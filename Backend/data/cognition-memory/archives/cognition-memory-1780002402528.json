@@ -1,0 +1,21 @@
+{
+  "archivedAt": "2026-05-28T21:06:42.528Z",
+  "entries": [
+    {
+      "id": "1780002160580-ce1ff4d4f32018",
+      "timestamp": "2026-05-28T21:02:40.580Z",
+      "symbol": "SOXL",
+      "environment": "CAUTION",
+      "confidenceLevel": "LOW",
+      "consensusState": "FULL_CONSENSUS",
+      "replayState": "STABILIZING",
+      "suppressionState": "REINFORCED",
+      "suppressionLevel": "NONE",
+      "reinforcementLevel": "HIGH",
+      "ecosystemState": "SYNCHRONIZED",
+      "escalationLevel": "UNKNOWN",
+      "driftState": "RECOVERING",
+      "recurrenceState": "STRONG_RECURRENCE"
+    }
+  ]
+}

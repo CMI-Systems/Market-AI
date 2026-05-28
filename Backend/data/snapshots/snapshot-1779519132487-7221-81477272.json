@@ -1,0 +1,26 @@
+{
+  "id": "snapshot-1779519132487-7221-81477272",
+  "timestamp": "2026-05-23T06:52:12.487Z",
+  "symbol": "NVDA",
+  "marketState": {
+    "momentum": "UNKNOWN",
+    "volatility": "UNKNOWN",
+    "directionalBias": "UNKNOWN",
+    "compression": "UNKNOWN"
+  },
+  "regime": {
+    "type": "UNKNOWN",
+    "confidence": 0.1,
+    "reasons": [
+      "Insufficient candle memory for regime classification."
+    ]
+  },
+  "confidenceLevel": "LOW",
+  "strategicEnvironment": "CAUTION",
+  "consensusStrength": "WEAK",
+  "anomalySeverity": "NONE",
+  "runtimeStatus": "STABLE",
+  "behavioralState": "UNKNOWN",
+  "memoryImportance": "IGNORE",
+  "summary": "NVDA strategic snapshot: CAUTION environment, WEAK consensus, STABLE runtime."
+}

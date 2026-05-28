@@ -1,0 +1,36 @@
+{
+  "userId": "local-operator",
+  "username": "Local Operator",
+  "operatorRole": "operator",
+  "cognitionPreferences": {
+    "mode": "Analyst Mode",
+    "density": "BALANCED"
+  },
+  "replayPreferences": {
+    "depth": "BALANCED"
+  },
+  "environmentPreferences": {
+    "focus": "GLOBAL"
+  },
+  "dashboardMode": "Analyst Mode",
+  "compressionMode": "Balanced retention",
+  "preferredEcosystems": [
+    "Broad Market",
+    "Mega Caps",
+    "Semiconductors"
+  ],
+  "watchlistProfile": {
+    "prioritizedSymbols": [
+      "NVDA",
+      "AMD",
+      "MSFT",
+      "QQQ",
+      "SPY"
+    ]
+  },
+  "retentionPreferences": {
+    "mode": "Balanced retention"
+  },
+  "createdAt": "2026-05-28T15:18:37.387Z",
+  "updatedAt": "2026-05-28T15:18:37.387Z"
+}

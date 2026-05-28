@@ -1,0 +1,21 @@
+{
+  "archivedAt": "2026-05-28T21:06:46.555Z",
+  "entries": [
+    {
+      "id": "1780002164608-5647b8840018f",
+      "timestamp": "2026-05-28T21:02:44.608Z",
+      "symbol": "META",
+      "environment": "CAUTION",
+      "confidenceLevel": "LOW",
+      "consensusState": "FULL_CONSENSUS",
+      "replayState": "STABILIZING",
+      "suppressionState": "REINFORCED",
+      "suppressionLevel": "NONE",
+      "reinforcementLevel": "HIGH",
+      "ecosystemState": "SYNCHRONIZED",
+      "escalationLevel": "UNKNOWN",
+      "driftState": "RECOVERING",
+      "recurrenceState": "STRONG_RECURRENCE"
+    }
+  ]
+}

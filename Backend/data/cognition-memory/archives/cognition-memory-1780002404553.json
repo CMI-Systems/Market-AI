@@ -1,0 +1,21 @@
+{
+  "archivedAt": "2026-05-28T21:06:44.553Z",
+  "entries": [
+    {
+      "id": "1780002162597-a2e11b4c039eb8",
+      "timestamp": "2026-05-28T21:02:42.597Z",
+      "symbol": "AMD",
+      "environment": "CAUTION",
+      "confidenceLevel": "LOW",
+      "consensusState": "FULL_CONSENSUS",
+      "replayState": "STABILIZING",
+      "suppressionState": "REINFORCED",
+      "suppressionLevel": "NONE",
+      "reinforcementLevel": "HIGH",
+      "ecosystemState": "SYNCHRONIZED",
+      "escalationLevel": "UNKNOWN",
+      "driftState": "RECOVERING",
+      "recurrenceState": "STRONG_RECURRENCE"
+    }
+  ]
+}

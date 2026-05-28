@@ -1,0 +1,13 @@
+{
+  "nodes": [
+    {
+      "nodeId": "local-cognition-node",
+      "role": "coordinator",
+      "region": "local",
+      "uptime": 0,
+      "status": "ACTIVE",
+      "synchronizationState": "SYNCHRONIZED",
+      "lastHeartbeat": "2026-05-28T17:59:00.136Z"
+    }
+  ]
+}

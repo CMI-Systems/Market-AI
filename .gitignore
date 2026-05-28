@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Runtime cognition data
+Backend/data/snapshots/
+Backend/data/cognition-memory/
+Backend/data/platform-usage/
+Backend/data/distributed-nodes/
+Backend/data/users/
+
+# Runtime/cache/temp
+Backend/cache/
+Backend/runtime/
+Backend/temp/
+.tmp/
+temp/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json

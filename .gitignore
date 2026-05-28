@@ -18,6 +18,7 @@ Backend/data/cognition-memory/
 Backend/data/platform-usage/
 Backend/data/distributed-nodes/
 Backend/data/users/
+Backend/training/datasets/
 
 # Runtime/cache/temp
 Backend/cache/

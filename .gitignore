@@ -32,3 +32,14 @@ temp/
 Thumbs.db
 .vscode/*
 !.vscode/settings.json
+
+# Runtime
+cache/
+tmp/
+
+# Database backups
+*.sql
+*.sqlite
+
+# Supabase
+.supabase/

@@ -3016,3 +3016,116 @@ dd {
     transform: translateX(35%);
   }
 }
+.auth-input {
+  width: 100%;
+  margin: 8px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(4, 12, 21, 0.75);
+  color: var(--text);
+}
+
+.auth-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.auth-actions button {
+  padding: 10px 14px;
+  border: 1px solid var(--line-bright);
+  border-radius: 8px;
+  background: rgba(83, 211, 218, 0.12);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.auth-actions button:hover {
+  border-color: var(--green);
+}
+.command-center-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.command-card,
+.trajectory-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(83, 211, 218, 0.10), transparent 48%),
+    rgba(8, 18, 29, 0.92);
+  box-shadow: 0 18px 56px rgba(0, 0, 0, 0.24);
+  padding: 16px;
+  min-height: 135px;
+}
+
+.command-card h2 {
+  margin: 6px 0 8px;
+}
+
+.command-card p {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.trajectory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.trajectory-card {
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.trajectory-card span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.trajectory-card strong {
+  font-size: 1.25rem;
+}
+
+.trajectory-card.expansion {
+  border-color: rgba(119, 227, 162, 0.45);
+}
+
+.trajectory-card.crisis {
+  border-color: rgba(255, 112, 128, 0.45);
+}
+
+.trajectory-card.compression {
+  border-color: rgba(244, 197, 106, 0.45);
+}
+
+.trajectory-card.accumulation {
+  border-color: rgba(83, 211, 218, 0.45);
+}
+
+@media (max-width: 1000px) {
+  .command-center-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trajectory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .command-center-grid,
+  .trajectory-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -37,6 +37,13 @@ app.use(express.json());
 app.use("/api/cognition", cognitionRoutes);
 app.use("/api/dev", devStreamRoutes);
 app.use("/api/v1", createApiV1Router());
+const frontendPath = path.join(__dirname, "..", "Frontend");
+
+app.use(express.static(frontendPath));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
 
 function runStartupSafetyChecks() {
   try {

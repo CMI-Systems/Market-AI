@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Market AI Intelligence Cockpit</title>
+
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="commandCenter.css" />
 </head>
 <body>
   <main class="cockpit-shell">
@@ -18,9 +20,29 @@
         <span id="systemStatusBadge" class="system-badge status-bad">Disconnected</span>
         <span class="hero-note">Backend cognition display layer</span>
       </div>
-    </header>
+    </header> 
 
-    <section class="status-grid" aria-label="Top system status cards">
+    <section class="panel" id="authPanel">
+  <div class="panel-header">
+    <div>
+      <span class="panel-kicker">Identity Layer</span>
+      <h2>Market AI Auth Test</h2>
+    </div>
+  </div>
+
+  <input id="authEmail" class="auth-input" type="email" placeholder="Email" />
+  <input id="authPassword" class="auth-input" type="password" placeholder="Password" />
+
+  <div class="auth-actions">
+    <button onclick="signUpUser()">Create Account</button>
+    <button onclick="loginUser()">Login</button>
+    <button onclick="logoutUser()">Logout</button>
+     </div>
+
+     <p id="authStatus">Auth standby.</p>
+     </section>
+
+     <section class="status-grid" aria-label="Top system status cards">
       <article class="status-card" id="backendCard">
         <span>Backend</span>
         <strong id="backendStatus">Checking</strong>
@@ -105,6 +127,60 @@
       </article>
     </section>
 
+    <section class="command-center-grid" aria-label="Market AI command center overview">
+  <article class="command-card">
+    <span class="panel-kicker">System Boot</span>
+    <h2>System Online</h2>
+    <p>Market AI core systems initialized.</p>
+  </article>
+
+  <article class="command-card">
+    <span class="panel-kicker">Global Scan</span>
+    <h2>Global Markets</h2>
+    <p>Scanning equities, bonds, crypto, commodities, and international markets.</p>
+  </article>
+
+  <article class="command-card">
+    <span class="panel-kicker">Data Streams</span>
+    <h2>Live Feeds</h2>
+    <p>Raw real-time market data streams active.</p>
+  </article>
+
+  <article class="command-card">
+    <span class="panel-kicker">Newsletter Intelligence</span>
+    <h2>Market Briefings</h2>
+    <p>Economic events, corporate updates, and market briefings awaiting feed integration.</p>
+  </article>
+
+  <article class="command-card">
+    <span class="panel-kicker">Market Pulse</span>
+    <h2>Pulse Monitor</h2>
+    <p>Market pressure, breadth, liquidity, volatility, and sentiment overview.</p>
+  </article>
+</section>
+
+<section class="trajectory-grid" aria-label="Market trajectory overview">
+  <article class="trajectory-card expansion">
+    <span>Expansion</span>
+    <strong>Monitoring</strong>
+  </article>
+
+  <article class="trajectory-card crisis">
+    <span>Crisis</span>
+    <strong>Monitoring</strong>
+  </article>
+
+  <article class="trajectory-card compression">
+    <span>Volatility Compression</span>
+    <strong>Monitoring</strong>
+  </article>
+
+  <article class="trajectory-card accumulation">
+    <span>Institutional Accumulation</span>
+    <strong>Monitoring</strong>
+  </article>
+</section>
+
     <section class="brain-strip" aria-labelledby="brainTitle">
       <div class="section-heading">
         <div>
@@ -171,7 +247,7 @@
           <span id="escalationLevel" class="escalation-badge">Escalation awaiting cognition</span>
         </div>
       </article>
-
+      
       <article class="panel" id="confidencePanel">
         <div class="panel-header">
           <div>
@@ -431,7 +507,7 @@
           </section>
         </div>
       </article>
-
+     
       <article class="panel evolution-panel wide-panel" id="sectorHeatmapPanel">
         <div class="panel-header">
           <div>
@@ -820,9 +896,9 @@
             <div id="priorityFeedWarnings" class="watchlist-notes expanded-detail">Awaiting cognition feed.</div>
           </article>
         </div>
-      </section>
+      </article>
 
-      <section class="operator-section wide-panel" id="operatorInteractionSection">
+      <article class="operator-section wide-panel" id="operatorInteractionSection">
         <div class="copilot-section-header">
           <div>
             <span class="panel-kicker">Operator Interaction Intelligence</span>
@@ -1089,8 +1165,7 @@
           </article>
         </div>
         <div id="cloudTopologyCards" class="topology-grid">Awaiting cloud deployment manifest.</div>
-      </section>
-
+      </article>
       <article class="panel roadmap-panel wide-panel">
         <div class="panel-header">
           <div>
@@ -1107,11 +1182,13 @@
           <span id="roadmapBehavioral">Behavioral endpoint pending</span>
           <span id="roadmapEscalation">Escalation endpoint pending</span>
         </div>
-      </article>
 
-    </section>
-  </main>
+          </section>
+        </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="commandCenter.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

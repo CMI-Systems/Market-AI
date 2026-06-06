@@ -54,21 +54,21 @@ function overview() {
   const triggers = state.isEscalating ? ["stability_monitor", "risk_acceleration"] : [];
 
   return {
-    backend: "demo",
+    backend: "simulation",
     timestamp: new Date().toISOString(),
     symbol: "SPY",
-    provider: "demo",
-    mode: "DEMO",
+    provider: "simulation",
+    mode: "MARKET_INTELLIGENCE_MODE",
     marketOpen: true,
     runtimeHealth: {
       status: "HEALTHY",
-      summary: "Demo runtime is serving local cognition responses.",
+      summary: "Simulation runtime is serving local cognition responses.",
     },
     strategicEnvironment: {
       environment: state.environment,
       stability: state.environment === "CAUTION" ? "MONITORING" : "STABLE",
       warnings: state.isEscalating ? ["Escalation monitor is tracking elevated context."] : [],
-      summary: `${state.environment} demo cognition is active for investor presentation.`,
+      summary: `${state.environment} simulation cognition is active for the closed beta environment.`,
     },
     confidence: {
       score: state.confidenceScore,
@@ -77,12 +77,12 @@ function overview() {
     },
     consensus: {
       consensusStrength: state.consensus,
-      summary: `${state.consensus} consensus is visible across demo cognition systems.`,
+      summary: `${state.consensus} consensus is visible across simulation cognition systems.`,
     },
     stabilityForecast: {
       trajectory: state.environment === "CAUTION" ? "MONITORING" : "STABLE",
       confidence: state.confidenceScore,
-      summary: "Demo stability forecast is updating from simulated cognition cadence.",
+      summary: "Simulation stability forecast is updating from beta cadence.",
     },
     escalation: {
       escalationLevel: state.escalationLevel,
@@ -91,11 +91,11 @@ function overview() {
         type: trigger,
         level: state.escalationLevel,
         timestamp: isoMinutesAgo(index + 1),
-        summary: "Demo escalation monitor flagged this context for review.",
+        summary: "Simulation escalation monitor flagged this context for review.",
       })),
       summary: state.isEscalating
-        ? `${state.escalationLevel} demo escalation context is visible.`
-        : "Escalation context is calm across demo cognition.",
+        ? `${state.escalationLevel} simulation escalation context is visible.`
+        : "Escalation context is calm across simulation cognition.",
     },
   };
 }
@@ -108,21 +108,21 @@ function brainStatus() {
       status: state.consensus === "WEAK" ? "OBSERVING" : "ANALYZING",
       bias: state.environment === "CAUTION" ? "NEUTRAL" : "RISK_ON",
       confidence: state.confidenceScore,
-      reason: "Demo tactical cognition is synthesizing market opportunity context.",
+      reason: "Simulation tactical cognition is synthesizing market opportunity context.",
     },
     behavioralBrain: {
       status: "OBSERVING",
       bias: state.confidenceScore >= 0.55 ? "ALIGNED" : "CAUTION",
       confidence: Math.max(0, state.confidenceScore - 0.08),
-      reason: "Demo behavioral cognition is monitoring crowd alignment.",
+      reason: "Simulation behavioral cognition is monitoring crowd alignment.",
     },
     failsafeBrain: {
       status: state.isEscalating ? "ACTIVE" : "STANDBY",
       bias: state.isEscalating ? "RISK_OFF" : "OBSERVATION_ONLY",
       confidence: state.isEscalating ? 0.88 : 0.64,
-      reason: "Demo failsafe cognition is monitoring protection status.",
+      reason: "Simulation failsafe cognition is monitoring protection status.",
     },
-    summary: "Demo brain status is available for cockpit visualization.",
+    summary: "Simulation brain status is available for cockpit visualization.",
   };
 }
 
@@ -137,7 +137,7 @@ function temporalMemory() {
     agingContexts: [],
     longHorizonSignals: [],
     warnings: [],
-    summary: "Demo temporal memory is reinforcing recent cognition patterns.",
+    summary: "Simulation temporal memory is reinforcing recent cognition patterns.",
   };
 }
 
@@ -151,7 +151,7 @@ function recurrence() {
     ],
     affectedEcosystems: ["SPY"],
     warnings: [],
-    summary: "Demo recurrence cognition detected repeated consensus and risk themes.",
+    summary: "Simulation recurrence cognition detected repeated consensus and risk themes.",
   };
 }
 
@@ -162,7 +162,7 @@ function reinforcementWeighting() {
     weakenedFactors: [],
     learningWeight: 0.72,
     warnings: [],
-    summary: "Demo reinforcement weighting is strengthening consensus memory.",
+    summary: "Simulation reinforcement weighting is strengthening consensus memory.",
   };
 }
 
@@ -201,7 +201,7 @@ function persistentMemory() {
     retentionStatus: "ACTIVE",
     compressionState: "UNCOMPRESSED",
     warnings: [],
-    summary: "Demo persistent cognition memory contains retained presentation cycles.",
+    summary: "Simulation persistent cognition memory contains retained beta cycles.",
   };
 }
 
@@ -210,7 +210,7 @@ function health() {
     status: "HEALTHY",
     uptimeMs: Date.now() % 1000000,
     memory: { heapUsedMb: 42 },
-    summary: "Demo health endpoint is available.",
+    summary: "Simulation health endpoint is available.",
   };
 }
 
@@ -228,20 +228,20 @@ export function getDemoResponse(endpoint) {
       vulnerabilityLevel: state.isEscalating ? "MODERATE" : "LOW",
       volatility: state.isEscalating ? "ELEVATED" : "NORMAL",
       status: state.isEscalating ? "MONITORING" : "STABLE",
-      summary: "Demo liquidity pressure is updating from presentation cadence.",
+      summary: "Simulation liquidity pressure is updating from beta cadence.",
     },
     "/api/cognition/institutional-flow": {
       flowState: state.environment === "EXPANSION" ? "ACCUMULATION" : "OBSERVING",
       flowStrength: state.consensus === "STRONG" ? "HIGH" : "MODERATE",
       confidence: state.confidenceScore,
       status: "ACTIVE",
-      summary: "Demo institutional flow remains visible in cognition synthesis.",
+      summary: "Institutional flow analysis remains visible in cognition synthesis.",
     },
     "/api/cognition/priority-feed": {
       feedState: "ACTIVE",
       events: priorityEvents(),
       warnings: [],
-      summary: "Demo priority cognition feed is rotating live intelligence events.",
+      summary: "Simulation priority cognition feed is rotating live intelligence events.",
     },
     "/api/health": health(),
     "/api/cognition/temporal-memory": temporalMemory(),
@@ -254,7 +254,7 @@ export function getDemoResponse(endpoint) {
       reinforcementLevel: "HIGH",
       confidenceWeight: state.confidenceScore,
       warnings: [],
-      summary: "Demo adaptive signal cognition is reinforcing consensus visibility.",
+      summary: "Simulation adaptive signal cognition is reinforcing consensus visibility.",
     },
   };
 

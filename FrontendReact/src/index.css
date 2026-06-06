@@ -52,14 +52,16 @@
 
 body {
   margin: 0;
+  overflow-x: hidden;
 }
 
 #root {
-  width: 1126px;
+  width: 100%;
   max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
+  overflow-x: hidden;
+  margin: 0;
+  text-align: initial;
+  border-inline: 0;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -93,6 +95,43 @@ h2 {
 }
 p {
   margin: 0;
+}
+
+.aicc-page,
+.page-container,
+.main-content,
+.dashboard-content,
+.page-placeholder {
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.page-placeholder {
+  padding: 34px;
+  background:
+    radial-gradient(circle at top left, rgba(83, 211, 218, 0.12), transparent 35%),
+    radial-gradient(circle at top right, rgba(48, 255, 135, 0.08), transparent 35%),
+    #020817;
+  color: #e8fbff;
+}
+
+.page-placeholder > * {
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.page-placeholder h1,
+.page-placeholder h2 {
+  color: #e8fbff;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.page-placeholder p {
+  color: #8fb7c9;
 }
 
 code,

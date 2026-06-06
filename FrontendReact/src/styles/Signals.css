@@ -1,0 +1,440 @@
+.signals-page {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 32px;
+  background:
+    radial-gradient(circle at top left, rgba(83, 211, 218, 0.12), transparent 35%),
+    radial-gradient(circle at top right, rgba(48, 255, 135, 0.08), transparent 35%),
+    #020817;
+  color: #e8fbff;
+}
+
+.signals-header {
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  margin: 0 auto 28px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(83, 211, 218, 0.18);
+}
+
+.signals-header h1 {
+  margin: 0;
+  font-size: 3rem;
+  letter-spacing: 3px;
+}
+
+.signals-header p {
+  margin: 8px 0 0;
+  color: #8fb7c9;
+  font-size: 0.82rem;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+}
+
+.signals-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  margin: 0 auto 24px;
+}
+
+.signals-summary-card,
+.chart-main-panel,
+.signal-marker-panel,
+.market-structure-panel,
+.signal-explanation-panel {
+  border: 1px solid rgba(83, 211, 218, 0.18);
+  border-radius: 16px;
+  background: rgba(5, 15, 32, 0.9);
+  box-shadow:
+    0 0 20px rgba(83, 211, 218, 0.08),
+    inset 0 0 18px rgba(83, 211, 218, 0.035);
+}
+
+.signals-summary-card {
+  padding: 18px 16px;
+}
+
+.signals-summary-card span,
+.chart-header-panel span,
+.selected-candle-detail span,
+.market-structure-panel span,
+.signal-explanation-panel span,
+.signal-marker-panel span {
+  display: block;
+  color: #8fa6b8;
+  font-size: 0.66rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.signals-summary-card strong,
+.chart-header-panel strong,
+.selected-candle-detail strong,
+.market-structure-panel strong,
+.signal-explanation-panel strong,
+.signal-marker-panel strong {
+  display: block;
+  margin-top: 8px;
+  color: #39ff88;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chart-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 0.8fr);
+  gap: 18px;
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+.chart-main-panel {
+  grid-row: span 3;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 20px;
+}
+
+.chart-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.chart-toolbar label {
+  color: #8fa6b8;
+  font-size: 0.7rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.chart-toolbar select {
+  padding: 10px 12px;
+  border: 1px solid rgba(83, 211, 218, 0.18);
+  border-radius: 10px;
+  background: rgba(2, 8, 23, 0.78);
+  color: #e8fbff;
+}
+
+.chart-header-panel,
+.selected-candle-detail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.chart-header-panel div,
+.selected-candle-detail div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(0, 255, 200, 0.12);
+  border-radius: 10px;
+  background: rgba(0, 10, 25, 0.72);
+}
+
+.timeframe-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.timeframe-selector button {
+  padding: 9px 13px;
+  border: 1px solid rgba(83, 211, 218, 0.18);
+  border-radius: 999px;
+  background: rgba(2, 8, 23, 0.78);
+  color: #8fb7c9;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.timeframe-selector button:hover,
+.timeframe-selector .timeframe-active {
+  border-color: rgba(57, 255, 136, 0.42);
+  color: #39ff88;
+  box-shadow: 0 0 14px rgba(57, 255, 136, 0.12);
+}
+
+.chart-state-bar {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(83, 211, 218, 0.16);
+  border-radius: 10px;
+  color: #bfefff;
+  background: rgba(83, 211, 218, 0.08);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.chart-state-warning {
+  border-color: rgba(255, 209, 102, 0.26);
+  color: #ffd166;
+  background: rgba(255, 209, 102, 0.08);
+}
+
+.chart-visual-shell {
+  position: relative;
+  min-height: 390px;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid rgba(83, 211, 218, 0.12);
+  border-radius: 14px;
+  background:
+    linear-gradient(90deg, rgba(83, 211, 218, 0.035) 1px, transparent 1px),
+    rgba(0, 10, 25, 0.62);
+  background-size: 60px 100%;
+}
+
+.chart-grid-lines {
+  position: absolute;
+  inset: 22px 0 42px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.chart-grid-lines div {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid rgba(143, 166, 184, 0.14);
+}
+
+.chart-grid-lines span {
+  position: absolute;
+  right: 10px;
+  top: -9px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #8fa6b8;
+  background: rgba(0, 10, 25, 0.86);
+  font-size: 0.62rem;
+}
+
+.latest-price-line {
+  position: absolute;
+  left: 14px;
+  right: 0;
+  border-top: 1px dashed rgba(57, 255, 136, 0.72);
+  pointer-events: none;
+  z-index: 4;
+}
+
+.latest-price-line span {
+  position: absolute;
+  right: 10px;
+  top: -12px;
+  padding: 3px 8px;
+  border: 1px solid rgba(57, 255, 136, 0.32);
+  border-radius: 999px;
+  color: #39ff88;
+  background: rgba(0, 10, 25, 0.92);
+  font-size: 0.66rem;
+}
+
+.mock-candle-chart {
+  position: absolute;
+  inset: 22px 54px 42px 16px;
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  z-index: 3;
+}
+
+.candle-row {
+  position: relative;
+  height: 100%;
+  min-width: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: crosshair;
+}
+
+.candle-row:focus {
+  outline: 1px solid rgba(83, 211, 218, 0.42);
+  outline-offset: 2px;
+}
+
+.candle-wick,
+.candle-body {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.candle-wick {
+  width: 2px;
+  min-height: 4px;
+  background: rgba(223, 247, 255, 0.8);
+}
+
+.candle-body {
+  width: min(16px, 70%);
+  min-height: 3px;
+  border-radius: 3px;
+}
+
+.candle-up {
+  background: #39ff88;
+  box-shadow: 0 0 12px rgba(57, 255, 136, 0.35);
+}
+
+.candle-down {
+  background: #ff647d;
+  box-shadow: 0 0 12px rgba(255, 100, 125, 0.32);
+}
+
+.chart-x-axis {
+  position: absolute;
+  left: 16px;
+  right: 54px;
+  bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  color: #6f8392;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  z-index: 2;
+}
+
+.volume-strip {
+  display: grid;
+  gap: 5px;
+  height: 88px;
+  margin-top: 16px;
+  align-items: end;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0 54px 0 16px;
+}
+
+.volume-strip div {
+  height: 100%;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+}
+
+.volume-strip i {
+  display: block;
+  width: min(16px, 70%);
+  min-height: 2px;
+  border-radius: 999px 999px 0 0;
+  background: rgba(83, 211, 218, 0.55);
+}
+
+.volume-strip .volume-up {
+  background: rgba(57, 255, 136, 0.58);
+}
+
+.volume-strip .volume-down {
+  background: rgba(255, 100, 125, 0.58);
+}
+
+.selected-candle-detail {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 16px 0 0;
+}
+
+.signal-marker-panel,
+.market-structure-panel,
+.signal-explanation-panel {
+  padding: 18px 16px;
+}
+
+.signal-marker-panel h2,
+.market-structure-panel h2,
+.signal-explanation-panel h2 {
+  margin: 0 0 14px;
+  color: #bfefff;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.signal-marker-panel div,
+.market-structure-panel div,
+.signal-explanation-panel div {
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(0, 255, 200, 0.12);
+  border-radius: 10px;
+  background: rgba(0, 10, 25, 0.72);
+}
+
+.signal-marker-panel p,
+.signal-explanation-panel p {
+  margin: 8px 0 0;
+  color: #b7c7e6;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 1200px) {
+  .signals-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chart-header-panel,
+  .selected-candle-detail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1000px) {
+  .chart-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-main-panel {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .signals-page {
+    padding: 24px 18px;
+  }
+
+  .signals-header h1 {
+    font-size: 2.2rem;
+  }
+
+  .signals-summary-grid,
+  .chart-header-panel,
+  .selected-candle-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .mock-candle-chart {
+    min-width: 720px;
+  }
+
+  .chart-visual-shell {
+    overflow-x: auto;
+  }
+}

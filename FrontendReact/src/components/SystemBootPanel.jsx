@@ -1,14 +1,38 @@
 import { useEffect, useState } from "react";
-import { getCognitionOverview } from "../services/cognitionApi";
+import {
+  getAiccSystemStatus,
+  getOfflineAiccSystemStatus,
+} from "../services/aiccApi";
+import {
+  getMarketProviderStatus,
+  getOfflineMarketProviderStatus,
+} from "../services/marketProviderApi";
+
+function displayState(value) {
+  if (!value) return "OFFLINE";
+  return String(value).replace(/_/g, " ");
+}
+
+function displayActiveProvider(value) {
+  if (!value) return "PENDING";
+  if (String(value).endsWith("_ACTIVE")) {
+    return String(value).replace("_ACTIVE", "").replace(/_/g, " ");
+  }
+  return "PENDING";
+}
 
 function SystemBootPanel() {
-  const [overview, setOverview] = useState(null);
+  const [systemStatus, setSystemStatus] = useState(getOfflineAiccSystemStatus());
+  const [providerStatus, setProviderStatus] = useState(getOfflineMarketProviderStatus());
 
   useEffect(() => {
     async function loadData() {
-      const overviewData = await getCognitionOverview();
-
-      if (overviewData) setOverview(overviewData);
+      const [status, marketProviderStatus] = await Promise.all([
+        getAiccSystemStatus(),
+        getMarketProviderStatus(),
+      ]);
+      setSystemStatus(status);
+      setProviderStatus(marketProviderStatus);
     }
 
     loadData();
@@ -22,11 +46,38 @@ function SystemBootPanel() {
     <div className="panel">
       <h2>System Boot</h2>
       <p>
-        Backend {overview?.backend || "UNKNOWN"} | Runtime{" "}
-        {overview?.runtimeHealth?.status || "UNKNOWN"} | Mode{" "}
-        {overview?.mode || "UNKNOWN"}
+        Backend {displayState(systemStatus.backend)} | Runtime{" "}
+        {displayState(systemStatus.runtime)} | Mode{" "}
+        {displayState(systemStatus.mode)}
       </p>
-      <p>{overview ? "System boot initialized from backend cognition." : "Initializing Market AI System..."}</p>
+
+      <div className="brain-metrics">
+        <div>
+          <span>Primary Provider</span>
+          <strong>{displayState(providerStatus.primaryProvider)}</strong>
+        </div>
+
+        <div>
+          <span>Active Provider</span>
+          <strong>{displayActiveProvider(`${providerStatus.activeProvider}_ACTIVE`)}</strong>
+        </div>
+
+        <div>
+          <span>Provider Health</span>
+          <strong>{displayState(providerStatus.providerHealth)}</strong>
+        </div>
+
+        <div>
+          <span>Market Status</span>
+          <strong>{displayState(providerStatus.marketStatus)}</strong>
+        </div>
+      </div>
+
+      <p>
+        Tactical {displayState(systemStatus.brains?.tactical)} | Behavioral{" "}
+        {displayState(systemStatus.brains?.behavioral)} | Failsafe{" "}
+        {displayState(systemStatus.brains?.failsafe)}
+      </p>
     </div>
   );
 }

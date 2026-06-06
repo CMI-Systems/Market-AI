@@ -1,5 +1,6 @@
 .market-pulse-page {
   min-height: 100vh;
+  width: 100%;
   padding: 34px;
   background:
     radial-gradient(circle at top left, rgba(83, 211, 218, 0.12), transparent 35%),
@@ -9,6 +10,10 @@
 }
 
 .market-pulse-header {
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
   margin-bottom: 28px;
   padding-bottom: 20px;
   border-bottom: 1px solid rgba(83, 211, 218, 0.16);
@@ -33,6 +38,10 @@
   display: grid;
   grid-template-columns: 1fr 1.4fr;
   gap: 22px;
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
   margin-bottom: 24px;
 }
 
@@ -84,6 +93,10 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(320px, 1fr));
   gap: 22px;
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .pulse-panel {

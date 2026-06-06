@@ -1,0 +1,308 @@
+.data-streams-page {
+  min-height: 100vh;
+  width: 100%;
+  padding: 32px;
+  background:
+    radial-gradient(circle at top left, rgba(83, 211, 218, 0.12), transparent 35%),
+    radial-gradient(circle at top right, rgba(48, 255, 135, 0.08), transparent 35%),
+    #020817;
+  color: #e8fbff;
+}
+
+.data-streams-header,
+.data-streams-page section {
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.data-streams-header {
+  padding-bottom: 22px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid rgba(83, 211, 218, 0.18);
+}
+
+.data-streams-header h1 {
+  margin: 0;
+  font-size: 3rem;
+  letter-spacing: 3px;
+}
+
+.data-streams-header p {
+  margin: 8px 0 0;
+  color: #8fb7c9;
+  font-size: 0.82rem;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+}
+
+.data-streams-page section {
+  margin-bottom: 26px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-heading span {
+  color: #39ff88;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: #bfefff;
+  font-size: 0.94rem;
+  letter-spacing: 2px;
+}
+
+.stream-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.stream-card,
+.pipeline-node,
+.health-card,
+.active-stream-feed,
+.future-connections-panel {
+  border: 1px solid rgba(83, 211, 218, 0.18);
+  border-radius: 16px;
+  background: rgba(5, 15, 32, 0.9);
+  box-shadow:
+    0 0 20px rgba(83, 211, 218, 0.08),
+    inset 0 0 18px rgba(83, 211, 218, 0.035);
+}
+
+.stream-card {
+  padding: 18px;
+}
+
+.stream-card > div:first-child,
+.future-connections-panel div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.stream-card span,
+.health-card span,
+.future-connections-panel span,
+.active-stream-feed span {
+  color: #8fa6b8;
+  font-size: 0.68rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.stream-card strong,
+.health-card strong,
+.future-connections-panel strong,
+.active-stream-feed strong {
+  color: #39ff88;
+  font-size: 0.86rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stream-card dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.stream-card dl div {
+  padding: 12px;
+  border: 1px solid rgba(0, 255, 200, 0.12);
+  border-radius: 10px;
+  background: rgba(0, 10, 25, 0.72);
+}
+
+.stream-card dt,
+.stream-card dd {
+  margin: 0;
+}
+
+.stream-card dt {
+  color: #8fa6b8;
+  font-size: 0.64rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.stream-card dd {
+  margin-top: 7px;
+  color: #e8fbff;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pipeline-map {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  align-items: center;
+}
+
+.pipeline-step {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+}
+
+.pipeline-step span {
+  color: #39ff88;
+  font-size: 1.15rem;
+  animation: pipelinePulse 1.8s ease-in-out infinite;
+}
+
+.pipeline-node {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  color: #e8fbff;
+  font-size: 0.72rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  animation: nodeGlow 3s ease-in-out infinite;
+}
+
+.data-streams-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  gap: 18px;
+}
+
+.stream-health-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.health-card {
+  padding: 18px;
+}
+
+.health-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 1.35rem;
+}
+
+.health-meter {
+  height: 8px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(143, 166, 184, 0.14);
+}
+
+.health-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #53d3da, #39ff88);
+  box-shadow: 0 0 12px rgba(57, 255, 136, 0.32);
+}
+
+.active-stream-feed {
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.active-stream-feed div {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-bottom: 1px solid rgba(83, 211, 218, 0.12);
+}
+
+.active-stream-feed div:last-child {
+  border-bottom: 0;
+}
+
+.future-connections-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px;
+}
+
+.future-connections-panel div {
+  padding: 14px;
+  border: 1px solid rgba(0, 255, 200, 0.12);
+  border-radius: 12px;
+  background: rgba(0, 10, 25, 0.72);
+}
+
+@keyframes pipelinePulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(3px);
+  }
+}
+
+@keyframes nodeGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 16px rgba(83, 211, 218, 0.06);
+  }
+
+  50% {
+    box-shadow: 0 0 24px rgba(57, 255, 136, 0.12);
+  }
+}
+
+@media (max-width: 1100px) {
+  .stream-status-grid,
+  .data-streams-dashboard,
+  .future-connections-panel {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pipeline-map {
+    grid-template-columns: 1fr;
+  }
+
+  .pipeline-step span {
+    display: block;
+  }
+}
+
+@media (max-width: 700px) {
+  .data-streams-page {
+    padding: 24px 18px;
+  }
+
+  .data-streams-header h1 {
+    font-size: 2.2rem;
+  }
+
+  .stream-status-grid,
+  .stream-health-grid,
+  .data-streams-dashboard,
+  .future-connections-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .stream-card dl {
+    grid-template-columns: 1fr;
+  }
+}

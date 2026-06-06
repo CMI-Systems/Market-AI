@@ -1,22 +1,30 @@
 import { useEffect, useState } from "react";
 import {
-  getCognitionOverview,
-  getProductionHealth,
-} from "../services/cognitionApi";
+  getAiccSystemStatus,
+  getOfflineAiccSystemStatus,
+} from "../services/aiccApi";
+import {
+  getMarketProviderStatus,
+  getOfflineMarketProviderStatus,
+} from "../services/marketProviderApi";
+
+function displayState(value) {
+  if (value === undefined || value === null || value === "") return "OFFLINE";
+  return String(value).replace(/_/g, " ");
+}
 
 function DataStreamsPanel() {
-  const [overview, setOverview] = useState(null);
-  const [health, setHealth] = useState(null);
+  const [systemStatus, setSystemStatus] = useState(getOfflineAiccSystemStatus());
+  const [providerStatus, setProviderStatus] = useState(getOfflineMarketProviderStatus());
 
   useEffect(() => {
     async function loadData() {
-      const [overviewData, healthData] = await Promise.all([
-        getCognitionOverview(),
-        getProductionHealth(),
+      const [status, marketProviderStatus] = await Promise.all([
+        getAiccSystemStatus(),
+        getMarketProviderStatus(),
       ]);
-
-      if (overviewData) setOverview(overviewData);
-      if (healthData) setHealth(healthData);
+      setSystemStatus(status);
+      setProviderStatus(marketProviderStatus);
     }
 
     loadData();
@@ -29,27 +37,95 @@ function DataStreamsPanel() {
   return (
     <div className="panel">
       <h2>Data Streams</h2>
-      <p>Live Market Intelligence Network</p>
+      <p>
+        Active Provider {displayState(providerStatus.activeProvider)} | Mode{" "}
+        {displayState(systemStatus.mode)}
+      </p>
 
       <div className="brain-metrics">
         <div>
           <span>Equities</span>
-          <strong>{overview?.backend === "connected" ? "ONLINE" : "OFFLINE"}</strong>
+          <strong>{providerStatus.capabilities?.equities ? "ONLINE" : "OFFLINE"}</strong>
         </div>
 
         <div>
           <span>Options</span>
-          <strong>{overview?.marketOpen ? "ONLINE" : "STANDBY"}</strong>
+          <strong>{providerStatus.capabilities?.options ? "ONLINE" : "PENDING"}</strong>
         </div>
 
         <div>
           <span>Futures</span>
-          <strong>{overview?.mode?.toUpperCase() || "SHADOW"}</strong>
+          <strong>{providerStatus.capabilities?.futures ? "ONLINE" : "UNAVAILABLE"}</strong>
         </div>
 
         <div>
-          <span>Latency</span>
-          <strong>{health?.uptimeMs ? "ACTIVE" : "UNKNOWN"}</strong>
+          <span>Backend</span>
+          <strong>{displayState(systemStatus.backend)}</strong>
+        </div>
+
+        <div>
+          <span>Provider</span>
+          <strong>{displayState(providerStatus.activeProvider)}</strong>
+        </div>
+
+        <div>
+          <span>Primary Provider</span>
+          <strong>{displayState(providerStatus.primaryProvider)}</strong>
+        </div>
+
+        <div>
+          <span>Fallback</span>
+          <strong>{displayState(providerStatus.fallbackProvider)}</strong>
+        </div>
+
+        <div>
+          <span>Provider Health</span>
+          <strong>{displayState(providerStatus.providerHealth)}</strong>
+        </div>
+
+        <div>
+          <span>Market Status</span>
+          <strong>{displayState(providerStatus.marketStatus)}</strong>
+        </div>
+
+        <div>
+          <span>Symbol</span>
+          <strong>{systemStatus.feeds?.symbol || "SPY"}</strong>
+        </div>
+
+        <div>
+          <span>Tactical</span>
+          <strong>{displayState(systemStatus.brains?.tactical)}</strong>
+        </div>
+
+        <div>
+          <span>Behavioral</span>
+          <strong>{displayState(systemStatus.brains?.behavioral)}</strong>
+        </div>
+
+        <div>
+          <span>Failsafe</span>
+          <strong>{displayState(systemStatus.brains?.failsafe)}</strong>
+        </div>
+
+        <div>
+          <span>Feed State</span>
+          <strong>{displayState(systemStatus.feeds?.feedState)}</strong>
+        </div>
+
+        <div>
+          <span>Runtime</span>
+          <strong>{displayState(systemStatus.runtime)}</strong>
+        </div>
+
+        <div>
+          <span>Events</span>
+          <strong>{systemStatus.feeds?.events ?? 0}</strong>
+        </div>
+
+        <div>
+          <span>Memory</span>
+          <strong>{systemStatus.feeds?.memory ?? "LOCAL"}</strong>
         </div>
       </div>
     </div>

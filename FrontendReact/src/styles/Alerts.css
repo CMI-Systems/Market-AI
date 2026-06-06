@@ -1,0 +1,235 @@
+.alerts-page {
+  min-height: 100vh;
+  width: 100%;
+  padding: 32px;
+  background:
+    radial-gradient(circle at top left, rgba(83, 211, 218, 0.12), transparent 35%),
+    radial-gradient(circle at top right, rgba(48, 255, 135, 0.08), transparent 35%),
+    #020817;
+  color: #e8fbff;
+}
+
+.alerts-header,
+.alert-summary-grid,
+.alert-filters,
+.alerts-layout {
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.alerts-header {
+  padding-bottom: 22px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(83, 211, 218, 0.18);
+}
+
+.alerts-header h1 {
+  margin: 0;
+  font-size: 3rem;
+  letter-spacing: 3px;
+}
+
+.alerts-header p {
+  margin: 8px 0 0;
+  color: #8fb7c9;
+  font-size: 0.82rem;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+}
+
+.alert-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.alert-summary-card,
+.alert-card,
+.live-alert-feed {
+  border: 1px solid rgba(83, 211, 218, 0.18);
+  border-radius: 16px;
+  background: rgba(5, 15, 32, 0.9);
+  box-shadow:
+    0 0 20px rgba(83, 211, 218, 0.08),
+    inset 0 0 18px rgba(83, 211, 218, 0.035);
+}
+
+.alert-summary-card {
+  padding: 18px;
+}
+
+.alert-summary-card span,
+.alert-card span,
+.alert-card dt,
+.live-alert-feed span {
+  display: block;
+  color: #8fa6b8;
+  font-size: 0.66rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.alert-summary-card strong,
+.alert-card strong,
+.alert-card dd,
+.live-alert-feed strong {
+  display: block;
+  margin-top: 8px;
+  color: #39ff88;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.alert-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.alert-filters button {
+  padding: 10px 14px;
+  border: 1px solid rgba(83, 211, 218, 0.18);
+  border-radius: 999px;
+  background: rgba(2, 8, 23, 0.78);
+  color: #8fb7c9;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.alert-filters .alert-filter-active {
+  border-color: rgba(57, 255, 136, 0.42);
+  color: #39ff88;
+  box-shadow: 0 0 14px rgba(57, 255, 136, 0.12);
+}
+
+.alerts-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+  gap: 18px;
+}
+
+.alerts-section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.alerts-section-title span {
+  color: #39ff88;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+}
+
+.alerts-section-title h2 {
+  margin: 0;
+  color: #bfefff;
+  font-size: 0.94rem;
+  letter-spacing: 2px;
+}
+
+.active-alerts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.alert-card {
+  padding: 18px;
+}
+
+.alert-card dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0 0;
+}
+
+.alert-card dl div {
+  padding: 10px;
+  border: 1px solid rgba(0, 255, 200, 0.12);
+  border-radius: 10px;
+  background: rgba(0, 10, 25, 0.72);
+}
+
+.alert-card dt,
+.alert-card dd {
+  margin: 0;
+}
+
+.alert-card p,
+.live-alert-feed p {
+  margin: 12px 0 0;
+  color: #b7c7e6;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.alert-warning {
+  border-color: rgba(255, 207, 90, 0.36);
+}
+
+.alert-critical {
+  border-color: rgba(255, 100, 125, 0.46);
+  box-shadow:
+    0 0 22px rgba(255, 100, 125, 0.12),
+    inset 0 0 18px rgba(255, 100, 125, 0.04);
+}
+
+.alert-notice {
+  border-color: rgba(83, 211, 218, 0.28);
+}
+
+.live-alert-feed {
+  max-height: 620px;
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.live-alert-feed div {
+  padding: 13px 12px;
+  border-bottom: 1px solid rgba(83, 211, 218, 0.12);
+}
+
+.live-alert-feed div:last-child {
+  border-bottom: 0;
+}
+
+.live-alert-feed em {
+  display: inline-block;
+  margin-top: 8px;
+  color: #ffcf5a;
+  font-size: 0.68rem;
+  font-style: normal;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 1000px) {
+  .alert-summary-grid,
+  .alerts-layout,
+  .active-alerts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .alerts-page {
+    padding: 24px 18px;
+  }
+
+  .alerts-header h1 {
+    font-size: 2.2rem;
+  }
+
+  .alert-card dl {
+    grid-template-columns: 1fr;
+  }
+}

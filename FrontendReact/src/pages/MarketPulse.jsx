@@ -127,17 +127,17 @@ function MarketPulse() {
     <div className="pulse-metrics">
       <div>
         <span>Advancers</span>
-        <strong>{confidence?.score ?? "N/A"}</strong>
+        <strong>{confidence?.score ?? "UNAVAILABLE"}</strong>
       </div>
 
       <div>
         <span>Decliners</span>
-        <strong>{confidence?.level ? translateConfidence(confidence) : "N/A"}</strong>
+        <strong>{confidence?.level ? translateConfidence(confidence) : "UNAVAILABLE"}</strong>
       </div>
 
       <div>
         <span>New Highs</span>
-        <strong>{confidence?.consensusStrength ? translateConsensus(confidence.consensusStrength) : "N/A"}</strong>
+        <strong>{confidence?.consensusStrength ? translateConsensus(confidence.consensusStrength) : "UNAVAILABLE"}</strong>
       </div>
 
       <div>
@@ -153,7 +153,7 @@ function MarketPulse() {
     <div className="pulse-metrics">
       <div>
         <span>VIX</span>
-        <strong>{liquidityPressure?.volatility || "N/A"}</strong>
+        <strong>{liquidityPressure?.volatility || "UNAVAILABLE"}</strong>
       </div>
 
       <div>

@@ -2,23 +2,35 @@
 
 ## Advanced Intelligence Command Center (AICC)
 
-Market-AI is an intelligent market analysis platform designed to centralize market monitoring, signal generation, behavioral analysis, risk management, and decision support into a single operational dashboard.
+Market-AI is an advanced market intelligence ecosystem built around the Advanced Intelligence Command Center (AICC), designed to centralize market monitoring, signal generation, behavioral analysis, risk management, and decision-support intelligence into a unified operational dashboard.
 
-AICC serves as the core intelligence layer of the Market-AI ecosystem.
+AICC serves as the operational intelligence layer of the Market-AI ecosystem, combining real-time market data, signal analysis, behavioral intelligence, provider diagnostics, and risk monitoring into a single command environment.
+
+> **Status:** Closed Beta Development
+>
+> **Active Provider:** Alpaca
+>
+> **Pending Provider:** Webull
+>
+> **Fallback Provider:** Simulation Engine
+>
+> **Repository Type:** Private Development Repository
+>
+> **Organization:** CMI Systems
 
 ---
 
 ## Current Status
 
-Closed Beta Development
+**Version:** AICC Closed Beta v0.1
 
-Version: AICC Closed Beta v0.1
+Current Development State:
 
-Primary Provider: Alpaca
-
-Secondary Provider: Webull (Pending Integration)
-
-Fallback Provider: Simulation Engine
+* Closed Beta Preparation
+* Internal Testing
+* Provider Validation
+* Signal Framework Expansion
+* Infrastructure Hardening
 
 ---
 
@@ -26,28 +38,28 @@ Fallback Provider: Simulation Engine
 
 ### Intelligence Modules
 
-- Tactical Brain
-- Behavioral Brain
-- Failsafe Brain
-- Market Pulse
-- Global Scan
-- Data Streams
-- Watchlists
-- Signals
-- Alerts
-- Replay Center
-- Trading Journal
-- Archives
+* Tactical Brain
+* Behavioral Brain
+* Failsafe Brain
+* Market Pulse
+* Global Scan
+* Data Streams
+* Watchlists
+* Signals
+* Alerts
+* Replay Center
+* Trading Journal
+* Archives
 
 ### System Modules
 
-- Core Cognition
-- Provider Adapter
-- Signal Engine
-- Alert Engine
-- Replay Engine
-- Data Layer
-- Failover Layer
+* Core Cognition
+* Provider Adapter
+* Signal Engine
+* Alert Engine
+* Replay Engine
+* Data Layer
+* Failover Layer
 
 ---
 
@@ -55,44 +67,46 @@ Fallback Provider: Simulation Engine
 
 ### Market Intelligence
 
-- Real-time market monitoring
-- Multi-symbol watchlists
-- Signal generation framework
-- Market structure analysis
-- Behavioral sentiment tracking
-- Risk assessment metrics
-- Institutional accumulation tracking
+* Real-time market monitoring
+* Multi-symbol watchlists
+* Signal generation framework
+* Market structure analysis
+* Behavioral sentiment tracking
+* Risk assessment metrics
+* Institutional flow monitoring
 
 ### Command Center
 
-- Unified operational dashboard
-- Provider diagnostics
-- System health monitoring
-- Intelligence scoring
-- Data stream monitoring
-- Alert management
-- Replay analysis
+* Unified operational dashboard
+* Provider diagnostics
+* System health monitoring
+* Intelligence scoring
+* Data stream monitoring
+* Alert management
+* Replay analysis
 
 ### Signal Analysis
 
-- Candlestick chart visualization
-- Multiple timeframe support
-  - 1 Minute
-  - 5 Minute
-  - 15 Minute
-  - 1 Hour
-  - 1 Day
-- Market structure analysis
-- Confidence scoring
-- Signal explanation engine
+* Multi-timeframe charting
+* Signal confidence scoring
+* Market structure analysis
+* Signal explanation engine
+
+Supported Timeframes:
+
+* 1 Minute
+* 5 Minute
+* 15 Minute
+* 1 Hour
+* 1 Day
 
 ### Reliability
 
-- Provider failover architecture
-- Simulation fallback mode
-- Health monitoring
-- Diagnostic reporting
-- Safe provider validation testing
+* Provider failover architecture
+* Simulation fallback mode
+* Health monitoring
+* Diagnostic reporting
+* Provider validation framework
 
 ---
 
@@ -100,55 +114,111 @@ Fallback Provider: Simulation Engine
 
 ### Frontend
 
-- React
-- Vite
-- JavaScript
-- CSS
+* React
+* Vite
+* JavaScript
+* CSS
 
 ### Backend
 
-- Node.js
-- Express
+* Node.js
+* Express
 
 ### Data Providers
 
-- Alpaca API
-- Webull Integration (In Progress)
+* Alpaca API (Active)
+* Webull Integration (Validation Phase)
 
 ---
 
-## Current Development Progress
+## Development Roadmap
 
-### Completed
+### Closed Beta (Current Phase)
 
-- AICC Dashboard Architecture
-- Command Center
-- System Diagnostics
-- Provider Health Monitoring
-- Signal Framework
-- Replay Center
-- Watchlists
-- Global Scan
-- Market Pulse
-- Data Streams
-- Closed Beta Infrastructure
+* AICC Core Architecture
+* Command Center Dashboard
+* Market Intelligence Modules
+* Provider Health Monitoring
+* Alpaca Integration
+* Replay Center
+* Watchlists
+* Global Scan
+* Market Pulse
+* Signals Engine
+* Multi-Timeframe Analysis
+* Closed Beta Infrastructure
 
-### In Progress
+### Integration Phase
 
-- Webull Provider Integration
-- Advanced Signal Intelligence
-- Enhanced Chart Engine
-- Live Watchlist Synchronization
-- Expanded Market Analytics
+* Webull Provider Activation
+* Provider Validation Framework
+* Enhanced Signal Intelligence
+* Advanced Market Structure Analysis
+* Live Watchlist Synchronization
+* Expanded Diagnostics
 
-### Planned
+### Open Beta
 
-- Multi-provider routing
-- AI-generated market summaries
-- Advanced replay intelligence
-- Portfolio intelligence layer
-- Mobile optimization
-- Public beta deployment
+* AI Market Summaries
+* Portfolio Intelligence Layer
+* Advanced Alert System
+* Enhanced Replay Analytics
+* Mobile Optimization
+* User Profile System
+
+### Version 1.0
+
+* Multi-User Environment
+* Institutional Analytics Suite
+* Advanced Behavioral Intelligence
+* Tactical Decision Framework
+* Public Cloud Deployment
+* Enterprise Monitoring
+
+---
+
+## Dashboard Preview
+
+Current AICC Modules:
+
+* Command Center
+* Watchlists
+* Signals
+* Global Scan
+* Market Pulse
+* Data Streams
+* Alerts
+* Replay Center
+* Tactical Brain
+* Behavioral Brain
+* Failsafe Brain
+
+Dashboard screenshots and live demonstration environments will be added as development progresses.
+
+---
+
+## Closed Beta Status
+
+### Active Provider
+
+* Alpaca
+
+### Pending Provider
+
+* Webull (Validation Phase)
+
+### Fallback Engine
+
+* Simulation Engine
+
+### Current Readiness
+
+* Provider Diagnostics: Ready
+* Failover Testing: Ready
+* Alerts Framework: Ready
+* Replay Framework: Ready
+* Signals Framework: Ready
+* Closed Beta Infrastructure: Ready
 
 ---
 
@@ -156,9 +226,9 @@ Fallback Provider: Simulation Engine
 
 This software is currently under active development.
 
-Certain modules are operating in validation mode while integrations are finalized.
+Certain modules operate in validation mode while integrations are finalized.
 
-Webull integration is currently configured as a pending provider and is not yet active in production workflows.
+Webull integration is configured as a pending provider and is not currently active within production workflows.
 
 ---
 
@@ -168,15 +238,22 @@ Market-AI is a research and intelligence platform.
 
 Nothing contained within this software constitutes financial advice, investment advice, or a recommendation to buy or sell any security.
 
-Users are responsible for conducting their own research and due diligence.
+Users are solely responsible for conducting their own research and due diligence before making investment decisions.
 
 ---
 
 ## CMI Systems
 
-Market-AI is being developed under CMI Systems.
+Market-AI is being developed and maintained by CMI Systems.
+
+CMI Systems focuses on advanced intelligence systems, market analytics, decision-support platforms, and next-generation financial intelligence technologies.
 
 Location: Haines City, Florida
+
+Repository Status: Private Development
+
+© 2026 CMI Systems. All Rights Reserved.
+
 
 Status: Private Development Repository
 

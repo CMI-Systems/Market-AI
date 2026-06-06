@@ -15,6 +15,19 @@ const {
 
 const router = express.Router();
 
+function normalizeVolume(value) {
+  if (typeof value === "number") return value;
+
+  const text = String(value || "0").trim().toUpperCase();
+  const numeric = Number.parseFloat(text);
+
+  if (!Number.isFinite(numeric)) return 0;
+  if (text.endsWith("M")) return Math.round(numeric * 1000000);
+  if (text.endsWith("K")) return Math.round(numeric * 1000);
+
+  return numeric;
+}
+
 router.get("/provider-status", (req, res) => {
   res.json(getProviderStatus({ simulate: req.query.simulate }));
 });
@@ -66,14 +79,14 @@ router.get("/provider-quote-compare", async (req, res) => {
       status: alpacaStatus,
       price: Number(activeQuote.price || 0),
       changePercent: Number(activeQuote.changePercent || 0),
-      volume: activeQuote.volume || 0,
+      volume: normalizeVolume(activeQuote.volume),
       timestamp: activeQuote.updatedAt || new Date().toISOString()
     },
     webull: {
       status: webullQuote.status,
       price: Number(webullQuote.price || 0),
       changePercent: Number(webullQuote.changePercent || 0),
-      volume: webullQuote.volume || 0,
+      volume: normalizeVolume(webullQuote.volume),
       timestamp: webullQuote.timestamp,
       message: webullQuote.message
     },

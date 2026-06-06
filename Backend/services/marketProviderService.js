@@ -126,12 +126,16 @@ function isWebullEnabled(env = process.env, options = {}) {
   return getWebullConfigStatus(env).enabled;
 }
 
+function getAlpacaDataUrl(env = process.env) {
+  return env.ALPACA_DATA_URL || env.ALPACA_BASE_URL;
+}
+
 function isAlpacaAvailable(env = process.env, options = {}) {
   const simulate = normalizeSimulation(options.simulate);
   if (simulate === "alpaca_down" || simulate === "no_provider" || simulate === "provider_timeout") {
     return false;
   }
-  return Boolean(env.ALPACA_API_KEY && env.ALPACA_SECRET_KEY && env.ALPACA_DATA_URL);
+  return Boolean(env.ALPACA_API_KEY && env.ALPACA_SECRET_KEY && getAlpacaDataUrl(env));
 }
 
 function getActiveProvider(env = process.env, options = {}) {
@@ -278,9 +282,10 @@ async function getAlpacaQuote(symbol, env = process.env) {
     "APCA-API-KEY-ID": env.ALPACA_API_KEY,
     "APCA-API-SECRET-KEY": env.ALPACA_SECRET_KEY
   };
+  const alpacaDataUrl = getAlpacaDataUrl(env);
   const [tradeResponse, barResponse] = await Promise.all([
-    axios.get(`${env.ALPACA_DATA_URL}/v2/stocks/${normalizedSymbol}/trades/latest`, { headers, timeout: 5000 }),
-    axios.get(`${env.ALPACA_DATA_URL}/v2/stocks/${normalizedSymbol}/bars/latest`, {
+    axios.get(`${alpacaDataUrl}/v2/stocks/${normalizedSymbol}/trades/latest`, { headers, timeout: 5000 }),
+    axios.get(`${alpacaDataUrl}/v2/stocks/${normalizedSymbol}/bars/latest`, {
       headers,
       params: {
         feed: "iex"
@@ -351,8 +356,9 @@ async function getAlpacaHistoricalCandles(symbol, timeframe = "5Min", limit = 80
   };
   const requestedLimit = Math.max(1, Math.min(Number(limit) || 80, 1000));
   const normalizedTimeframe = normalizeTimeframe(timeframe);
+  const alpacaDataUrl = getAlpacaDataUrl(env);
   const response = await axios.get(
-    `${env.ALPACA_DATA_URL}/v2/stocks/${normalizedSymbol}/bars`,
+    `${alpacaDataUrl}/v2/stocks/${normalizedSymbol}/bars`,
     {
       headers,
       params: {
@@ -522,7 +528,7 @@ function getProviderDiagnostics(options = {}) {
   const env = options.env || process.env;
   const simulate = normalizeSimulation(options.simulate);
   const webullHealth = getWebullHealth(env);
-  const alpacaConfigured = Boolean(env.ALPACA_API_KEY && env.ALPACA_SECRET_KEY && env.ALPACA_DATA_URL);
+  const alpacaConfigured = Boolean(env.ALPACA_API_KEY && env.ALPACA_SECRET_KEY && getAlpacaDataUrl(env));
   const alpacaEnabled = alpacaConfigured && simulate !== "no_provider";
   const alpacaHealthy = alpacaConfigured &&
     !["alpaca_down", "provider_timeout", "no_provider"].includes(simulate || "");
@@ -573,5 +579,6 @@ module.exports = {
   getProviderCapabilities,
   isAlpacaAvailable,
   isWebullEnabled,
+  getAlpacaDataUrl,
   normalizeTimeframe
 };

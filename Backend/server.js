@@ -34,7 +34,24 @@ const {
 
 const runtimeConfig = loadEnvironmentConfig();
 const app = express();
-app.use(cors());
+const allowedOrigins = new Set([
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://market-ai-one-kappa.vercel.app",
+  process.env.FRONTEND_URL
+].filter(Boolean));
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(null, false);
+  }
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use("/api/cognition", cognitionRoutes);
 app.use("/api/aicc", aiccRoutes);
@@ -47,6 +64,15 @@ app.use(express.static(frontendPath));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
+});
+
+app.get("/health", (req, res) => {
+  res.json({
+    status: "OK",
+    service: "Market-AI Backend",
+    version: "AICC Closed Beta v0.1",
+    timestamp: new Date().toISOString()
+  });
 });
 
 function runStartupSafetyChecks() {
@@ -80,7 +106,11 @@ try {
   logger.warn("startup", "[Market AI] Persistent cognition memory startup recovery failed safely.");
 }
 
-const PORT = runtimeConfig.port;
+const PORT = process.env.PORT || 3001;
+
+function getAlpacaDataUrl() {
+  return process.env.ALPACA_DATA_URL || process.env.ALPACA_BASE_URL;
+}
 
 function autoStartSimulatedStreamIfEnabled() {
   if (!runtimeConfig.autoSim) {
@@ -130,7 +160,7 @@ function autoStartSimulatedStreamIfEnabled() {
 
 async function getLiveStock(symbol) {
   const response = await axios.get(
-    `${process.env.ALPACA_DATA_URL}/v2/stocks/${symbol}/trades/latest`,
+    `${getAlpacaDataUrl()}/v2/stocks/${symbol}/trades/latest`,
     {
       headers: {
         "APCA-API-KEY-ID": process.env.ALPACA_API_KEY,
@@ -148,7 +178,7 @@ async function getLiveStock(symbol) {
 
 async function getLatestStockBar(symbol) {
   const response = await axios.get(
-    `${process.env.ALPACA_DATA_URL}/v2/stocks/${symbol}/bars/latest`,
+    `${getAlpacaDataUrl()}/v2/stocks/${symbol}/bars/latest`,
     {
       headers: {
         "APCA-API-KEY-ID": process.env.ALPACA_API_KEY,
@@ -271,7 +301,7 @@ app.get("/api/chart/:symbol", async (req, res) => {
     const start = new Date(Date.now() - 1000 * 60 * 60 * 24 * 5);
 
     const response = await axios.get(
-      `${process.env.ALPACA_DATA_URL}/v2/stocks/${symbol}/bars`,
+      `${getAlpacaDataUrl()}/v2/stocks/${symbol}/bars`,
       {
         headers: {
           "APCA-API-KEY-ID": process.env.ALPACA_API_KEY,

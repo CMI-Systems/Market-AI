@@ -21,6 +21,14 @@ function displayActiveProvider(value) {
   return "PENDING";
 }
 
+function displayProviderMode(activeProvider, fallbackMode) {
+  if (activeProvider === "SIMULATION" || activeProvider === "FALLBACK") {
+    return "SIMULATION";
+  }
+
+  return activeProvider ? "LIVE PROVIDER" : displayState(fallbackMode);
+}
+
 function SystemBootPanel() {
   const [systemStatus, setSystemStatus] = useState(getOfflineAiccSystemStatus());
   const [providerStatus, setProviderStatus] = useState(getOfflineMarketProviderStatus());
@@ -48,7 +56,7 @@ function SystemBootPanel() {
       <p>
         Backend {displayState(systemStatus.backend)} | Runtime{" "}
         {displayState(systemStatus.runtime)} | Mode{" "}
-        {displayState(systemStatus.mode)}
+        {displayProviderMode(providerStatus.activeProvider, systemStatus.mode)}
       </p>
 
       <div className="brain-metrics">

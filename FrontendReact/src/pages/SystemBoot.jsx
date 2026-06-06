@@ -25,7 +25,21 @@ function displayState(value) {
 }
 
 function displayProvider(value) {
-  return value === "SIMULATION" ? "FALLBACK SIMULATION" : displayState(value);
+  return value === "SIMULATION" || value === "FALLBACK" ? "SIMULATION" : displayState(value);
+}
+
+function displayProviderMode(activeProvider) {
+  return activeProvider === "SIMULATION" || activeProvider === "FALLBACK"
+    ? "SIMULATION"
+    : "LIVE PROVIDER";
+}
+
+function displayFallbackStatus(providerStatus, providerDiagnostics) {
+  if (providerStatus.activeProvider === "SIMULATION" || providerStatus.activeProvider === "FALLBACK") {
+    return "SIMULATION";
+  }
+
+  return providerDiagnostics.fallback?.status || "AVAILABLE";
 }
 
 function SystemBoot() {
@@ -102,6 +116,9 @@ function SystemBoot() {
     { label: "Replay", status: "READY" },
     { label: "Failover", status: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
   ];
+  const fallbackIsActive =
+    providerStatus.activeProvider === "SIMULATION" || providerStatus.activeProvider === "FALLBACK";
+  const providerWarnings = fallbackIsActive ? providerDiagnostics.warnings || [] : [];
 
   return (
     <div className="page-placeholder">
@@ -142,7 +159,7 @@ function SystemBoot() {
 
         <div>
           <span>Mode</span>
-          <strong>{providerStatus.activeProvider === "ALPACA" && providerStatus.marketStatus === "OPEN" ? "LIVE ANALYSIS" : "SIMULATION"}</strong>
+          <strong>{displayProviderMode(providerStatus.activeProvider)}</strong>
         </div>
 
         <div>
@@ -169,7 +186,7 @@ function SystemBoot() {
 
         <div>
           <span>Fallback</span>
-          <strong>{displayProvider(providerStatus.fallbackProvider)}</strong>
+          <strong>{displayFallbackStatus(providerStatus, providerDiagnostics)}</strong>
         </div>
 
         <div>
@@ -194,7 +211,7 @@ function SystemBoot() {
 
         <div>
           <span>Fallback</span>
-          <strong>{providerDiagnostics.fallback?.status || "AVAILABLE"}</strong>
+          <strong>{displayFallbackStatus(providerStatus, providerDiagnostics)}</strong>
         </div>
 
         <div>
@@ -204,12 +221,12 @@ function SystemBoot() {
 
         <div>
           <span>Warnings</span>
-          <strong>{providerDiagnostics.warnings?.length || 0}</strong>
+          <strong>{providerWarnings.length}</strong>
         </div>
 
         <div>
           <span>Latest Warning</span>
-          <strong>{providerDiagnostics.warnings?.[0] || "CLEAR"}</strong>
+          <strong>{providerWarnings[0] || "CLEAR"}</strong>
         </div>
       </div>
 

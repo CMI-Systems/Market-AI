@@ -22,7 +22,15 @@ function displayState(value) {
 }
 
 function displayProvider(value) {
-  return value === "SIMULATION" ? "FALLBACK SIMULATION" : displayState(value);
+  return value === "SIMULATION" || value === "FALLBACK" ? "SIMULATION" : displayState(value);
+}
+
+function displayFallbackStatus(providerStatus, providerDiagnostics) {
+  if (providerStatus.activeProvider === "SIMULATION" || providerStatus.activeProvider === "FALLBACK") {
+    return "SIMULATION";
+  }
+
+  return providerDiagnostics.fallback?.status || "AVAILABLE";
 }
 
 function formatCapabilities(capabilities = {}) {
@@ -107,6 +115,9 @@ function DataStreams() {
 
     return stream;
   });
+  const fallbackIsActive =
+    providerStatus.activeProvider === "SIMULATION" || providerStatus.activeProvider === "FALLBACK";
+  const providerWarnings = fallbackIsActive ? providerDiagnostics.warnings || [] : [];
 
   return (
     <div className="data-streams-page">
@@ -139,7 +150,7 @@ function DataStreams() {
           <div className="stream-card">
             <div>
               <span>Fallback</span>
-              <strong>{displayState(providerStatus.fallbackProvider)}</strong>
+              <strong>{displayFallbackStatus(providerStatus, providerDiagnostics)}</strong>
             </div>
           </div>
 
@@ -227,7 +238,7 @@ function DataStreams() {
           <div className="stream-card">
             <div>
               <span>Fallback Provider</span>
-              <strong>{displayProvider(providerStatus.fallbackProvider)}</strong>
+              <strong>{displayFallbackStatus(providerStatus, providerDiagnostics)}</strong>
             </div>
           </div>
 
@@ -248,12 +259,12 @@ function DataStreams() {
           <div className="stream-card">
             <div>
               <span>Warnings</span>
-              <strong>{providerDiagnostics.warnings?.length || 0}</strong>
+              <strong>{providerWarnings.length}</strong>
             </div>
             <dl>
               <div>
                 <dt>Latest</dt>
-                <dd>{providerDiagnostics.warnings?.[0] || "CLEAR"}</dd>
+                <dd>{providerWarnings[0] || "CLEAR"}</dd>
               </div>
             </dl>
           </div>

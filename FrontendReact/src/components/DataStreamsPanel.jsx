@@ -13,6 +13,20 @@ function displayState(value) {
   return String(value).replace(/_/g, " ");
 }
 
+function displayProviderMode(activeProvider, fallbackMode) {
+  if (activeProvider === "SIMULATION" || activeProvider === "FALLBACK") {
+    return "SIMULATION";
+  }
+
+  return activeProvider ? "LIVE PROVIDER" : displayState(fallbackMode);
+}
+
+function displayFallbackStatus(activeProvider) {
+  return activeProvider === "SIMULATION" || activeProvider === "FALLBACK"
+    ? "SIMULATION"
+    : "AVAILABLE";
+}
+
 function DataStreamsPanel() {
   const [systemStatus, setSystemStatus] = useState(getOfflineAiccSystemStatus());
   const [providerStatus, setProviderStatus] = useState(getOfflineMarketProviderStatus());
@@ -39,7 +53,7 @@ function DataStreamsPanel() {
       <h2>Data Streams</h2>
       <p>
         Active Provider {displayState(providerStatus.activeProvider)} | Mode{" "}
-        {displayState(systemStatus.mode)}
+        {displayProviderMode(providerStatus.activeProvider, systemStatus.mode)}
       </p>
 
       <div className="brain-metrics">
@@ -75,7 +89,7 @@ function DataStreamsPanel() {
 
         <div>
           <span>Fallback</span>
-          <strong>{displayState(providerStatus.fallbackProvider)}</strong>
+          <strong>{displayFallbackStatus(providerStatus.activeProvider)}</strong>
         </div>
 
         <div>

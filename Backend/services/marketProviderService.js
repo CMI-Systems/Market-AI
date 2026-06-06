@@ -67,6 +67,39 @@ function normalizeTimeframe(timeframe = "5Min") {
   return TIMEFRAME_MAP[key] || TIMEFRAME_MAP["5MIN"];
 }
 
+function getHistoricalWindow(timeframe = "5Min", limit = 80) {
+  const normalizedTimeframe = normalizeTimeframe(timeframe);
+  const requestedLimit = Math.max(1, Math.min(Number(limit) || 80, 1000));
+  const minimumLookbackDays = {
+    "1Min": 2,
+    "5Min": 5,
+    "15Min": 10,
+    "1Hour": 30,
+    "1Day": 180
+  };
+  const barLookbackMinutes = normalizedTimeframe.minutes * requestedLimit * 2;
+  const bufferLookbackMinutes =
+    (minimumLookbackDays[normalizedTimeframe.provider] || 5) * 24 * 60;
+  const lookbackMinutes = Math.max(barLookbackMinutes, bufferLookbackMinutes);
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - lookbackMinutes * 60 * 1000);
+
+  return {
+    start: startDate.toISOString(),
+    end: endDate.toISOString()
+  };
+}
+
+function shouldLogProviderDiagnostics(env = process.env) {
+  return env.NODE_ENV !== "production" || env.MARKET_PROVIDER_DEBUG === "true";
+}
+
+function logEmptyAlpacaBarsDiagnostic(details, env = process.env) {
+  if (!shouldLogProviderDiagnostics(env)) return;
+
+  console.warn("[marketProviderService] Empty Alpaca bars response", details);
+}
+
 function formatVolume(volume) {
   if (!Number.isFinite(volume)) return "0";
   if (volume >= 1000000) return `${(volume / 1000000).toFixed(1)}M`;
@@ -356,6 +389,7 @@ async function getAlpacaHistoricalCandles(symbol, timeframe = "5Min", limit = 80
   };
   const requestedLimit = Math.max(1, Math.min(Number(limit) || 80, 1000));
   const normalizedTimeframe = normalizeTimeframe(timeframe);
+  const historicalWindow = getHistoricalWindow(timeframe, requestedLimit);
   const alpacaDataUrl = getAlpacaDataUrl(env);
   const response = await axios.get(
     `${alpacaDataUrl}/v2/stocks/${normalizedSymbol}/bars`,
@@ -363,6 +397,8 @@ async function getAlpacaHistoricalCandles(symbol, timeframe = "5Min", limit = 80
       headers,
       params: {
         timeframe: normalizedTimeframe.provider,
+        start: historicalWindow.start,
+        end: historicalWindow.end,
         limit: requestedLimit,
         adjustment: "raw",
         feed: "iex"
@@ -370,7 +406,26 @@ async function getAlpacaHistoricalCandles(symbol, timeframe = "5Min", limit = 80
       timeout: 5000
     }
   );
-  const bars = Array.isArray(response.data?.bars) ? response.data.bars : [];
+  const bars = Array.isArray(response.data?.bars)
+    ? response.data.bars
+    : Array.isArray(response.data?.bars?.[normalizedSymbol])
+      ? response.data.bars[normalizedSymbol]
+      : [];
+
+  if (!bars.length) {
+    logEmptyAlpacaBarsDiagnostic(
+      {
+        symbol: normalizedSymbol,
+        timeframe: normalizedTimeframe.provider,
+        start: historicalWindow.start,
+        end: historicalWindow.end,
+        status: response.status,
+        responseKeys: Object.keys(response.data || {}),
+        reason: "EMPTY_ALPACA_BARS"
+      },
+      env
+    );
+  }
 
   return bars.map((bar) => normalizeCandle(bar, "ALPACA"));
 }

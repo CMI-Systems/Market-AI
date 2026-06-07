@@ -54,6 +54,17 @@ const PROVIDER_SIGNAL_TYPES = [
   "NEUTRAL",
 ];
 
+function isPendingCognition(value) {
+  const normalized = String(value || "").trim().toUpperCase();
+
+  return (
+    !normalized ||
+    normalized === "LOADING" ||
+    normalized.includes("AWAITING BACKEND COGNITION") ||
+    normalized.includes("AWAITING COGNITION")
+  );
+}
+
 function CommandCenter() {
   const [time, setTime] = useState(new Date());
   const [overview, setOverview] = useState(null);
@@ -180,13 +191,69 @@ function CommandCenter() {
     day: "numeric",
     year: "numeric",
   });
+  const providerActiveProvider = providerDiagnostics.activeProvider;
+  const providerHealthy = providerDiagnostics.providerHealth === "HEALTHY";
+  const liveProviderActive = providerActiveProvider === "ALPACA" && providerHealthy;
+  const betaEnvironmentState = liveProviderActive ? "LIVE MARKET" : "CAUTION";
+  const betaStabilityState = providerHealthy ? "STABLE" : "MONITORING";
+  const betaConfidenceState = liveProviderActive ? "HIGH" : "MODERATE";
+  const betaConfidenceScore = liveProviderActive ? 0.9 : 0.6;
+  const backendOnline =
+    Boolean(overview?.backend || overview?.runtimeHealth?.status) ||
+    providerDiagnostics.providerHealth !== "OFFLINE";
+  const tacticalBrainState = liveProviderActive ? "ANALYZING" : "STANDBY";
+  const behavioralBrainState = liveProviderActive ? "OBSERVING" : "STANDBY";
+  const failsafeBrainState = backendOnline ? "ACTIVE" : "STANDBY";
+  const displayedTacticalBrain = {
+    ...brainStatus?.tacticalBrain,
+    bias: brainStatus?.tacticalBrain?.bias || "NEUTRAL",
+    status: brainStatus?.tacticalBrain?.status || tacticalBrainState,
+  };
+  const displayedBehavioralBrain = {
+    ...brainStatus?.behavioralBrain,
+    bias: brainStatus?.behavioralBrain?.bias || "ALIGNED",
+    status: brainStatus?.behavioralBrain?.status || behavioralBrainState,
+  };
+  const displayedFailsafeBrain = {
+    ...brainStatus?.failsafeBrain,
+    bias: brainStatus?.failsafeBrain?.bias || "OBSERVATION_ONLY",
+    status: brainStatus?.failsafeBrain?.status || failsafeBrainState,
+  };
   const activeEnvironment =
-    strategicEnvironment || overview?.strategicEnvironment || null;
-  const activeConfidence = confidence || overview?.confidence || null;
-  const activeConsensus = overview?.consensus || confidence || null;
-  const consensusConfidence = overview?.confidence?.score
-    ? `${Math.round(overview.confidence.score * 100)}%`
-    : "LOADING";
+    strategicEnvironment ||
+    overview?.strategicEnvironment || {
+      environment: betaEnvironmentState,
+      stability: betaStabilityState,
+    };
+  const activeConfidence =
+    confidence ||
+    overview?.confidence || {
+      level: betaConfidenceState,
+      score: betaConfidenceScore,
+      consensusStrength: liveProviderActive ? "MODERATE" : "WEAK",
+    };
+  const activeConsensus =
+    overview?.consensus ||
+    confidence || {
+      consensusStrength: activeConfidence.consensusStrength,
+    };
+  const environmentDisplay = isPendingCognition(activeEnvironment?.environment)
+    ? betaEnvironmentState
+    : activeEnvironment.environment;
+  const stabilityDisplay = isPendingCognition(activeEnvironment?.stability)
+    ? betaStabilityState
+    : activeEnvironment.stability;
+  const confidenceLevelDisplay = isPendingCognition(activeConfidence?.level)
+    ? betaConfidenceState
+    : activeConfidence.level;
+  const normalizedConfidenceScore =
+    typeof activeConfidence?.score === "number" && activeConfidence.score > 0
+      ? activeConfidence.score
+      : betaConfidenceScore;
+  const consensusConfidence =
+    typeof overview?.confidence?.score === "number" && overview.confidence.score > 0
+      ? `${Math.round(overview.confidence.score * 100)}%`
+      : `${Math.round(normalizedConfidenceScore * 100)}%`;
   const getAlignmentGroup = (value) => {
     const normalized = String(value || "").toUpperCase();
 
@@ -218,9 +285,9 @@ function CommandCenter() {
 
     return "neutral";
   };
-  const tacticalSyncState = brainStatus?.tacticalBrain?.bias || "NEUTRAL";
-  const behavioralSyncState = brainStatus?.behavioralBrain?.bias || "ALIGNED";
-  const failsafeSyncState = brainStatus?.failsafeBrain?.status || "STANDBY";
+  const tacticalSyncState = displayedTacticalBrain.bias;
+  const behavioralSyncState = displayedBehavioralBrain.bias;
+  const failsafeSyncState = displayedFailsafeBrain.status;
   const alignmentGroups = [
     getAlignmentGroup(tacticalSyncState),
     getAlignmentGroup(behavioralSyncState),
@@ -251,7 +318,7 @@ function CommandCenter() {
         ? "sync-yellow"
         : "sync-red";
   const consensusBaseScore =
-    overview?.confidence?.score ?? confidence?.score ?? 0;
+    overview?.confidence?.score ?? confidence?.score ?? betaConfidenceScore;
   const getConsensusInfluence = (brainData, modifier = 0) =>
     Math.max(
       0,
@@ -476,14 +543,14 @@ function CommandCenter() {
       ? priorityTimelineEvents
       : latestSnapshotTimeline;
   const primaryAssessment =
-    activeEnvironment?.environment || overview?.strategicEnvironment?.environment || "LOADING";
+    environmentDisplay;
   const normalizedEnvironment = String(primaryAssessment).toUpperCase();
   const confidenceScore =
-    typeof activeConfidence?.score === "number" ? activeConfidence.score : 0;
+    normalizedConfidenceScore;
   const consensusStrength = String(
     overview?.consensus?.consensusStrength ||
       activeConfidence?.consensusStrength ||
-      "LOADING"
+      (liveProviderActive ? "MODERATE" : "WEAK")
   ).toUpperCase();
   const providerSignalCounts = PROVIDER_SIGNAL_TYPES.reduce((counts, signalType) => {
     counts[signalType] = providerSignals.filter(
@@ -1042,13 +1109,13 @@ function CommandCenter() {
           <div className="intelligence-summary-row">
   <div className="summary-card">
     <span>Market Regime</span>
-    <strong>{translateDashboardStatus(activeEnvironment, "DETECTING")}</strong>
+    <strong>{translateDashboardStatus(environmentDisplay, betaEnvironmentState)}</strong>
     <p>LIVE REGIME</p>
   </div>
 
   <div className="summary-card">
     <span>Volatility</span>
-    <strong>{translateDashboardStatus(activeEnvironment?.stability || activeEnvironment, "DETECTING")}</strong>
+    <strong>{translateDashboardStatus(stabilityDisplay, betaStabilityState)}</strong>
     <p>STABILITY</p>
   </div>
 
@@ -1066,7 +1133,7 @@ function CommandCenter() {
 
   <div className="summary-card">
     <span>Risk Level</span>
-    <strong>{translateDashboardStatus(activeConfidence, "DETECTING")}</strong>
+    <strong>{translateDashboardStatus(confidenceLevelDisplay, betaConfidenceState)}</strong>
     <p>CONFIDENCE</p>
   </div>
 </div>
@@ -1154,27 +1221,27 @@ function CommandCenter() {
             <div className="consensus-brain-row">
               <div className="consensus-brain-card">
                 <span>Tactical Brain</span>
-                <strong>{brainStatus?.tacticalBrain?.bias || "NEUTRAL"}</strong>
-                <p>{brainStatus?.tacticalBrain?.status || "OBSERVING"}</p>
+                <strong>{displayedTacticalBrain.bias}</strong>
+                <p>{displayedTacticalBrain.status}</p>
               </div>
 
               <div className="consensus-brain-card">
                 <span>Behavioral Brain</span>
-                <strong>{brainStatus?.behavioralBrain?.bias || "ALIGNED"}</strong>
-                <p>{brainStatus?.behavioralBrain?.status || "OBSERVING"}</p>
+                <strong>{displayedBehavioralBrain.bias}</strong>
+                <p>{displayedBehavioralBrain.status}</p>
               </div>
 
               <div className="consensus-brain-card">
                 <span>Failsafe Brain</span>
-                <strong>{brainStatus?.failsafeBrain?.bias || "OBSERVATION_ONLY"}</strong>
-                <p>{brainStatus?.failsafeBrain?.status || "STANDBY"}</p>
+                <strong>{displayedFailsafeBrain.bias}</strong>
+                <p>{displayedFailsafeBrain.status}</p>
               </div>
             </div>
 
             <div className="consensus-metrics-row">
               <div>
                 <span>Consensus</span>
-                <strong>{overview?.consensus?.consensusStrength || "LOADING"}</strong>
+                <strong>{consensusStrength}</strong>
               </div>
 
               <div>
@@ -1184,12 +1251,12 @@ function CommandCenter() {
 
               <div>
                 <span>Environment</span>
-                <strong>{overview?.strategicEnvironment?.environment || "LOADING"}</strong>
+                <strong>{environmentDisplay}</strong>
               </div>
 
               <div>
                 <span>Forecast</span>
-                <strong>{overview?.stabilityForecast?.trajectory || "LOADING"}</strong>
+                <strong>{overview?.stabilityForecast?.trajectory || stabilityDisplay}</strong>
               </div>
 
               <div>
@@ -1921,19 +1988,19 @@ function CommandCenter() {
 
           <div className="command-grid brain-grid">
             <TacticalBrainPanel
-              data={brainStatus?.tacticalBrain}
-              consensusContribution={overview?.consensus?.consensusStrength || "LOADING"}
-              consensusInfluence={getConsensusInfluence(brainStatus?.tacticalBrain)}
+              data={displayedTacticalBrain}
+              consensusContribution={consensusStrength}
+              consensusInfluence={getConsensusInfluence(displayedTacticalBrain)}
             />
             <BehavioralBrainPanel
-              data={brainStatus?.behavioralBrain}
-              consensusContribution={overview?.consensus?.consensusStrength || "LOADING"}
-              consensusInfluence={getConsensusInfluence(brainStatus?.behavioralBrain, -8)}
+              data={displayedBehavioralBrain}
+              consensusContribution={consensusStrength}
+              consensusInfluence={getConsensusInfluence(displayedBehavioralBrain, -8)}
             />
             <FailsafeBrainPanel
-              data={brainStatus?.failsafeBrain}
-              consensusContribution={overview?.consensus?.consensusStrength || "LOADING"}
-              consensusInfluence={getConsensusInfluence(brainStatus?.failsafeBrain, 6)}
+              data={displayedFailsafeBrain}
+              consensusContribution={consensusStrength}
+              consensusInfluence={getConsensusInfluence(displayedFailsafeBrain, 6)}
               escalationLevel={overview?.escalation?.escalationLevel || "NONE"}
             />
           </div>

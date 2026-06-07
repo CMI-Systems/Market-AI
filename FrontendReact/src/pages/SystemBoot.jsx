@@ -42,6 +42,30 @@ function displayFallbackStatus(providerStatus, providerDiagnostics) {
   return providerDiagnostics.fallback?.status || "AVAILABLE";
 }
 
+function isBackendOnline(overview, health, providerStatus) {
+  return Boolean(
+    overview?.backend ||
+      overview?.runtimeHealth?.status ||
+      health?.status ||
+      providerStatus.providerHealth !== "OFFLINE"
+  );
+}
+
+function isLiveProviderActive(providerStatus) {
+  return providerStatus.activeProvider === "ALPACA" && providerStatus.providerHealth === "HEALTHY";
+}
+
+function getBetaReadinessScore({ backendOnline, liveProviderActive, providerHealthy, failoverReady, fallbackAvailable, warningsClear }) {
+  return [
+    backendOnline ? 20 : 0,
+    liveProviderActive ? 20 : 0,
+    providerHealthy ? 20 : 0,
+    failoverReady ? 20 : 0,
+    fallbackAvailable ? 10 : 0,
+    warningsClear ? 10 : 0,
+  ].reduce((total, value) => total + value, 0);
+}
+
 function SystemBoot() {
   const [overview, setOverview] = useState(null);
   const [brainStatus, setBrainStatus] = useState(null);
@@ -119,6 +143,24 @@ function SystemBoot() {
   const fallbackIsActive =
     providerStatus.activeProvider === "SIMULATION" || providerStatus.activeProvider === "FALLBACK";
   const providerWarnings = fallbackIsActive ? providerDiagnostics.warnings || [] : [];
+  const backendOnline = isBackendOnline(overview, health, providerStatus);
+  const liveProviderActive = isLiveProviderActive(providerStatus);
+  const providerHealthy = providerStatus.providerHealth === "HEALTHY";
+  const fallbackAvailable = (providerDiagnostics.fallback?.status || "AVAILABLE") === "AVAILABLE";
+  const betaReadinessScore = getBetaReadinessScore({
+    backendOnline,
+    liveProviderActive,
+    providerHealthy,
+    failoverReady: providerDiagnostics.failoverReady,
+    fallbackAvailable,
+    warningsClear: providerWarnings.length === 0,
+  });
+  const tacticalBrainState = liveProviderActive ? "ANALYZING" : "STANDBY";
+  const behavioralBrainState = liveProviderActive ? "OBSERVING" : "STANDBY";
+  const failsafeBrainState = backendOnline ? "ACTIVE" : "STANDBY";
+  const environmentState = liveProviderActive ? "LIVE MARKET" : "CAUTION";
+  const stabilityState = providerHealthy ? "STABLE" : "MONITORING";
+  const confidenceState = liveProviderActive && providerHealthy ? "HIGH" : "MODERATE";
 
   return (
     <div className="page-placeholder">
@@ -256,39 +298,39 @@ function SystemBoot() {
       <div className="brain-metrics">
         <div>
           <span>Tactical Brain</span>
-          <strong>{brainStatus?.tacticalBrain?.status || "LOADING"}</strong>
+          <strong>{tacticalBrainState}</strong>
         </div>
 
         <div>
           <span>Behavioral Brain</span>
-          <strong>{brainStatus?.behavioralBrain?.status || "LOADING"}</strong>
+          <strong>{behavioralBrainState}</strong>
         </div>
 
         <div>
           <span>Failsafe Brain</span>
-          <strong>{brainStatus?.failsafeBrain?.status || "LOADING"}</strong>
+          <strong>{failsafeBrainState}</strong>
         </div>
       </div>
 
       <div className="brain-metrics">
         <div>
           <span>Environment</span>
-          <strong>{strategicEnvironment?.environment || "LOADING"}</strong>
+          <strong>{environmentState}</strong>
         </div>
 
         <div>
           <span>Stability</span>
-          <strong>{strategicEnvironment?.stability || "LOADING"}</strong>
+          <strong>{stabilityState}</strong>
         </div>
 
         <div>
           <span>Confidence</span>
-          <strong>{confidence?.level || "LOADING"}</strong>
+          <strong>{confidenceState}</strong>
         </div>
 
         <div>
           <span>Score</span>
-          <strong>{Math.round((confidence?.score || 0) * 100)}</strong>
+          <strong>{betaReadinessScore}</strong>
         </div>
       </div>
 

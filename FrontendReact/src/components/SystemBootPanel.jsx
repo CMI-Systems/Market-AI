@@ -29,6 +29,10 @@ function displayProviderMode(activeProvider, fallbackMode) {
   return activeProvider ? "LIVE PROVIDER" : displayState(fallbackMode);
 }
 
+function isLiveProviderActive(providerStatus) {
+  return providerStatus.activeProvider === "ALPACA" && providerStatus.providerHealth === "HEALTHY";
+}
+
 function SystemBootPanel() {
   const [systemStatus, setSystemStatus] = useState(getOfflineAiccSystemStatus());
   const [providerStatus, setProviderStatus] = useState(getOfflineMarketProviderStatus());
@@ -49,6 +53,12 @@ function SystemBootPanel() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const liveProviderActive = isLiveProviderActive(providerStatus);
+  const backendOnline = systemStatus.backend === "ONLINE";
+  const tacticalBrainState = liveProviderActive ? "ANALYZING" : "STANDBY";
+  const behavioralBrainState = liveProviderActive ? "OBSERVING" : "STANDBY";
+  const failsafeBrainState = backendOnline ? "ACTIVE" : "STANDBY";
 
   return (
     <div className="panel">
@@ -82,9 +92,9 @@ function SystemBootPanel() {
       </div>
 
       <p>
-        Tactical {displayState(systemStatus.brains?.tactical)} | Behavioral{" "}
-        {displayState(systemStatus.brains?.behavioral)} | Failsafe{" "}
-        {displayState(systemStatus.brains?.failsafe)}
+        Tactical {tacticalBrainState} | Behavioral{" "}
+        {behavioralBrainState} | Failsafe{" "}
+        {failsafeBrainState}
       </p>
     </div>
   );

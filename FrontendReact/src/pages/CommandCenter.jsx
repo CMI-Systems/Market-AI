@@ -22,6 +22,7 @@ import {
   getOfflineProviderDiagnostics,
   getProviderSignals,
 } from "../services/marketProviderApi";
+import { displayWebullStatus } from "../services/providerDisplay";
 import { Link } from "react-router-dom";
 import "../styles/CommandCenter.css";
 
@@ -601,7 +602,7 @@ function CommandCenter() {
     { label: "Alerts", status: "ONLINE" },
     { label: "Replay Center", status: "ONLINE" },
     { label: "Failover", status: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
-    { label: "Webull", status: providerDiagnostics.webull?.enabled ? "ONLINE" : "PENDING" },
+    { label: "Webull", status: displayWebullStatus(providerDiagnostics.webull) },
   ];
   const betaReadinessItems = [
     { label: "Architecture", status: "READY" },

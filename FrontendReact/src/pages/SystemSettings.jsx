@@ -7,6 +7,10 @@ import {
   getOfflineProviderDiagnostics,
   getProviderDiagnostics,
 } from "../services/marketProviderApi";
+import {
+  displayProviderWarning,
+  displayWebullStatus,
+} from "../services/providerDisplay";
 
 const AICC_BETA_VERSION = "AICC Closed Beta v0.1";
 const AICC_BETA_DISCLAIMER =
@@ -44,7 +48,7 @@ function SystemSettings() {
     { label: "Alerts", status: "ONLINE" },
     { label: "Replay Center", status: "ONLINE" },
     { label: "Failover", status: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
-    { label: "Webull", status: providerDiagnostics.webull?.enabled ? "ONLINE" : "PENDING" },
+    { label: "Webull", status: displayWebullStatus(providerDiagnostics.webull) },
   ];
   const betaReadinessItems = [
     { label: "Architecture", status: "READY" },
@@ -86,7 +90,7 @@ function SystemSettings() {
       <div className="brain-metrics">
         <div>
           <span>Webull</span>
-          <strong>{providerDiagnostics.webull?.status || "PENDING"}</strong>
+          <strong>{displayWebullStatus(providerDiagnostics.webull)}</strong>
         </div>
         <div>
           <span>Alpaca</span>
@@ -98,7 +102,11 @@ function SystemSettings() {
         </div>
         <div>
           <span>Warnings</span>
-          <strong>{providerDiagnostics.warnings?.length || 0}</strong>
+          <strong>
+            {displayProviderWarning(providerDiagnostics.warnings?.[0]) === "CLEAR"
+              ? providerDiagnostics.warnings?.length || 0
+              : displayProviderWarning(providerDiagnostics.warnings?.[0])}
+          </strong>
         </div>
       </div>
     </div>

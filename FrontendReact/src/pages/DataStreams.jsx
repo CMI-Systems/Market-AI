@@ -14,6 +14,13 @@ import {
   getOfflineWebullHealth,
   getWebullHealth,
 } from "../services/marketProviderApi";
+import {
+  displayProviderWarning,
+  displayWebullActivation,
+  displayWebullConfigured,
+  displayWebullEnvironment,
+  displayWebullStatus,
+} from "../services/providerDisplay";
 import "../styles/DataStreams.css";
 
 function displayState(value) {
@@ -187,28 +194,28 @@ function DataStreams() {
           <div className="stream-card">
             <div>
               <span>Webull Status</span>
-              <strong>{webullHealth.status || "PENDING"}</strong>
+              <strong>{displayWebullStatus(webullHealth)}</strong>
             </div>
           </div>
 
           <div className="stream-card">
             <div>
               <span>Webull Configured</span>
-              <strong>{webullHealth.configured ? "YES" : "NO"}</strong>
+              <strong>{displayWebullConfigured(webullHealth)}</strong>
             </div>
           </div>
 
           <div className="stream-card">
             <div>
               <span>Webull Environment</span>
-              <strong>{displayState(webullHealth.environment)}</strong>
+              <strong>{displayWebullEnvironment(webullHealth)}</strong>
             </div>
           </div>
 
           <div className="stream-card">
             <div>
               <span>Ready For Activation</span>
-              <strong>{webullHealth.readyForActivation ? "YES" : "NO"}</strong>
+              <strong>{displayWebullActivation(webullHealth)}</strong>
             </div>
           </div>
         </div>
@@ -264,7 +271,7 @@ function DataStreams() {
             <dl>
               <div>
                 <dt>Latest</dt>
-                <dd>{providerWarnings[0] || "CLEAR"}</dd>
+                <dd>{displayProviderWarning(providerWarnings[0])}</dd>
               </div>
             </dl>
           </div>

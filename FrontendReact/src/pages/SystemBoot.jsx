@@ -14,6 +14,13 @@ import {
   getOfflineWebullHealth,
   getWebullHealth,
 } from "../services/marketProviderApi";
+import {
+  displayProviderWarning,
+  displayWebullActivation,
+  displayWebullConfigured,
+  displayWebullEnvironment,
+  displayWebullStatus,
+} from "../services/providerDisplay";
 
 const AICC_BETA_VERSION = "AICC Closed Beta v0.1";
 const AICC_BETA_DISCLAIMER =
@@ -126,7 +133,7 @@ function SystemBoot() {
     { label: "Alerts", status: "ONLINE" },
     { label: "Replay Center", status: "ONLINE" },
     { label: "Failover", status: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
-    { label: "Webull", status: providerDiagnostics.webull?.enabled ? "ONLINE" : "PENDING" },
+    { label: "Webull", status: providerDiagnostics.webull?.enabled ? "ONLINE" : "INTEGRATION PENDING" },
   ];
   const betaReadinessItems = [
     { label: "Architecture", status: "READY" },
@@ -241,9 +248,7 @@ function SystemBoot() {
       <div className="brain-metrics">
         <div>
           <span>Webull</span>
-          <strong>
-            {webullHealth.status || providerDiagnostics.webull?.status || "PENDING"}
-          </strong>
+          <strong>{displayWebullStatus(webullHealth || providerDiagnostics.webull)}</strong>
         </div>
 
         <div>
@@ -268,7 +273,7 @@ function SystemBoot() {
 
         <div>
           <span>Latest Warning</span>
-          <strong>{providerWarnings[0] || "CLEAR"}</strong>
+          <strong>{displayProviderWarning(providerWarnings[0])}</strong>
         </div>
       </div>
 
@@ -276,22 +281,22 @@ function SystemBoot() {
       <div className="brain-metrics">
         <div>
           <span>Webull Status</span>
-          <strong>{webullHealth.status || "PENDING"}</strong>
+          <strong>{displayWebullStatus(webullHealth)}</strong>
         </div>
 
         <div>
           <span>Webull Configured</span>
-          <strong>{webullHealth.configured ? "YES" : "NO"}</strong>
+          <strong>{displayWebullConfigured(webullHealth)}</strong>
         </div>
 
         <div>
           <span>Webull Environment</span>
-          <strong>{displayState(webullHealth.environment)}</strong>
+          <strong>{displayWebullEnvironment(webullHealth)}</strong>
         </div>
 
         <div>
           <span>Ready For Activation</span>
-          <strong>{webullHealth.readyForActivation ? "YES" : "NO"}</strong>
+          <strong>{displayWebullActivation(webullHealth)}</strong>
         </div>
       </div>
 

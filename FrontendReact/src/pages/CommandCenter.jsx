@@ -18,32 +18,25 @@ import {
   translateDashboardStatus,
 } from "../services/intelligenceTranslator";
 import {
+  getMarketCandles,
+  getMarketQuotes,
   getProviderDiagnostics,
   getOfflineProviderDiagnostics,
   getProviderSignals,
 } from "../services/marketProviderApi";
-import { displayWebullStatus } from "../services/providerDisplay";
 import { Link } from "react-router-dom";
 import "../styles/CommandCenter.css";
 
-import SystemBootPanel from "../components/SystemBootPanel";
 import GlobalScanPanel from "../components/GlobalScanPanel";
-import DataStreamsPanel from "../components/DataStreamsPanel";
 import NewsLetterPanel from "../components/NewsLetterPanel";
 import MarketPulsePanel from "../components/MarketPulsePanel";
-import SystemOnlinePanel from "../components/SystemOnlinePanel";
-import BrainActivationPanel from "../components/BrainActivationPanel";
 import InstitutionalAccumlationPanel from "../components/InstitutionalAccumlationPanel";
 import VolatilityCompressionPanel from "../components/VolatilityCompressionPanel";
 import CrisisManagementPanel from "../components/CrisisManagementPanel";
 import ExpansionPanel from "../components/ExpansionPanel";
-import TacticalBrainPanel from "../components/TacticalBrainPanel";
-import BehavioralBrainPanel from "../components/BehavioralBrainPanel";
-import FailsafeBrainPanel from "../components/FailsafeBrainPanel";
-import MarketOverviewPanel from "../components/MarketOverviewPanel";
-import IntelligenceFeedPanel from "../components/IntelligenceFeedPanel";
 
 const PROVIDER_SIGNAL_SYMBOLS = ["SPY", "QQQ", "NVDA", "AAPL", "MSFT", "TSLA"];
+const OVERVIEW_TIMEFRAMES = ["1Min", "5Min", "15Min", "1H", "1D"];
 const AICC_BETA_VERSION = "AICC Closed Beta v0.1";
 const AICC_BETA_DISCLAIMER =
   "For research and intelligence purposes only. Not financial advice.";
@@ -82,6 +75,14 @@ function CommandCenter() {
   const [priorityFeed, setPriorityFeed] = useState(null);
   const [providerSignals, setProviderSignals] = useState([]);
   const [providerDiagnostics, setProviderDiagnostics] = useState(getOfflineProviderDiagnostics());
+  const [selectedOverviewSymbol, setSelectedOverviewSymbol] = useState("SPY");
+  const [selectedOverviewTimeframe, setSelectedOverviewTimeframe] = useState("5Min");
+  const [overviewCandles, setOverviewCandles] = useState([]);
+  const [overviewQuote, setOverviewQuote] = useState(null);
+  const [selectedSecondarySymbol, setSelectedSecondarySymbol] = useState("QQQ");
+  const [selectedSecondaryTimeframe, setSelectedSecondaryTimeframe] = useState("5Min");
+  const [secondaryCandles, setSecondaryCandles] = useState([]);
+  const [secondaryQuote, setSecondaryQuote] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -125,6 +126,56 @@ function CommandCenter() {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadMarketOverview() {
+      const [quotes, candles] = await Promise.all([
+        getMarketQuotes([selectedOverviewSymbol]),
+        getMarketCandles(selectedOverviewSymbol, selectedOverviewTimeframe, 48),
+      ]);
+
+      if (!mounted) return;
+
+      if (quotes[0]) setOverviewQuote(quotes[0]);
+      if (candles.length) setOverviewCandles(candles);
+    }
+
+    loadMarketOverview();
+
+    const interval = setInterval(loadMarketOverview, 60000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [selectedOverviewSymbol, selectedOverviewTimeframe]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadSecondaryMarketOverview() {
+      const [quotes, candles] = await Promise.all([
+        getMarketQuotes([selectedSecondarySymbol]),
+        getMarketCandles(selectedSecondarySymbol, selectedSecondaryTimeframe, 48),
+      ]);
+
+      if (!mounted) return;
+
+      if (quotes[0]) setSecondaryQuote(quotes[0]);
+      if (candles.length) setSecondaryCandles(candles);
+    }
+
+    loadSecondaryMarketOverview();
+
+    const interval = setInterval(loadSecondaryMarketOverview, 60000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [selectedSecondarySymbol, selectedSecondaryTimeframe]);
 
   useEffect(() => {
   async function loadBrainStatus() {
@@ -590,32 +641,6 @@ function CommandCenter() {
     highConfidenceProviderSignals.length > 0
       ? "Provider signal adapter reports active market watch conditions."
       : "Provider signal adapter is not reporting high-confidence market watch conditions.";
-  const betaStatusItems = [
-    { label: "Core Cognition", status: overview?.backend ? "ONLINE" : "ONLINE" },
-    {
-      label: "Provider Adapter",
-      status:
-        providerDiagnostics.providerHealth === "OFFLINE" ? "OFFLINE" : "ONLINE",
-    },
-    { label: "Watchlists", status: "ONLINE" },
-    { label: "Signals", status: "ONLINE" },
-    { label: "Alerts", status: "ONLINE" },
-    { label: "Replay Center", status: "ONLINE" },
-    { label: "Failover", status: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
-    { label: "Webull", status: displayWebullStatus(providerDiagnostics.webull) },
-  ];
-  const betaReadinessItems = [
-    { label: "Architecture", status: "READY" },
-    { label: "Data Layer", status: overview?.backend ? "READY" : "READY" },
-    {
-      label: "Provider Layer",
-      status: providerDiagnostics.providerHealth === "OFFLINE" ? "PENDING" : "READY",
-    },
-    { label: "Signals", status: providerSignals.length ? "READY" : "READY" },
-    { label: "Alerts", status: "READY" },
-    { label: "Replay", status: "READY" },
-    { label: "Failover", status: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
-  ];
   const strategicPosture =
     ["OPTIMAL", "FAVORABLE"].includes(normalizedEnvironment)
       ? "ENGAGE"
@@ -1030,6 +1055,138 @@ function CommandCenter() {
     `Failsafe protection is ${String(protectionStatus).toLowerCase()} and escalation risk is ${String(escalationLevel).toLowerCase()}.`,
     `Recommended operator posture: ${recommendedAction}.`,
   ];
+  const getMarketChartData = (candles, quote) => {
+    const latestCandle = candles[candles.length - 1] || null;
+    const lastPrice = quote?.price || latestCandle?.close || 0;
+    const changePercent =
+      quote?.changePercent ??
+      (candles.length > 1 && candles[0]?.open && latestCandle
+        ? ((latestCandle.close - candles[0].open) / candles[0].open) * 100
+        : 0);
+    const chartCandles = candles.slice(-36);
+    const high = Math.max(...chartCandles.map((candle) => candle.high || 0), 1);
+    const low = Math.min(...chartCandles.map((candle) => candle.low || high), high);
+    const range = Math.max(high - low, 1);
+    const maxVolumeValue = Math.max(...chartCandles.map((candle) => candle.volume || 0), 1);
+
+    return {
+      chartCandles,
+      changePercent,
+      high,
+      lastPrice,
+      low,
+      maxVolume: maxVolumeValue,
+      range,
+    };
+  };
+  const primaryChartData = getMarketChartData(overviewCandles, overviewQuote);
+  const secondaryChartData = getMarketChartData(secondaryCandles, secondaryQuote);
+  const overviewChangePercent = primaryChartData.changePercent;
+  const renderMarketChartCard = ({
+    title,
+    symbol,
+    selectedTimeframe,
+    chartData,
+    onSymbolChange,
+    onTimeframeChange,
+  }) => (
+    <div className="overview-chart-card">
+      <div className="overview-chart-header">
+        <div>
+          <span>{title}</span>
+          <strong>{symbol}</strong>
+          <p>
+            {chartData.lastPrice ? `$${Number(chartData.lastPrice).toFixed(2)}` : "--"} |{" "}
+            <em className={Number(chartData.changePercent) >= 0 ? "positive-change" : "negative-change"}>
+              {Number(chartData.changePercent) >= 0 ? "+" : ""}
+              {Number(chartData.changePercent || 0).toFixed(2)}%
+            </em>
+          </p>
+        </div>
+
+        <div className="overview-chart-controls">
+          <select value={symbol} onChange={(event) => onSymbolChange(event.target.value)}>
+            {PROVIDER_SIGNAL_SYMBOLS.map((availableSymbol) => (
+              <option key={availableSymbol}>{availableSymbol}</option>
+            ))}
+          </select>
+
+          <div className="overview-timeframe-tabs">
+            {OVERVIEW_TIMEFRAMES.map((timeframe) => (
+              <button
+                className={selectedTimeframe === timeframe ? "active" : ""}
+                key={timeframe}
+                type="button"
+                onClick={() => onTimeframeChange(timeframe)}
+              >
+                {timeframe}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="overview-candle-chart">
+        {chartData.chartCandles.length ? (
+          chartData.chartCandles.map((candle, index) => {
+            const open = Number(candle.open || 0);
+            const close = Number(candle.close || 0);
+            const high = Number(candle.high || Math.max(open, close));
+            const low = Number(candle.low || Math.min(open, close));
+            const top = ((chartData.high - high) / chartData.range) * 100;
+            const bottom = ((low - chartData.low) / chartData.range) * 100;
+            const bodyTop = ((chartData.high - Math.max(open, close)) / chartData.range) * 100;
+            const bodyHeight = Math.max((Math.abs(open - close) / chartData.range) * 100, 3);
+            const volumeHeight = Math.max(((candle.volume || 0) / chartData.maxVolume) * 100, 8);
+
+            return (
+              <div className="overview-candle-column" key={`${title}-${candle.timestamp || candle.time}-${index}`}>
+                <div className="overview-candle-area">
+                  <i
+                    className="overview-candle-wick"
+                    style={{ top: `${top}%`, bottom: `${bottom}%` }}
+                  ></i>
+                  <b
+                    className={close >= open ? "candle-up" : "candle-down"}
+                    style={{ top: `${bodyTop}%`, height: `${bodyHeight}%` }}
+                  ></b>
+                </div>
+                <span style={{ height: `${volumeHeight}%` }}></span>
+              </div>
+            );
+          })
+        ) : (
+          <div className="overview-chart-empty">Provider candles unavailable.</div>
+        )}
+      </div>
+    </div>
+  );
+  const watchlistPreviewRows = PROVIDER_SIGNAL_SYMBOLS.map((symbol) => {
+    const signal = providerSignals.find((item) => item.symbol === symbol);
+
+    return {
+      symbol,
+      signal: signal?.signal || "NEUTRAL",
+      confidence: signal?.confidence ?? 50,
+      risk: signal?.risk || "MODERATE",
+      provider: signal?.provider || providerDiagnostics.activeProvider || "ALPACA",
+    };
+  });
+  const compactAlerts = [
+    ...topProviderSignals.slice(0, 3).map((signal) => ({
+      title: `${signal.symbol} ${signal.signal}`,
+      detail: `${signal.confidence}% confidence | ${signal.risk}`,
+    })),
+    ...priorityTimelineEvents.slice(0, 2).map((event) => ({
+      title: event.label,
+      detail: event.time,
+    })),
+  ].slice(0, 4);
+  const infrastructureChips = [
+    { label: "Backend", value: backendOnline ? "ONLINE" : "OFFLINE" },
+    { label: "Provider", value: providerHealthy ? "HEALTHY" : "DEGRADED" },
+    { label: "Failover", value: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
+  ];
 
   return (
     <div className="command-layout">
@@ -1069,32 +1226,50 @@ function CommandCenter() {
       </aside>
 
       <main className="command-center">
-        <header className="command-header">
-          <div className="header-title">
+        <header className="command-header command-hero">
+          <div className="header-title command-hero-title">
             <h1>COMMAND CENTER</h1>
             <p>Market AI Intelligence Ecosystem</p>
             <span className="beta-version-label">{AICC_BETA_VERSION}</span>
+
+            <div className="command-hero-meta">
+              <span>{formattedDate} | {formattedTime}</span>
+              <span>Market: {overview?.marketOpen ? "OPEN" : "CLOSED"}</span>
+              <span>Provider: {providerDiagnostics.activeProvider || "ALPACA"}</span>
+              <span>Backend: {backendOnline ? "ONLINE" : "OFFLINE"}</span>
+              <span>Failover: {providerDiagnostics.failoverReady ? "READY" : "PENDING"}</span>
+            </div>
           </div>
 
-          <div className="command-status-bar">
-            <div className="status-card clock-card">
-              <span>{formattedDate}</span>
-              <strong>{formattedTime}</strong>
+          <div className="command-hero-kpis">
+            <div className="summary-card hero-kpi-card">
+              <span>Market Regime</span>
+              <strong>{translateDashboardStatus(environmentDisplay, betaEnvironmentState)}</strong>
+              <p>LIVE MARKET</p>
             </div>
 
-            <div className="status-card">
-              <span>System Status</span>
-              <strong>Operational</strong>
+            <div className="summary-card hero-kpi-card">
+              <span>Volatility State</span>
+              <strong>{translateDashboardStatus(stabilityDisplay, betaStabilityState)}</strong>
+              <p>STABILITY</p>
             </div>
 
-            <div className="status-card">
-              <span>Market Status</span>
-              <strong>{overview?.marketOpen ? "Open" : "Closed"}</strong>
+            <div className="summary-card hero-kpi-card">
+              <span>Confidence Environment</span>
+              <strong>{translateDashboardStatus(confidenceLevelDisplay, betaConfidenceState)}</strong>
+              <p>{finalConfidenceScore}% INDEX</p>
             </div>
 
-            <div className="status-card">
-              <span>Brain Network</span>
-              <strong>Online</strong>
+            <div className="summary-card hero-kpi-card">
+              <span>Signal Quality</span>
+              <strong>{consensusStrength === "STRONG" ? "HIGH CONVICTION" : translateDashboardStatus(activeConsensus, "HIGH CONVICTION")}</strong>
+              <p>{topProviderSignals.length} ACTIVE</p>
+            </div>
+
+            <div className="summary-card hero-kpi-card">
+              <span>Risk Level</span>
+              <strong>{executiveRisk || "MODERATE"}</strong>
+              <p>FAILSAFE</p>
             </div>
           </div>
         </header>
@@ -1107,59 +1282,141 @@ function CommandCenter() {
           <span><i className="live-dot"></i> Failsafe Monitoring</span>
         </div>
 
-          <div className="intelligence-summary-row">
-  <div className="summary-card">
-    <span>Market Regime</span>
-    <strong>{translateDashboardStatus(environmentDisplay, betaEnvironmentState)}</strong>
-    <p>LIVE REGIME</p>
-  </div>
+        <section className="command-section command-overview-section">
+          <div className="command-chart-grid">
+            {renderMarketChartCard({
+              title: "Primary Market Chart",
+              symbol: selectedOverviewSymbol,
+              selectedTimeframe: selectedOverviewTimeframe,
+              chartData: primaryChartData,
+              onSymbolChange: setSelectedOverviewSymbol,
+              onTimeframeChange: setSelectedOverviewTimeframe,
+            })}
 
-  <div className="summary-card">
-    <span>Volatility</span>
-    <strong>{translateDashboardStatus(stabilityDisplay, betaStabilityState)}</strong>
-    <p>STABILITY</p>
-  </div>
+            {renderMarketChartCard({
+              title: "Secondary Market Chart",
+              symbol: selectedSecondarySymbol,
+              selectedTimeframe: selectedSecondaryTimeframe,
+              chartData: secondaryChartData,
+              onSymbolChange: setSelectedSecondarySymbol,
+              onTimeframeChange: setSelectedSecondaryTimeframe,
+            })}
+          </div>
 
-  <div className="summary-card">
-    <span>Market Breadth</span>
-    <strong>{translateDashboardStatus(activeConsensus, "DETECTING")}</strong>
-    <p>CONSENSUS</p>
-  </div>
-
-  <div className="summary-card">
-    <span>System Health</span>
-    <strong>{classifyHealth(overview?.runtimeHealth)}</strong>
-    <p>RUNTIME</p>
-  </div>
-
-  <div className="summary-card">
-    <span>Risk Level</span>
-    <strong>{translateDashboardStatus(confidenceLevelDisplay, betaConfidenceState)}</strong>
-    <p>CONFIDENCE</p>
-  </div>
-</div>
-
-        <section className="command-section beta-status-section">
-          <h2>CLOSED BETA STATUS</h2>
-
-          <div className="beta-status-grid">
-            {betaStatusItems.map((item) => (
-              <div className="beta-status-card" key={item.label}>
-                <span>{item.label}</span>
-                <strong>{item.status}</strong>
+          <div className="command-under-chart-grid">
+            <div className="overview-side-card">
+              <h3>Live Watchlist</h3>
+              <div className="overview-watchlist">
+                {watchlistPreviewRows.map((row) => (
+                  <div key={row.symbol}>
+                    <strong>{row.symbol}</strong>
+                    <span>{row.signal}</span>
+                    <em>{row.confidence}%</em>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            <div className="overview-side-card">
+              <h3>Regime Status</h3>
+              <div className="overview-status-list">
+                <div><span>Environment</span><strong>{environmentDisplay}</strong></div>
+                <div><span>Confidence</span><strong>{finalConfidenceScore}%</strong></div>
+                <div><span>Action</span><strong>{recommendedAction}</strong></div>
+              </div>
+            </div>
+
+            <div className="overview-side-card">
+              <h3>Alerts & Intelligence</h3>
+              <div className="overview-alert-list">
+                {compactAlerts.length ? (
+                  compactAlerts.map((alert, index) => (
+                    <div key={`${alert.title}-${index}`}>
+                      <strong>{alert.title}</strong>
+                      <span>{alert.detail}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div>
+                    <strong>NO ACTIVE ALERTS</strong>
+                    <span>Provider signals stable</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="command-section beta-readiness-section">
-          <h2>BETA READINESS</h2>
+        <section className="command-section overview-brain-section">
+          <h2>Brain Intelligence</h2>
+          <div className="overview-brain-grid">
+            <div className="overview-brain-card">
+              <h3>Tactical Brain</h3>
+              <div className="overview-status-list">
+                <div><span>Trend</span><strong>{Number(overviewChangePercent) >= 0 ? "RISING" : "PRESSURED"}</strong></div>
+                <div><span>Momentum</span><strong>{strongestProviderSignal ? "ACTIVE" : "OBSERVING"}</strong></div>
+                <div><span>Signal Bias</span><strong>{strongestProviderSignal?.signal || displayedTacticalBrain.bias}</strong></div>
+                <div><span>Confidence</span><strong>{strongestProviderSignal?.confidence || getConsensusInfluence(displayedTacticalBrain)}%</strong></div>
+              </div>
+            </div>
 
-          <div className="beta-status-grid">
-            {betaReadinessItems.map((item) => (
-              <div className="beta-status-card" key={item.label}>
-                <span>{item.label}</span>
-                <strong>{item.status}</strong>
+            <div className="overview-brain-card">
+              <h3>Behavioral Brain</h3>
+              <div className="overview-status-list">
+                <div><span>Sentiment</span><strong>{providerRiskDominates ? "CAUTION" : displayedBehavioralBrain.bias}</strong></div>
+                <div><span>Participation</span><strong>{topProviderSignals.length ? "ACTIVE" : "OBSERVING"}</strong></div>
+                <div><span>Discipline Risk</span><strong>{providerRiskDominates ? "ELEVATED" : "NORMAL"}</strong></div>
+                <div><span>Behavioral Score</span><strong>{getConsensusInfluence(displayedBehavioralBrain, -8)}</strong></div>
+              </div>
+            </div>
+
+            <div className="overview-brain-card">
+              <h3>Failsafe Brain</h3>
+              <div className="overview-status-list">
+                <div><span>Risk State</span><strong>{riskState}</strong></div>
+                <div><span>Volatility Guard</span><strong>{providerHealthy ? "ACTIVE" : "MONITORING"}</strong></div>
+                <div><span>Conflict Detection</span><strong>{syncStatus === "CONFLICTED" ? "WATCH" : "CLEAR"}</strong></div>
+                <div><span>Protection</span><strong>{providerHealthy ? "ONLINE" : protectionStatus}</strong></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="command-section overview-feed-section">
+          <div className="overview-feed-grid">
+            <div className="overview-feed-card">
+              <h2>Signal Feed</h2>
+              <div className="overview-signal-grid">
+                {(topProviderSignals.length ? topProviderSignals : watchlistPreviewRows).slice(0, 6).map((signal) => (
+                  <div className="overview-signal-card" key={`${signal.symbol}-${signal.signal}`}>
+                    <span>{signal.symbol}</span>
+                    <strong>{signal.signal}</strong>
+                    <p>{signal.confidence ?? 50}% | {signal.risk || "MODERATE"} | {signal.provider || providerDiagnostics.activeProvider || "ALPACA"}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="overview-feed-card">
+              <h2>Replay / Intelligence Timeline</h2>
+              <div className="overview-timeline-list">
+                {narrativeTimeline.slice(0, 5).map((event, index) => (
+                  <div key={`${event.label}-${index}`}>
+                    <span>{event.time}</span>
+                    <strong>{event.label}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="command-section compact-infrastructure-section">
+          <div className="compact-infra-chip-row">
+            {infrastructureChips.map((chip) => (
+              <div className="compact-infra-chip" key={chip.label}>
+                <span>{chip.label}</span>
+                <strong>{chip.value}</strong>
               </div>
             ))}
           </div>
@@ -1949,15 +2206,7 @@ function CommandCenter() {
         </section>
 
         <section className="command-section">
-          <h2>Market Overview</h2>
-          <div className="command-grid">
-            <MarketOverviewPanel />
-            <IntelligenceFeedPanel />
-          </div>
-        </section>
-
-        <section className="command-section">
-          <h2>Market Intelligence</h2>
+          <h2>Market Intelligence Modules</h2>
           <div className="command-grid">
             <GlobalScanPanel />
             <MarketPulsePanel
@@ -1965,54 +2214,7 @@ function CommandCenter() {
               liquidityPressure={liquidityPressure}
               institutionalFlow={institutionalFlow}
             />
-            <DataStreamsPanel />
             <NewsLetterPanel />
-          </div>
-        </section>
-
-        <section className="command-section">
-          <h2>Three Brain Intelligence Core</h2>
-          <div className={`brain-sync-panel ${syncColorClass}`}>
-            <h3>THREE BRAIN SYNCHRONIZATION</h3>
-
-            <div className="brain-sync-row">
-              <span>TACTICAL: {tacticalSyncState}</span>
-              <span>BEHAVIORAL: {behavioralSyncState}</span>
-              <span>FAILSAFE: {failsafeSyncState}</span>
-            </div>
-
-            <div className="brain-sync-score-row">
-              <strong>SYNC SCORE: {syncScore}%</strong>
-              <strong>STATUS: {syncStatus}</strong>
-            </div>
-          </div>
-
-          <div className="command-grid brain-grid">
-            <TacticalBrainPanel
-              data={displayedTacticalBrain}
-              consensusContribution={consensusStrength}
-              consensusInfluence={getConsensusInfluence(displayedTacticalBrain)}
-            />
-            <BehavioralBrainPanel
-              data={displayedBehavioralBrain}
-              consensusContribution={consensusStrength}
-              consensusInfluence={getConsensusInfluence(displayedBehavioralBrain, -8)}
-            />
-            <FailsafeBrainPanel
-              data={displayedFailsafeBrain}
-              consensusContribution={consensusStrength}
-              consensusInfluence={getConsensusInfluence(displayedFailsafeBrain, 6)}
-              escalationLevel={overview?.escalation?.escalationLevel || "NONE"}
-            />
-          </div>
-        </section>
-
-        <section className="command-section">
-          <h2>Autonomous Intelligence Systems</h2>
-          <div className="command-grid">
-            <SystemBootPanel />
-            <BrainActivationPanel />
-            <SystemOnlinePanel />
           </div>
         </section>
 

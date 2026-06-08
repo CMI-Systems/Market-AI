@@ -69,15 +69,22 @@
 
 .watchlist-controls {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr;
+  grid-template-columns: 1.2fr 1.4fr 1fr 1fr 1fr;
   gap: 14px;
   width: min(100%, 1440px);
   max-width: 1440px;
   margin: 0 auto 20px;
 }
 
+.watchlist-add-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
 .watchlist-controls input,
-.watchlist-controls select {
+.watchlist-controls select,
+.watchlist-add-form button {
   width: 100%;
   padding: 13px 14px;
   border: 1px solid rgba(83, 211, 218, 0.18);
@@ -85,6 +92,72 @@
   background: rgba(2, 8, 23, 0.78);
   color: #e8fbff;
   font: inherit;
+}
+
+.watchlist-add-form button {
+  min-width: 86px;
+  cursor: pointer;
+  color: #39ff88;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.watchlist-error,
+.watchlist-disclaimer {
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  margin: 0 auto 18px;
+  color: #ffcf5a;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.watchlist-detail-panel {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  margin: 0 auto 20px;
+  padding: 18px;
+  border: 1px solid rgba(57, 255, 136, 0.2);
+  border-radius: 16px;
+  background: rgba(3, 18, 28, 0.9);
+  box-shadow:
+    0 0 24px rgba(57, 255, 136, 0.08),
+    inset 0 0 18px rgba(57, 255, 136, 0.035);
+}
+
+.watchlist-detail-panel div {
+  min-width: 0;
+}
+
+.watchlist-detail-panel span {
+  display: block;
+  color: #8fa6b8;
+  font-size: 0.66rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.watchlist-detail-panel strong {
+  display: block;
+  margin-top: 7px;
+  overflow-wrap: anywhere;
+  color: #e8fbff;
+  font-size: 0.92rem;
+  letter-spacing: 0.05em;
+}
+
+.watchlist-detail-panel small {
+  display: block;
+  margin-top: 4px;
+  color: #8fb7c9;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .watchlist-table {
@@ -100,16 +173,30 @@
 
 .watchlist-row {
   display: grid;
-  grid-template-columns: 1.5fr repeat(7, minmax(120px, 1fr));
+  grid-template-columns: 1.5fr repeat(8, minmax(112px, 1fr));
   gap: 12px;
   align-items: center;
-  min-width: 1100px;
+  min-width: 1260px;
+  width: 100%;
   padding: 14px 16px;
   border-bottom: 1px solid rgba(83, 211, 218, 0.1);
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .watchlist-row:last-child {
   border-bottom: 0;
+}
+
+.watchlist-row:hover,
+.watchlist-row-selected {
+  background: rgba(57, 255, 136, 0.055);
 }
 
 .watchlist-heading {
@@ -118,6 +205,7 @@
   letter-spacing: 1.2px;
   text-transform: uppercase;
   background: rgba(0, 10, 25, 0.78);
+  cursor: default;
 }
 
 .watchlist-row span {
@@ -156,6 +244,20 @@
   color: #dff7ff;
 }
 
+.watchlist-remove-button {
+  display: inline-block;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 100, 125, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 100, 125, 0.08);
+  color: #ff8da0;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
 .risk-low {
   border-color: rgba(57, 255, 136, 0.24);
   color: #39ff88;
@@ -182,6 +284,10 @@
 
   .watchlist-summary-grid,
   .watchlist-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .watchlist-detail-panel {
     grid-template-columns: 1fr;
   }
 }

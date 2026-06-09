@@ -1182,6 +1182,33 @@ function CommandCenter() {
     : ["Limited validated risk context"];
   const aiccPrimaryDriver = aiccKeyDrivers[0] || "Limited validated driver context";
   const aiccPrimaryRisk = aiccKeyRisks[0] || "Limited validated risk context";
+  const aiccOpportunityContext = aiccNarrative.engines?.opportunityContext || {};
+  const aiccThemesGainingTraction = Array.isArray(aiccOpportunityContext.themesToMonitor)
+    ? aiccOpportunityContext.themesToMonitor.slice(0, 4)
+    : ["consensus stability"];
+  const aiccAreasOfStrength = Array.isArray(aiccOpportunityContext.areasOfStrength)
+    ? aiccOpportunityContext.areasOfStrength.slice(0, 4)
+    : ["no validated area of strength yet"];
+  const aiccAreasToMonitor = [
+    ...aiccThemesGainingTraction,
+    aiccPrimaryRisk,
+  ].filter(Boolean).slice(0, 4);
+  const aiccConsensusState = aiccSummary.consensusState || "ELEVATED_UNCERTAINTY";
+  const aiccRegimeState = aiccSummary.regime || "TRANSITION";
+  const aiccVerdict = aiccConsensusState;
+  const aiccBiasSource = `${aiccConsensusState} ${aiccRegimeState} ${aiccTactical.tacticalState || ""}`;
+  const aiccMarketBias = /BEARISH|DEFENSIVE|HIGH_RISK|CRISIS|DISTRIBUTION|BREAKDOWN/i.test(aiccBiasSource)
+    ? "Bearish"
+    : /BULLISH|RISK_ON|EXPANSION|RECOVERY|BREAKOUT/i.test(aiccBiasSource)
+      ? "Bullish"
+      : "Neutral";
+  const aiccRiskSource = `${aiccConsensusState} ${aiccRegimeState} ${aiccFailsafe.failsafeState || ""} ${aiccFailsafe.riskEscalation || ""}`;
+  const aiccRiskEnvironment = /RISK_OFF|HIGH_RISK|CRITICAL|CRISIS|LOW_RELIABILITY|ESCALATION/i.test(aiccRiskSource)
+    ? "Risk-Off"
+    : /RISK_ON|EXPANSION|CONFIRMED|CONTROLLED/i.test(aiccRiskSource)
+      ? "Risk-On"
+      : "Neutral";
+  const aiccMarketStatusLine = `${aiccConsensusState} consensus is operating inside a ${aiccRegimeState} regime. ${aiccShortNarrative}`;
   const renderMarketChartCard = ({
     title,
     symbol,
@@ -1382,6 +1409,41 @@ function CommandCenter() {
           <span><i className="live-dot"></i> Failsafe Monitoring</span>
         </div>
 
+        <section className="command-section executive-intelligence-section verdict-banner-section">
+          <div className="verdict-banner-header">
+            <span className="mission-eyebrow">AICC Verdict</span>
+            <h2>{aiccVerdict}</h2>
+            <p>{aiccMarketStatusLine}</p>
+          </div>
+
+          <div className="verdict-banner-grid">
+            <div className="verdict-metric-card verdict-metric-primary">
+              <span>Verdict</span>
+              <strong>{aiccVerdict}</strong>
+            </div>
+
+            <div className="verdict-metric-card">
+              <span>Confidence</span>
+              <strong>{aiccSummary.overallConfidence ?? 45}%</strong>
+            </div>
+
+            <div className="verdict-metric-card">
+              <span>Reliability</span>
+              <strong>{aiccFailsafe.reliability ?? 45}%</strong>
+            </div>
+
+            <div className="verdict-metric-card">
+              <span>Market Bias</span>
+              <strong>{aiccMarketBias}</strong>
+            </div>
+
+            <div className="verdict-metric-card">
+              <span>Risk Environment</span>
+              <strong>{aiccRiskEnvironment}</strong>
+            </div>
+          </div>
+        </section>
+
         <section className="command-section executive-intelligence-section mission-briefing-section">
           <div className="mission-briefing-header">
             <div>
@@ -1400,12 +1462,12 @@ function CommandCenter() {
           <div className="mission-briefing-grid">
             <div className="mission-metric-card mission-metric-card-primary">
               <span>Consensus</span>
-              <strong>{aiccSummary.consensusState || "ELEVATED_UNCERTAINTY"}</strong>
+              <strong>{aiccConsensusState}</strong>
             </div>
 
             <div className="mission-metric-card">
               <span>Regime</span>
-              <strong>{aiccSummary.regime || "TRANSITION"}</strong>
+              <strong>{aiccRegimeState}</strong>
             </div>
 
             <div className="mission-metric-card">
@@ -1463,6 +1525,57 @@ function CommandCenter() {
           ))}
         </section>
 
+        <section className="command-section executive-intelligence-section spotlight-hero-section current-market-story-section">
+          <div className="spotlight-hero-header">
+            <span className="mission-eyebrow">Current Market Story</span>
+            <h2>{aiccNarrativeHeadline}</h2>
+            <p>{aiccNarrative.spotlightNarrative || aiccShortNarrative}</p>
+          </div>
+
+          <div className="market-story-grid">
+            <div className="market-story-narrative-card">
+              <span>Headline</span>
+              <strong>{aiccNarrativeHeadline}</strong>
+              <p>{aiccNarrative.detailedNarrative || aiccShortNarrative}</p>
+            </div>
+
+            <div className="spotlight-theme-card">
+              <span>Themes Gaining Traction</span>
+              {aiccThemesGainingTraction.map((theme, index) => (
+                <p key={`story-theme-${index}`}>{theme}</p>
+              ))}
+            </div>
+
+            <div>
+              <h3>Key Drivers</h3>
+              {aiccKeyDrivers.map((driver, index) => (
+                <p key={`story-driver-${index}`}>Driver {index + 1}: {driver}</p>
+              ))}
+            </div>
+
+            <div>
+              <h3>Key Risks</h3>
+              {aiccKeyRisks.map((risk, index) => (
+                <p key={`story-risk-${index}`}>Risk {index + 1}: {risk}</p>
+              ))}
+            </div>
+
+            <div>
+              <h3>Areas Of Strength</h3>
+              {aiccAreasOfStrength.map((area, index) => (
+                <p key={`story-strength-${index}`}>{area}</p>
+              ))}
+            </div>
+
+            <div>
+              <h3>Areas To Monitor</h3>
+              {aiccAreasToMonitor.map((area, index) => (
+                <p key={`story-monitor-${index}`}>{area}</p>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="command-section overview-brain-section">
           <h2>AICC Intelligence Panel</h2>
           <div className="overview-brain-grid compressed-brain-grid">
@@ -1500,35 +1613,6 @@ function CommandCenter() {
                 <div><span>Reliability</span><strong>{aiccFailsafe.reliability ?? 45}%</strong></div>
                 <div><span>Key Metrics</span><strong>{aiccFailsafe.riskEscalation || "ELEVATED"} / {aiccFailsafe.validation || "WEAK_VALIDATION"}</strong></div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="command-section executive-intelligence-section spotlight-hero-section">
-          <div className="spotlight-hero-header">
-            <span className="mission-eyebrow">Intelligence Spotlight</span>
-            <h2>{aiccNarrativeHeadline}</h2>
-            <p>{aiccNarrative.spotlightNarrative || aiccShortNarrative}</p>
-          </div>
-
-          <div className="spotlight-hero-grid">
-            <div className="spotlight-theme-card">
-              <span>Theme Strength</span>
-              <strong>{aiccNarrative.confidence ?? aiccSummary.overallConfidence ?? 45}%</strong>
-            </div>
-
-            <div>
-              <h3>Key Drivers</h3>
-              {aiccKeyDrivers.map((driver, index) => (
-                <p key={`spotlight-driver-${index}`}>Driver {index + 1}: {driver}</p>
-              ))}
-            </div>
-
-            <div>
-              <h3>Key Risks</h3>
-              {aiccKeyRisks.map((risk, index) => (
-                <p key={`spotlight-risk-${index}`}>Risk {index + 1}: {risk}</p>
-              ))}
             </div>
           </div>
         </section>

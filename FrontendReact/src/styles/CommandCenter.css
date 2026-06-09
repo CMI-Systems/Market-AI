@@ -1214,6 +1214,76 @@
   text-transform: uppercase;
 }
 
+.verdict-banner-section {
+  padding: 30px;
+  border-color: rgba(57, 255, 136, 0.32);
+  background:
+    linear-gradient(135deg, rgba(6, 36, 36, 0.96), rgba(5, 15, 32, 0.96));
+  box-shadow:
+    0 0 46px rgba(57, 255, 136, 0.12),
+    inset 0 0 34px rgba(83, 211, 218, 0.05);
+}
+
+.verdict-banner-header {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.verdict-banner-header h2 {
+  margin: 0;
+  color: #39ff88;
+  font-size: 2.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.verdict-banner-header p {
+  max-width: 1180px;
+  margin: 0;
+  color: #d7eaff;
+  font-size: 1.04rem;
+  line-height: 1.65;
+}
+
+.verdict-banner-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.6fr) repeat(4, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.verdict-metric-card {
+  min-height: 128px;
+  padding: 18px;
+  border: 1px solid rgba(83, 211, 218, 0.22);
+  border-radius: 14px;
+  background: rgba(5, 15, 32, 0.9);
+  box-shadow: inset 0 0 18px rgba(83, 211, 218, 0.04);
+}
+
+.verdict-metric-card span,
+.market-story-narrative-card span {
+  display: block;
+  color: #8fa6b8;
+  font-size: 0.66rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.verdict-metric-card strong {
+  display: block;
+  margin-top: 12px;
+  color: #e8fbff;
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.verdict-metric-primary strong {
+  color: #39ff88;
+  font-size: 1.6rem;
+}
+
 .mission-briefing-section {
   padding: 30px;
   border-color: rgba(57, 255, 136, 0.28);
@@ -1458,6 +1528,44 @@
   color: #39ff88;
   font-size: 2.35rem;
   letter-spacing: 0.08em;
+}
+
+.current-market-story-section {
+  border-color: rgba(57, 255, 136, 0.22);
+}
+
+.market-story-grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.4fr) repeat(2, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.market-story-grid > div {
+  padding: 18px;
+  border: 1px solid rgba(83, 211, 218, 0.2);
+  border-radius: 14px;
+  background: rgba(5, 15, 32, 0.9);
+  box-shadow: inset 0 0 18px rgba(83, 211, 218, 0.04);
+}
+
+.market-story-narrative-card {
+  grid-row: span 2;
+}
+
+.market-story-narrative-card strong {
+  display: block;
+  margin-top: 10px;
+  color: #39ff88;
+  font-size: 1.25rem;
+  line-height: 1.45;
+}
+
+.market-story-narrative-card p,
+.spotlight-theme-card p {
+  margin: 12px 0 0;
+  color: #d7eaff;
+  font-size: 0.94rem;
+  line-height: 1.65;
 }
 
 .consensus-panel {
@@ -2437,6 +2545,19 @@
 }
 
 @media (max-width: 768px) {
+  .verdict-banner-grid,
+  .market-story-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .verdict-banner-header h2 {
+    font-size: 1.75rem;
+  }
+
+  .market-story-narrative-card {
+    grid-row: auto;
+  }
+
   .mission-briefing-header,
   .mission-briefing-body {
     grid-template-columns: 1fr;

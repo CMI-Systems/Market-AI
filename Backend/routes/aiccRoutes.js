@@ -6,7 +6,7 @@ const { buildAiccSystemStatus } = require("../services/aiccSystemStatus");
 const router = express.Router();
 
 router.get("/system-status", (req, res) => {
-  res.json(buildAiccSystemStatus());
+  res.json(buildAiccSystemStatus({ simulate: req.query.simulate }));
 });
 
 router.get("/alerts", async (req, res) => {

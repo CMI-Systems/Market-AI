@@ -21,9 +21,17 @@ function displayActiveProvider(value) {
   return "PENDING";
 }
 
-function displayProviderMode(activeProvider, fallbackMode) {
+function displayStreamMode(systemStatus, activeProvider, fallbackMode) {
+  if (systemStatus.streamMode === "LIVE_ALPACA") {
+    return "LIVE ALPACA";
+  }
+
+  if (systemStatus.simulationActive) {
+    return "SIMULATION ACTIVE";
+  }
+
   if (activeProvider === "SIMULATION" || activeProvider === "FALLBACK") {
-    return "SIMULATION";
+    return "SIMULATION ACTIVE";
   }
 
   return activeProvider ? "LIVE PROVIDER" : displayState(fallbackMode);
@@ -31,6 +39,12 @@ function displayProviderMode(activeProvider, fallbackMode) {
 
 function isLiveProviderActive(providerStatus) {
   return providerStatus.activeProvider === "ALPACA" && providerStatus.providerHealth === "HEALTHY";
+}
+
+function displayResolvedProvider(systemStatus, providerStatus) {
+  if (systemStatus.streamMode === "LIVE_ALPACA") return "ALPACA";
+  if (systemStatus.simulationActive) return "SIMULATION";
+  return displayActiveProvider(`${providerStatus.activeProvider}_ACTIVE`);
 }
 
 function SystemBootPanel() {
@@ -54,7 +68,7 @@ function SystemBootPanel() {
     return () => clearInterval(interval);
   }, []);
 
-  const liveProviderActive = isLiveProviderActive(providerStatus);
+  const liveProviderActive = systemStatus.streamMode === "LIVE_ALPACA" && isLiveProviderActive(providerStatus);
   const backendOnline = systemStatus.backend === "ONLINE";
   const tacticalBrainState = liveProviderActive ? "ANALYZING" : "STANDBY";
   const behavioralBrainState = liveProviderActive ? "OBSERVING" : "STANDBY";
@@ -66,7 +80,7 @@ function SystemBootPanel() {
       <p>
         Backend {displayState(systemStatus.backend)} | Runtime{" "}
         {displayState(systemStatus.runtime)} | Mode{" "}
-        {displayProviderMode(providerStatus.activeProvider, systemStatus.mode)}
+        {displayStreamMode(systemStatus, providerStatus.activeProvider, systemStatus.mode)}
       </p>
 
       <div className="brain-metrics">
@@ -77,7 +91,7 @@ function SystemBootPanel() {
 
         <div>
           <span>Active Provider</span>
-          <strong>{displayActiveProvider(`${providerStatus.activeProvider}_ACTIVE`)}</strong>
+          <strong>{displayResolvedProvider(systemStatus, providerStatus)}</strong>
         </div>
 
         <div>

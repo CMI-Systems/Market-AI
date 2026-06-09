@@ -3,9 +3,11 @@ const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:300
 const OFFLINE_SYSTEM_STATUS = {
   backend: "OFFLINE",
   mode: "OFFLINE",
+  streamMode: "FALLBACK_SIMULATION",
+  simulationActive: true,
   marketStatus: "UNKNOWN",
   runtime: "OFFLINE",
-  provider: "FALLBACK",
+  provider: "SIMULATION",
   primaryProvider: "WEBULL_PENDING",
   secondaryProvider: "ALPACA_PENDING",
   environment: "LOCAL_FALLBACK",

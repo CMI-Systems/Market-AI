@@ -13,17 +13,31 @@ function displayState(value) {
   return String(value).replace(/_/g, " ");
 }
 
-function displayProviderMode(activeProvider, fallbackMode) {
+function displayStreamMode(systemStatus, activeProvider, fallbackMode) {
+  if (systemStatus.streamMode === "LIVE_ALPACA") {
+    return "LIVE ALPACA";
+  }
+
+  if (systemStatus.simulationActive) {
+    return "SIMULATION ACTIVE";
+  }
+
   if (activeProvider === "SIMULATION" || activeProvider === "FALLBACK") {
-    return "SIMULATION";
+    return "SIMULATION ACTIVE";
   }
 
   return activeProvider ? "LIVE PROVIDER" : displayState(fallbackMode);
 }
 
-function displayFallbackStatus(activeProvider) {
-  return activeProvider === "SIMULATION" || activeProvider === "FALLBACK"
-    ? "SIMULATION"
+function displayResolvedProvider(systemStatus, providerStatus) {
+  if (systemStatus.streamMode === "LIVE_ALPACA") return "ALPACA";
+  if (systemStatus.simulationActive) return "SIMULATION";
+  return displayState(providerStatus.activeProvider);
+}
+
+function displayFallbackStatus(systemStatus, activeProvider) {
+  return systemStatus.simulationActive || activeProvider === "SIMULATION" || activeProvider === "FALLBACK"
+    ? "SIMULATION ACTIVE"
     : "AVAILABLE";
 }
 
@@ -52,8 +66,8 @@ function DataStreamsPanel() {
     <div className="panel">
       <h2>Data Streams</h2>
       <p>
-        Active Provider {displayState(providerStatus.activeProvider)} | Mode{" "}
-        {displayProviderMode(providerStatus.activeProvider, systemStatus.mode)}
+        Active Provider {displayResolvedProvider(systemStatus, providerStatus)} | Mode{" "}
+        {displayStreamMode(systemStatus, providerStatus.activeProvider, systemStatus.mode)}
       </p>
 
       <div className="brain-metrics">
@@ -79,7 +93,7 @@ function DataStreamsPanel() {
 
         <div>
           <span>Provider</span>
-          <strong>{displayState(providerStatus.activeProvider)}</strong>
+          <strong>{displayResolvedProvider(systemStatus, providerStatus)}</strong>
         </div>
 
         <div>
@@ -89,7 +103,7 @@ function DataStreamsPanel() {
 
         <div>
           <span>Fallback</span>
-          <strong>{displayFallbackStatus(providerStatus.activeProvider)}</strong>
+          <strong>{displayFallbackStatus(systemStatus, providerStatus.activeProvider)}</strong>
         </div>
 
         <div>

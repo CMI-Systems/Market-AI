@@ -7,7 +7,10 @@ const {
   buildStrategicEnvironment
 } = require("./cognitionSnapshotStore");
 const { getMarketHoursStatus } = require("./marketHours");
-const { getProviderStatus } = require("./marketProviderService");
+const {
+  getProviderStatus,
+  isAlpacaAvailable
+} = require("./marketProviderService");
 const { buildProductionHealth } = require("./productionHealthService");
 const { getStreamStatus } = require("./streamController");
 
@@ -46,6 +49,54 @@ function calculateScore({ providerActive, marketOpen, runtimeHealthy, brainsActi
     (brainsActive ? 15 : 0);
 }
 
+function resolveStreamMode({ backendOnline, marketHours, providerStatus, env, options = {} }) {
+  const marketOpen = Boolean(marketHours.isOpen);
+  const alpacaConnected = Boolean(
+    backendOnline &&
+    providerStatus.activeProvider === "ALPACA" &&
+    providerStatus.providerHealth === "HEALTHY" &&
+    isAlpacaAvailable(env, options)
+  );
+
+  if (backendOnline && alpacaConnected && marketOpen) {
+    return {
+      streamMode: "LIVE_ALPACA",
+      provider: "ALPACA",
+      simulationActive: false,
+      marketStatus: "OPEN",
+      environment: "LIVE_MARKET"
+    };
+  }
+
+  if (marketOpen && !alpacaConnected) {
+    return {
+      streamMode: "FALLBACK_SIMULATION",
+      provider: "SIMULATION",
+      simulationActive: true,
+      marketStatus: "OPEN",
+      environment: "LOCAL_FALLBACK"
+    };
+  }
+
+  if (marketHours.reason === "weekend" || marketHours.reason === "holiday") {
+    return {
+      streamMode: "MARKET_CLOSED_SIMULATION",
+      provider: "SIMULATION",
+      simulationActive: true,
+      marketStatus: "CLOSED",
+      environment: "MARKET_CLOSED"
+    };
+  }
+
+  return {
+    streamMode: "AFTER_HOURS_SIMULATION",
+    provider: "SIMULATION",
+    simulationActive: true,
+    marketStatus: "CLOSED",
+    environment: "AFTER_HOURS"
+  };
+}
+
 function buildAiccSystemStatus(options = {}) {
   const env = options.env || process.env;
   const config = options.config || loadEnvironmentConfig(env);
@@ -57,7 +108,8 @@ function buildAiccSystemStatus(options = {}) {
   const confidence = options.confidence || buildConfidence();
   const environment = options.environment || buildStrategicEnvironment();
   const priorityFeed = options.priorityFeed || buildPriorityFeedEndpoint();
-  const providerStatus = options.providerStatus || getProviderStatus({ env });
+  const providerOptions = { env, simulate: options.simulate };
+  const providerStatus = options.providerStatus || getProviderStatus(providerOptions);
 
   const backendOnline = true;
   const activeProvider = providerStatus.activeProvider;
@@ -69,7 +121,14 @@ function buildAiccSystemStatus(options = {}) {
   );
   const runtime = runtimeState(health);
   const runtimeHealthy = runtime === "HEALTHY";
-  const liveDataActive = backendOnline && providerActive && marketOpen;
+  const streamState = resolveStreamMode({
+    backendOnline,
+    marketHours,
+    providerStatus,
+    env,
+    options: providerOptions
+  });
+  const liveDataActive = streamState.streamMode === "LIVE_ALPACA";
   const brainsActive = liveDataActive || Boolean(streamStatus.active);
   const backendConfidence = normalizePercent(confidence.score || overview.confidence?.score);
   const score = backendConfidence && backendConfidence > 0
@@ -87,11 +146,7 @@ function buildAiccSystemStatus(options = {}) {
       ? "LIVE_ANALYSIS"
       : "SIMULATION";
 
-  const normalizedEnvironment = liveDataActive
-    ? "LIVE_MARKET"
-    : providerActive && !marketOpen
-      ? "AFTER_HOURS_SIMULATION"
-      : "LOCAL_FALLBACK";
+  const normalizedEnvironment = streamState.environment;
 
   const stability = !backendOnline
     ? "OFFLINE"
@@ -118,9 +173,11 @@ function buildAiccSystemStatus(options = {}) {
   return {
     backend: backendOnline ? "ONLINE" : "OFFLINE",
     mode,
-    marketStatus: marketOpen ? "OPEN" : "CLOSED",
+    streamMode: streamState.streamMode,
+    simulationActive: streamState.simulationActive,
+    marketStatus: streamState.marketStatus,
     runtime,
-    provider: activeProvider,
+    provider: streamState.provider,
     primaryProvider: providerStatus.primaryProvider,
     secondaryProvider: providerActive ? `${activeProvider}_ACTIVE` : "SIMULATION_ACTIVE",
     fallbackProvider: providerStatus.fallbackProvider,
@@ -157,5 +214,6 @@ module.exports = {
   buildAiccSystemStatus,
   calculateScore,
   confidenceLabel,
-  normalizePercent
+  normalizePercent,
+  resolveStreamMode
 };

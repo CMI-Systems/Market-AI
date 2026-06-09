@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import "../styles/ReplayCenter.css";
 
 const sessionVerdict = [
@@ -137,6 +138,8 @@ const nextSessionFocus = [
 ];
 
 function ReplayCenter() {
+  const location = useLocation();
+  const journalEntry = location.state?.journalEntry || null;
   const [selectedTradeId, setSelectedTradeId] = useState(sampleTrades[0].id);
 
   const selectedTrade = useMemo(
@@ -151,6 +154,46 @@ function ReplayCenter() {
         <h1>REPLAY CENTER</h1>
         <p>What happened, why it happened, how the operator performed, and what improves next.</p>
       </header>
+
+      {journalEntry && (
+        <section className="replay-section replay-operator-debrief">
+          <div className="replay-section-title">
+            <span>Journal Context</span>
+            <h2>REVIEWING JOURNAL ENTRY</h2>
+          </div>
+
+          <div className="replay-debrief-grid">
+            <div className="replay-debrief-card">
+              <span>Symbol</span>
+              <strong>{journalEntry.symbol || "AAPL"}</strong>
+            </div>
+            <div className="replay-debrief-card">
+              <span>Direction</span>
+              <strong>{journalEntry.direction || "LONG"}</strong>
+            </div>
+            <div className="replay-debrief-card">
+              <span>Result</span>
+              <strong>{journalEntry.result || "WIN"}</strong>
+            </div>
+            <div className="replay-debrief-card">
+              <span>Behavioral Tags</span>
+              <strong>{journalEntry.behavioralTags?.join(", ") || "No tags selected"}</strong>
+            </div>
+            <div className="replay-debrief-card">
+              <span>Trade Thesis</span>
+              <strong>{journalEntry.tradeThesis || "No thesis supplied."}</strong>
+            </div>
+            <div className="replay-debrief-card">
+              <span>Execution Review</span>
+              <strong>{journalEntry.executionReview || "No execution review supplied."}</strong>
+            </div>
+            <div className="replay-debrief-card">
+              <span>Behavioral Reflection</span>
+              <strong>{journalEntry.behavioralReflection || "No behavioral reflection supplied."}</strong>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="replay-section replay-session-verdict replay-operator-performance">
         <div className="replay-section-title">

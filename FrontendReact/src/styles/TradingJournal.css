@@ -19,6 +19,52 @@
   border-color: rgba(57, 255, 136, 0.22);
 }
 
+.journal-assessment-layer {
+  border-color: rgba(57, 255, 136, 0.3);
+  background:
+    linear-gradient(135deg, rgba(5, 24, 32, 0.94), rgba(5, 15, 32, 0.9));
+}
+
+.journal-assessment-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(140px, 1fr));
+  gap: 14px;
+}
+
+.journal-assessment-card {
+  min-height: 112px;
+  padding: 16px;
+  border-radius: 10px;
+  background: rgba(0, 10, 25, 0.72);
+  box-shadow: inset 0 -1px 0 rgba(83, 211, 218, 0.12);
+}
+
+.journal-assessment-card span {
+  display: block;
+  color: #8fa6b8;
+  font-size: 0.66rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.journal-assessment-card strong {
+  display: block;
+  margin-top: 10px;
+  color: #39ff88;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+
+.journal-assessment-card:first-child strong {
+  font-size: 1.35rem;
+}
+
+.journal-assessment-card:nth-last-child(-n + 2) {
+  grid-column: span 2;
+}
+
 .journal-record-grid,
 .journal-two-column,
 .journal-tag-grid {
@@ -92,9 +138,14 @@
 }
 
 @media (max-width: 1000px) {
+  .journal-assessment-grid,
   .journal-record-grid,
   .journal-two-column,
   .journal-tag-grid {
     grid-template-columns: 1fr;
+  }
+
+  .journal-assessment-card:nth-last-child(-n + 2) {
+    grid-column: auto;
   }
 }

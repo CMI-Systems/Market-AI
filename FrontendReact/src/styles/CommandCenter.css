@@ -1215,12 +1215,12 @@
 }
 
 .verdict-banner-section {
-  padding: 30px;
-  border-color: rgba(57, 255, 136, 0.32);
+  padding: 34px;
+  border-color: rgba(57, 255, 136, 0.42);
   background:
     linear-gradient(135deg, rgba(6, 36, 36, 0.96), rgba(5, 15, 32, 0.96));
   box-shadow:
-    0 0 46px rgba(57, 255, 136, 0.12),
+    0 0 56px rgba(57, 255, 136, 0.16),
     inset 0 0 34px rgba(83, 211, 218, 0.05);
 }
 
@@ -1233,7 +1233,7 @@
 .verdict-banner-header h2 {
   margin: 0;
   color: #39ff88;
-  font-size: 2.65rem;
+  font-size: 3.15rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1248,13 +1248,13 @@
 
 .verdict-banner-grid {
   display: grid;
-  grid-template-columns: minmax(320px, 1.6fr) repeat(4, minmax(150px, 1fr));
+  grid-template-columns: minmax(360px, 1.8fr) repeat(3, minmax(170px, 1fr));
   gap: 16px;
 }
 
 .verdict-metric-card {
-  min-height: 128px;
-  padding: 18px;
+  min-height: 150px;
+  padding: 22px;
   border: 1px solid rgba(83, 211, 218, 0.22);
   border-radius: 14px;
   background: rgba(5, 15, 32, 0.9);
@@ -1274,14 +1274,68 @@
   display: block;
   margin-top: 12px;
   color: #e8fbff;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .verdict-metric-primary strong {
   color: #39ff88;
-  font-size: 1.6rem;
+  font-size: 1.95rem;
+}
+
+.verdict-meter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.verdict-meter-card {
+  padding: 18px;
+  border: 1px solid rgba(57, 255, 136, 0.2);
+  border-radius: 14px;
+  background: rgba(0, 14, 24, 0.82);
+}
+
+.verdict-meter-card > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.verdict-meter-card span {
+  color: #8fa6b8;
+  font-size: 0.66rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.verdict-meter-card strong {
+  color: #39ff88;
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+}
+
+.verdict-meter-track {
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(83, 211, 218, 0.18);
+  border-radius: 999px;
+  background: rgba(2, 8, 23, 0.88);
+}
+
+.verdict-meter-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #39ff88, #53d3da);
+}
+
+.reliability-meter-track i {
+  background: linear-gradient(90deg, #53d3da, #bfefff);
 }
 
 .mission-briefing-section {
@@ -1384,6 +1438,10 @@
   grid-template-columns: minmax(420px, 2fr) minmax(220px, 1fr) minmax(220px, 1fr);
   gap: 16px;
   align-items: stretch;
+}
+
+.mission-briefing-body-focused {
+  grid-template-columns: 1fr;
 }
 
 .operator-briefing-card {
@@ -1497,6 +1555,22 @@
   min-height: 48px;
 }
 
+.brain-card-details {
+  margin-top: 10px;
+}
+
+.brain-card-details summary {
+  cursor: pointer;
+  color: #8fb7c9;
+  font-size: 0.68rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.brain-card-details .overview-status-list {
+  margin-top: 12px;
+}
+
 .spotlight-hero-section {
   padding: 28px;
   border-color: rgba(83, 211, 218, 0.28);
@@ -1536,7 +1610,7 @@
 
 .market-story-grid {
   display: grid;
-  grid-template-columns: minmax(360px, 1.4fr) repeat(2, minmax(260px, 1fr));
+  grid-template-columns: minmax(360px, 1.25fr) repeat(2, minmax(260px, 1fr));
   gap: 16px;
 }
 
@@ -1549,7 +1623,7 @@
 }
 
 .market-story-narrative-card {
-  grid-row: span 2;
+  grid-column: span 1;
 }
 
 .market-story-narrative-card strong {
@@ -2546,6 +2620,7 @@
 
 @media (max-width: 768px) {
   .verdict-banner-grid,
+  .verdict-meter-grid,
   .market-story-grid {
     grid-template-columns: 1fr;
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   getAdaptiveSignals,
   getBrainStatus,
@@ -1180,6 +1180,8 @@ function CommandCenter() {
   const aiccKeyRisks = Array.isArray(aiccNarrative.keyRisks)
     ? aiccNarrative.keyRisks.slice(0, 4)
     : ["Limited validated risk context"];
+  const aiccPrimaryDriver = aiccKeyDrivers[0] || "Limited validated driver context";
+  const aiccPrimaryRisk = aiccKeyRisks[0] || "Limited validated risk context";
   const renderMarketChartCard = ({
     title,
     symbol,
@@ -1380,123 +1382,154 @@ function CommandCenter() {
           <span><i className="live-dot"></i> Failsafe Monitoring</span>
         </div>
 
-        <section className="command-section executive-intelligence-section">
-          <h2>AICC Market Assessment</h2>
-          <p className="executive-subtitle">
-            {aiccNarrativeHeadline}
-          </p>
+        <section className="command-section executive-intelligence-section mission-briefing-section">
+          <div className="mission-briefing-header">
+            <div>
+              <span className="mission-eyebrow">AICC Mission Briefing</span>
+              <h2>AICC Market Assessment</h2>
+              <p className="executive-subtitle">
+                {aiccNarrativeHeadline}
+              </p>
+            </div>
+            <div className="mission-confidence-pill">
+              <span>Overall Confidence</span>
+              <strong>{aiccSummary.overallConfidence ?? 45}%</strong>
+            </div>
+          </div>
 
-          <div className="executive-intelligence-grid">
-            <div className="executive-card">
+          <div className="mission-briefing-grid">
+            <div className="mission-metric-card mission-metric-card-primary">
               <span>Consensus</span>
               <strong>{aiccSummary.consensusState || "ELEVATED_UNCERTAINTY"}</strong>
             </div>
 
-            <div className="executive-card">
+            <div className="mission-metric-card">
               <span>Regime</span>
               <strong>{aiccSummary.regime || "TRANSITION"}</strong>
             </div>
 
-            <div className="executive-card">
+            <div className="mission-metric-card">
               <span>Confidence</span>
               <strong>{aiccSummary.overallConfidence ?? 45}%</strong>
             </div>
 
-            <div className="executive-card">
+            <div className="mission-metric-card">
               <span>Reliability</span>
               <strong>{aiccFailsafe.reliability ?? 45}%</strong>
             </div>
+          </div>
 
-            <div className="executive-card">
-              <span>Risk</span>
-              <strong>{aiccFailsafe.riskEscalation || "ELEVATED"}</strong>
+          <div className="mission-briefing-body">
+            <div className="operator-briefing-card">
+              <h3>Operator Briefing</h3>
+              <p>{aiccNarrative.detailedNarrative || aiccShortNarrative}</p>
+              <p>{aiccNarrative.riskNarrative || "AICC Intelligence Limited"}</p>
+            </div>
+
+            <div className="primary-intel-card">
+              <span>Primary Driver</span>
+              <strong>{aiccPrimaryDriver}</strong>
+            </div>
+
+            <div className="primary-intel-card primary-risk-card">
+              <span>Primary Risk</span>
+              <strong>{aiccPrimaryRisk}</strong>
             </div>
           </div>
 
-          <div className="executive-brief-card">
-            <h3>Operator Briefing</h3>
-            <p>{aiccNarrative.detailedNarrative || aiccShortNarrative}</p>
-            <p>{aiccNarrative.riskNarrative || "AICC Intelligence Limited"}</p>
+          <div className="mission-driver-risk-grid">
+            <div>
+              <h3>Key Drivers</h3>
+              {aiccKeyDrivers.map((driver, index) => (
+                <p key={`assessment-driver-${index}`}>Driver {index + 1}: {driver}</p>
+              ))}
+            </div>
 
-            {aiccKeyDrivers.map((driver, index) => (
-              <p key={`assessment-driver-${index}`}>Driver {index + 1}: {driver}</p>
-            ))}
-
-            {aiccKeyRisks.map((risk, index) => (
-              <p key={`assessment-risk-${index}`}>Risk {index + 1}: {risk}</p>
-            ))}
+            <div>
+              <h3>Key Risks</h3>
+              {aiccKeyRisks.map((risk, index) => (
+                <p key={`assessment-risk-${index}`}>Risk {index + 1}: {risk}</p>
+              ))}
+            </div>
           </div>
+        </section>
+
+        <section className="intelligence-stack-ribbon" aria-label="AICC intelligence stack">
+          {["TACTICAL", "BEHAVIORAL", "FAILSAFE", "CONSENSUS", "REGIME", "NARRATIVE"].map((layer, index, stack) => (
+            <Fragment key={layer}>
+              <span>{layer}</span>
+              {index < stack.length - 1 && <strong aria-hidden="true">→</strong>}
+            </Fragment>
+          ))}
         </section>
 
         <section className="command-section overview-brain-section">
           <h2>AICC Intelligence Panel</h2>
-          <div className="overview-brain-grid">
-            <div className="overview-brain-card">
+          <div className="overview-brain-grid compressed-brain-grid">
+            <div className="overview-brain-card compressed-brain-card">
               <h3>Tactical Brain Summary</h3>
+              <div className="compressed-brain-state">
+                <span>State</span>
+                <strong>{aiccTactical.tacticalState || "NEUTRAL_TRANSITION"}</strong>
+              </div>
               <div className="overview-status-list">
-                <div><span>Trend</span><strong>{aiccTactical.trend || "NEUTRAL"}</strong></div>
-                <div><span>Momentum</span><strong>{aiccTactical.momentum || "SLOWING"}</strong></div>
-                <div><span>Structure</span><strong>{aiccTactical.structure || "RANGE"}</strong></div>
                 <div><span>Confidence</span><strong>{aiccTactical.confidence ?? 45}%</strong></div>
+                <div><span>Key Metrics</span><strong>{aiccTactical.trend || "NEUTRAL"} / {aiccTactical.momentum || "SLOWING"} / {aiccTactical.structure || "RANGE"}</strong></div>
               </div>
             </div>
 
-            <div className="overview-brain-card">
+            <div className="overview-brain-card compressed-brain-card">
               <h3>Behavioral Brain Summary</h3>
+              <div className="compressed-brain-state">
+                <span>State</span>
+                <strong>{aiccBehavioral.behavioralState || "TRANSITIONING_BEHAVIOR"}</strong>
+              </div>
               <div className="overview-status-list">
-                <div><span>State</span><strong>{aiccBehavioral.behavioralState || "TRANSITIONING_BEHAVIOR"}</strong></div>
-                <div><span>Participation</span><strong>{aiccBehavioral.participation || "WEAK_PARTICIPATION"}</strong></div>
-                <div><span>Leadership</span><strong>{aiccBehavioral.leadership || "NO_CLEAR_LEADERSHIP"}</strong></div>
                 <div><span>Confidence</span><strong>{aiccBehavioral.confidence ?? 45}%</strong></div>
+                <div><span>Key Metrics</span><strong>{aiccBehavioral.participation || "WEAK_PARTICIPATION"} / {aiccBehavioral.leadership || "NO_CLEAR_LEADERSHIP"}</strong></div>
               </div>
             </div>
 
-            <div className="overview-brain-card">
+            <div className="overview-brain-card compressed-brain-card">
               <h3>Failsafe Brain Summary</h3>
+              <div className="compressed-brain-state">
+                <span>State</span>
+                <strong>{aiccFailsafe.failsafeState || "ELEVATED_UNCERTAINTY"}</strong>
+              </div>
               <div className="overview-status-list">
-                <div><span>State</span><strong>{aiccFailsafe.failsafeState || "ELEVATED_UNCERTAINTY"}</strong></div>
                 <div><span>Reliability</span><strong>{aiccFailsafe.reliability ?? 45}%</strong></div>
-                <div><span>Risk Escalation</span><strong>{aiccFailsafe.riskEscalation || "ELEVATED"}</strong></div>
-                <div><span>Validation</span><strong>{aiccFailsafe.validation || "WEAK_VALIDATION"}</strong></div>
+                <div><span>Key Metrics</span><strong>{aiccFailsafe.riskEscalation || "ELEVATED"} / {aiccFailsafe.validation || "WEAK_VALIDATION"}</strong></div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="command-section executive-intelligence-section">
-          <h2>Intelligence Spotlight</h2>
-          <p className="executive-subtitle">
-            {aiccNarrativeHeadline}
-          </p>
+        <section className="command-section executive-intelligence-section spotlight-hero-section">
+          <div className="spotlight-hero-header">
+            <span className="mission-eyebrow">Intelligence Spotlight</span>
+            <h2>{aiccNarrativeHeadline}</h2>
+            <p>{aiccNarrative.spotlightNarrative || aiccShortNarrative}</p>
+          </div>
 
-          <div className="executive-intelligence-grid">
-            <div className="executive-card">
-              <span>Narrative Headline</span>
-              <strong>{aiccNarrativeHeadline}</strong>
-            </div>
-
-            <div className="executive-card">
+          <div className="spotlight-hero-grid">
+            <div className="spotlight-theme-card">
               <span>Theme Strength</span>
               <strong>{aiccNarrative.confidence ?? aiccSummary.overallConfidence ?? 45}%</strong>
             </div>
 
-            <div className="executive-card">
-              <span>Regime</span>
-              <strong>{aiccSummary.regime || "TRANSITION"}</strong>
+            <div>
+              <h3>Key Drivers</h3>
+              {aiccKeyDrivers.map((driver, index) => (
+                <p key={`spotlight-driver-${index}`}>Driver {index + 1}: {driver}</p>
+              ))}
             </div>
-          </div>
 
-          <div className="executive-brief-card">
-            <h3>{aiccNarrativeHeadline}</h3>
-            <p>{aiccNarrative.spotlightNarrative || aiccShortNarrative}</p>
-
-            {aiccKeyDrivers.map((driver, index) => (
-              <p key={`spotlight-driver-${index}`}>Driver {index + 1}: {driver}</p>
-            ))}
-
-            {aiccKeyRisks.map((risk, index) => (
-              <p key={`spotlight-risk-${index}`}>Risk {index + 1}: {risk}</p>
-            ))}
+            <div>
+              <h3>Key Risks</h3>
+              {aiccKeyRisks.map((risk, index) => (
+                <p key={`spotlight-risk-${index}`}>Risk {index + 1}: {risk}</p>
+              ))}
+            </div>
           </div>
         </section>
 

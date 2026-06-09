@@ -17,6 +17,7 @@ import {
   classifyHealth,
   translateDashboardStatus,
 } from "../services/intelligenceTranslator";
+import { analyzeAiccIntelligence } from "../services/intelligence/aiccIntelligenceOrchestrator";
 import {
   getMarketCandles,
   getMarketQuotes,
@@ -637,10 +638,6 @@ function CommandCenter() {
   const providerSignalEvidence = strongestProviderSignal
     ? `${strongestProviderSignal.symbol} ${strongestProviderSignal.signal} at ${strongestProviderSignal.confidence}% confidence`
     : "No active provider signal evidence";
-  const providerSignalBrief =
-    highConfidenceProviderSignals.length > 0
-      ? "Provider signal adapter reports active market watch conditions."
-      : "Provider signal adapter is not reporting high-confidence market watch conditions.";
   const strategicPosture =
     ["OPTIMAL", "FAVORABLE"].includes(normalizedEnvironment)
       ? "ENGAGE"
@@ -1046,15 +1043,6 @@ function CommandCenter() {
     providerRiskDominates
       ? "HIGH"
       : escalationLevel === "NONE" ? "LOW" : escalationLevel;
-  const executiveBrief = [
-    `Consensus is ${consensusStrength.toLowerCase()} with ${finalConfidenceScore}% final intelligence confidence.`,
-    `Memory state is ${memoryState.toLowerCase()} with ${memoryRecurrence.toLowerCase()} recurrence and ${influenceLevel.toLowerCase()} influence.`,
-    providerSignalBrief,
-    `Strongest provider signal: ${providerSignalEvidence}.`,
-    `Behavioral alignment is ${String(brainStatus?.behavioralBrain?.bias || "aligned").toLowerCase()} while tactical cognition is ${String(brainStatus?.tacticalBrain?.status || "observing").toLowerCase()}.`,
-    `Failsafe protection is ${String(protectionStatus).toLowerCase()} and escalation risk is ${String(escalationLevel).toLowerCase()}.`,
-    `Recommended operator posture: ${recommendedAction}.`,
-  ];
   const getMarketChartData = (candles, quote) => {
     const latestCandle = candles[candles.length - 1] || null;
     const lastPrice = quote?.price || latestCandle?.close || 0;
@@ -1082,6 +1070,115 @@ function CommandCenter() {
   const primaryChartData = getMarketChartData(overviewCandles, overviewQuote);
   const secondaryChartData = getMarketChartData(secondaryCandles, secondaryQuote);
   const overviewChangePercent = primaryChartData.changePercent;
+  const aiccDataStreams = [
+    {
+      name: "provider",
+      status: providerDiagnostics.providerHealth || "UNKNOWN",
+      warnings: providerDiagnostics.warnings || [],
+    },
+    {
+      name: "webull",
+      status: providerDiagnostics.webull?.status || "UNKNOWN",
+      warnings: providerDiagnostics.webull?.warnings || [],
+    },
+    {
+      name: "alpaca",
+      status: providerDiagnostics.alpaca?.status || "UNKNOWN",
+      warnings: providerDiagnostics.alpaca?.warnings || [],
+    },
+    {
+      name: "fallback",
+      status: providerDiagnostics.fallback?.status || "UNKNOWN",
+      warnings: providerDiagnostics.fallback?.warnings || [],
+    },
+  ];
+  const aiccMarketPulse = {
+    breadth: {
+      percentPositive: providerSignals.length
+        ? Math.round((highConfidenceProviderSignals.length / providerSignals.length) * 100)
+        : Math.round(normalizedConfidenceScore * 100),
+    },
+    volumeRatio: primaryChartData.maxVolume > 0 ? 1 : 0.75,
+    volatility: liquidityPressure?.volatility === "ELEVATED" ? 65 : 35,
+    riskScore: threatLevelScore,
+    trendScore: Number(overviewChangePercent) >= 0 ? 65 : 42,
+    history: predictionEntries.map((entry) => ({
+      regime: entry.environment,
+      state: entry.consensusState,
+    })),
+  };
+  const aiccMarketIntelligence = {
+    dataQuality: providerHealthy ? 82 : 48,
+    leadership: {
+      growth: Number(overviewChangePercent) >= 0 ? 1.5 : 0.2,
+      value: 0.6,
+      defensive: providerRiskDominates ? 1.4 : 0.2,
+      bond: providerRiskDominates ? 1 : -0.2,
+    },
+    rotation: {
+      riskOn: highConfidenceProviderSignals.length ? 68 : 45,
+      safety: providerRiskDominates ? 72 : 40,
+    },
+    institutionalFlow: institutionalFlow?.flowStrength === "HIGH" ? 75 : 55,
+    dominantNarrative: dominantTheme,
+    narrativeAdoption: memoryStrengthScore,
+    drivers: signalReasons.slice(0, 3),
+    risks: failsafeForecast === "ENGAGED"
+      ? ["failsafe protection elevated", "provider risk context"]
+      : ["provider reliability", "consensus stability"],
+  };
+  const aiccGlobalScan = {
+    riskScore: threatLevelScore,
+    trendScore: Number(overviewChangePercent) >= 0 ? 65 : 42,
+    volatility: liquidityPressure?.volatility === "ELEVATED" ? 65 : 35,
+    history: predictionEntries.map((entry) => ({
+      regime: entry.environment,
+      state: entry.consensusState,
+    })),
+  };
+  const aiccNewsletterData = {
+    dominantNarrative: dominantTheme,
+    mentionCount: priorityTimelineEvents.length,
+    symbolBreadth: aiccMarketPulse.breadth.percentPositive,
+  };
+  const aiccIntelligence = analyzeAiccIntelligence({
+    symbol: selectedOverviewSymbol,
+    candles: overviewCandles,
+    quote: overviewQuote,
+    marketContext: activeEnvironment,
+    benchmarkCandles: secondaryCandles,
+    sectorContext: {
+      performancePct: Number(overviewChangePercent) || 0,
+    },
+    marketPulse: aiccMarketPulse,
+    marketIntelligence: aiccMarketIntelligence,
+    globalScan: aiccGlobalScan,
+    newsletterData: aiccNewsletterData,
+    crossAssetData: {
+      assetReturns: aiccMarketIntelligence.leadership,
+    },
+    dataStreams: aiccDataStreams,
+    history: predictionEntries.map((entry) => ({
+      state: entry.consensusState || entry.environment,
+      regime: entry.environment,
+    })),
+  });
+  const aiccSummary = aiccIntelligence.summary || {};
+  const aiccNarrative = aiccIntelligence.narrative || {};
+  const aiccTactical = aiccIntelligence.tactical || {};
+  const aiccBehavioral = aiccIntelligence.behavioral || {};
+  const aiccFailsafe = aiccIntelligence.failsafe || {};
+  const aiccNarrativeHeadline = aiccSummary.narrativeHeadline || "AICC Intelligence Limited";
+  const aiccShortNarrative =
+    aiccNarrative.shortNarrative ||
+    aiccNarrative.spotlightNarrative ||
+    "AICC Intelligence Limited";
+  const aiccKeyDrivers = Array.isArray(aiccNarrative.keyDrivers)
+    ? aiccNarrative.keyDrivers.slice(0, 4)
+    : ["Limited validated driver context"];
+  const aiccKeyRisks = Array.isArray(aiccNarrative.keyRisks)
+    ? aiccNarrative.keyRisks.slice(0, 4)
+    : ["Limited validated risk context"];
   const renderMarketChartCard = ({
     title,
     symbol,
@@ -1318,11 +1415,15 @@ function CommandCenter() {
             </div>
 
             <div className="overview-side-card">
-              <h3>Regime Status</h3>
+              <h3>AICC Intelligence Summary</h3>
               <div className="overview-status-list">
-                <div><span>Environment</span><strong>{environmentDisplay}</strong></div>
-                <div><span>Confidence</span><strong>{finalConfidenceScore}%</strong></div>
-                <div><span>Action</span><strong>{recommendedAction}</strong></div>
+                <div><span>Tactical State</span><strong>{aiccSummary.tacticalState || "NEUTRAL_TRANSITION"}</strong></div>
+                <div><span>Behavioral State</span><strong>{aiccSummary.behavioralState || "TRANSITIONING_BEHAVIOR"}</strong></div>
+                <div><span>Failsafe State</span><strong>{aiccSummary.failsafeState || "ELEVATED_UNCERTAINTY"}</strong></div>
+                <div><span>Consensus State</span><strong>{aiccSummary.consensusState || "ELEVATED_UNCERTAINTY"}</strong></div>
+                <div><span>Regime</span><strong>{aiccSummary.regime || "TRANSITION"}</strong></div>
+                <div><span>Narrative</span><strong>{aiccNarrativeHeadline}</strong></div>
+                <div><span>Overall Confidence</span><strong>{aiccSummary.overallConfidence ?? 45}%</strong></div>
               </div>
             </div>
 
@@ -1353,30 +1454,30 @@ function CommandCenter() {
             <div className="overview-brain-card">
               <h3>Tactical Brain</h3>
               <div className="overview-status-list">
-                <div><span>Trend</span><strong>{Number(overviewChangePercent) >= 0 ? "RISING" : "PRESSURED"}</strong></div>
-                <div><span>Momentum</span><strong>{strongestProviderSignal ? "ACTIVE" : "OBSERVING"}</strong></div>
-                <div><span>Signal Bias</span><strong>{strongestProviderSignal?.signal || displayedTacticalBrain.bias}</strong></div>
-                <div><span>Confidence</span><strong>{strongestProviderSignal?.confidence || getConsensusInfluence(displayedTacticalBrain)}%</strong></div>
+                <div><span>Trend</span><strong>{aiccTactical.trend || "NEUTRAL"}</strong></div>
+                <div><span>Momentum</span><strong>{aiccTactical.momentum || "SLOWING"}</strong></div>
+                <div><span>Structure</span><strong>{aiccTactical.structure || "RANGE"}</strong></div>
+                <div><span>Confidence</span><strong>{aiccTactical.confidence ?? 45}%</strong></div>
               </div>
             </div>
 
             <div className="overview-brain-card">
               <h3>Behavioral Brain</h3>
               <div className="overview-status-list">
-                <div><span>Sentiment</span><strong>{providerRiskDominates ? "CAUTION" : displayedBehavioralBrain.bias}</strong></div>
-                <div><span>Participation</span><strong>{topProviderSignals.length ? "ACTIVE" : "OBSERVING"}</strong></div>
-                <div><span>Discipline Risk</span><strong>{providerRiskDominates ? "ELEVATED" : "NORMAL"}</strong></div>
-                <div><span>Behavioral Score</span><strong>{getConsensusInfluence(displayedBehavioralBrain, -8)}</strong></div>
+                <div><span>Behavioral State</span><strong>{aiccBehavioral.behavioralState || "TRANSITIONING_BEHAVIOR"}</strong></div>
+                <div><span>Participation</span><strong>{aiccBehavioral.participation || "WEAK_PARTICIPATION"}</strong></div>
+                <div><span>Leadership</span><strong>{aiccBehavioral.leadership || "NO_CLEAR_LEADERSHIP"}</strong></div>
+                <div><span>Confidence</span><strong>{aiccBehavioral.confidence ?? 45}%</strong></div>
               </div>
             </div>
 
             <div className="overview-brain-card">
               <h3>Failsafe Brain</h3>
               <div className="overview-status-list">
-                <div><span>Risk State</span><strong>{riskState}</strong></div>
-                <div><span>Volatility Guard</span><strong>{providerHealthy ? "ACTIVE" : "MONITORING"}</strong></div>
-                <div><span>Conflict Detection</span><strong>{syncStatus === "CONFLICTED" ? "WATCH" : "CLEAR"}</strong></div>
-                <div><span>Protection</span><strong>{providerHealthy ? "ONLINE" : protectionStatus}</strong></div>
+                <div><span>Failsafe State</span><strong>{aiccFailsafe.failsafeState || "ELEVATED_UNCERTAINTY"}</strong></div>
+                <div><span>Reliability</span><strong>{aiccFailsafe.reliability ?? 45}%</strong></div>
+                <div><span>Risk Escalation</span><strong>{aiccFailsafe.riskEscalation || "ELEVATED"}</strong></div>
+                <div><span>Validation</span><strong>{aiccFailsafe.validation || "WEAK_VALIDATION"}</strong></div>
               </div>
             </div>
           </div>
@@ -1423,25 +1524,25 @@ function CommandCenter() {
         </section>
 
         <section className="command-section executive-intelligence-section">
-          <h2>AICC EXECUTIVE INTELLIGENCE</h2>
+          <h2>INTELLIGENCE SPOTLIGHT</h2>
           <p className="executive-subtitle">
-            Unified cognition synthesis and operator briefing.
+            {aiccNarrativeHeadline}
           </p>
 
           <div className="executive-intelligence-grid">
             <div className="executive-card">
               <span>Executive State</span>
-              <strong>{executiveState}</strong>
+              <strong>{aiccSummary.consensusState || executiveState}</strong>
             </div>
 
             <div className="executive-card">
               <span>Strategic Direction</span>
-              <strong>{executiveDirection}</strong>
+              <strong>{aiccSummary.regime || executiveDirection}</strong>
             </div>
 
             <div className="executive-card">
               <span>Confidence</span>
-              <strong>{finalConfidenceScore}%</strong>
+              <strong>{aiccSummary.overallConfidence ?? finalConfidenceScore}%</strong>
             </div>
 
             <div className="executive-card">
@@ -1456,18 +1557,25 @@ function CommandCenter() {
           </div>
 
           <div className="executive-brief-card">
-            <h3>EXECUTIVE BRIEF</h3>
+            <h3>{aiccNarrativeHeadline}</h3>
 
-            {executiveBrief.map((line, index) => (
-              <p key={index}>{line}</p>
+            <p>{aiccShortNarrative}</p>
+            <p>{aiccNarrative.spotlightNarrative || aiccNarrative.riskNarrative || "AICC Intelligence Limited"}</p>
+
+            {aiccKeyDrivers.map((driver, index) => (
+              <p key={`driver-${index}`}>Driver {index + 1}: {driver}</p>
+            ))}
+
+            {aiccKeyRisks.map((risk, index) => (
+              <p key={`risk-${index}`}>Risk {index + 1}: {risk}</p>
             ))}
           </div>
 
           <div className="executive-status-bar">
-            <span>CONSENSUS: {consensusStrength}</span>
-            <span>CONFIDENCE: {finalConfidenceScore}%</span>
-            <span>RISK: {executiveRisk}</span>
-            <span>FORECAST: {cognitiveTrajectory}</span>
+            <span>CONSENSUS: {aiccSummary.consensusState || consensusStrength}</span>
+            <span>CONFIDENCE: {aiccSummary.overallConfidence ?? finalConfidenceScore}%</span>
+            <span>RISK: {aiccFailsafe.riskEscalation || executiveRisk}</span>
+            <span>REGIME: {aiccSummary.regime || cognitiveTrajectory}</span>
             <span>ACTION: {recommendedAction}</span>
           </div>
         </section>

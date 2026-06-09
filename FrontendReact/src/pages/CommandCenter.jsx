@@ -31,6 +31,7 @@ import "../styles/CommandCenter.css";
 import GlobalScanPanel from "../components/GlobalScanPanel";
 import NewsLetterPanel from "../components/NewsLetterPanel";
 import MarketPulsePanel from "../components/MarketPulsePanel";
+import DataStreamsPanel from "../components/DataStreamsPanel";
 import InstitutionalAccumlationPanel from "../components/InstitutionalAccumlationPanel";
 import VolatilityCompressionPanel from "../components/VolatilityCompressionPanel";
 import CrisisManagementPanel from "../components/CrisisManagementPanel";
@@ -1379,7 +1380,128 @@ function CommandCenter() {
           <span><i className="live-dot"></i> Failsafe Monitoring</span>
         </div>
 
+        <section className="command-section executive-intelligence-section">
+          <h2>AICC Market Assessment</h2>
+          <p className="executive-subtitle">
+            {aiccNarrativeHeadline}
+          </p>
+
+          <div className="executive-intelligence-grid">
+            <div className="executive-card">
+              <span>Consensus</span>
+              <strong>{aiccSummary.consensusState || "ELEVATED_UNCERTAINTY"}</strong>
+            </div>
+
+            <div className="executive-card">
+              <span>Regime</span>
+              <strong>{aiccSummary.regime || "TRANSITION"}</strong>
+            </div>
+
+            <div className="executive-card">
+              <span>Confidence</span>
+              <strong>{aiccSummary.overallConfidence ?? 45}%</strong>
+            </div>
+
+            <div className="executive-card">
+              <span>Reliability</span>
+              <strong>{aiccFailsafe.reliability ?? 45}%</strong>
+            </div>
+
+            <div className="executive-card">
+              <span>Risk</span>
+              <strong>{aiccFailsafe.riskEscalation || "ELEVATED"}</strong>
+            </div>
+          </div>
+
+          <div className="executive-brief-card">
+            <h3>Operator Briefing</h3>
+            <p>{aiccNarrative.detailedNarrative || aiccShortNarrative}</p>
+            <p>{aiccNarrative.riskNarrative || "AICC Intelligence Limited"}</p>
+
+            {aiccKeyDrivers.map((driver, index) => (
+              <p key={`assessment-driver-${index}`}>Driver {index + 1}: {driver}</p>
+            ))}
+
+            {aiccKeyRisks.map((risk, index) => (
+              <p key={`assessment-risk-${index}`}>Risk {index + 1}: {risk}</p>
+            ))}
+          </div>
+        </section>
+
+        <section className="command-section overview-brain-section">
+          <h2>AICC Intelligence Panel</h2>
+          <div className="overview-brain-grid">
+            <div className="overview-brain-card">
+              <h3>Tactical Brain Summary</h3>
+              <div className="overview-status-list">
+                <div><span>Trend</span><strong>{aiccTactical.trend || "NEUTRAL"}</strong></div>
+                <div><span>Momentum</span><strong>{aiccTactical.momentum || "SLOWING"}</strong></div>
+                <div><span>Structure</span><strong>{aiccTactical.structure || "RANGE"}</strong></div>
+                <div><span>Confidence</span><strong>{aiccTactical.confidence ?? 45}%</strong></div>
+              </div>
+            </div>
+
+            <div className="overview-brain-card">
+              <h3>Behavioral Brain Summary</h3>
+              <div className="overview-status-list">
+                <div><span>State</span><strong>{aiccBehavioral.behavioralState || "TRANSITIONING_BEHAVIOR"}</strong></div>
+                <div><span>Participation</span><strong>{aiccBehavioral.participation || "WEAK_PARTICIPATION"}</strong></div>
+                <div><span>Leadership</span><strong>{aiccBehavioral.leadership || "NO_CLEAR_LEADERSHIP"}</strong></div>
+                <div><span>Confidence</span><strong>{aiccBehavioral.confidence ?? 45}%</strong></div>
+              </div>
+            </div>
+
+            <div className="overview-brain-card">
+              <h3>Failsafe Brain Summary</h3>
+              <div className="overview-status-list">
+                <div><span>State</span><strong>{aiccFailsafe.failsafeState || "ELEVATED_UNCERTAINTY"}</strong></div>
+                <div><span>Reliability</span><strong>{aiccFailsafe.reliability ?? 45}%</strong></div>
+                <div><span>Risk Escalation</span><strong>{aiccFailsafe.riskEscalation || "ELEVATED"}</strong></div>
+                <div><span>Validation</span><strong>{aiccFailsafe.validation || "WEAK_VALIDATION"}</strong></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="command-section executive-intelligence-section">
+          <h2>Intelligence Spotlight</h2>
+          <p className="executive-subtitle">
+            {aiccNarrativeHeadline}
+          </p>
+
+          <div className="executive-intelligence-grid">
+            <div className="executive-card">
+              <span>Narrative Headline</span>
+              <strong>{aiccNarrativeHeadline}</strong>
+            </div>
+
+            <div className="executive-card">
+              <span>Theme Strength</span>
+              <strong>{aiccNarrative.confidence ?? aiccSummary.overallConfidence ?? 45}%</strong>
+            </div>
+
+            <div className="executive-card">
+              <span>Regime</span>
+              <strong>{aiccSummary.regime || "TRANSITION"}</strong>
+            </div>
+          </div>
+
+          <div className="executive-brief-card">
+            <h3>{aiccNarrativeHeadline}</h3>
+            <p>{aiccNarrative.spotlightNarrative || aiccShortNarrative}</p>
+
+            {aiccKeyDrivers.map((driver, index) => (
+              <p key={`spotlight-driver-${index}`}>Driver {index + 1}: {driver}</p>
+            ))}
+
+            {aiccKeyRisks.map((risk, index) => (
+              <p key={`spotlight-risk-${index}`}>Risk {index + 1}: {risk}</p>
+            ))}
+          </div>
+        </section>
+
         <section className="command-section command-overview-section">
+          <h2>Charts</h2>
           <div className="command-chart-grid">
             {renderMarketChartCard({
               title: "Primary Market Chart",
@@ -1399,7 +1521,10 @@ function CommandCenter() {
               onTimeframeChange: setSelectedSecondaryTimeframe,
             })}
           </div>
+        </section>
 
+        <section className="command-section overview-feed-section">
+          <h2>Market Intelligence</h2>
           <div className="command-under-chart-grid">
             <div className="overview-side-card">
               <h3>Live Watchlist</h3>
@@ -1411,19 +1536,6 @@ function CommandCenter() {
                     <em>{row.confidence}%</em>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            <div className="overview-side-card">
-              <h3>AICC Intelligence Summary</h3>
-              <div className="overview-status-list">
-                <div><span>Tactical State</span><strong>{aiccSummary.tacticalState || "NEUTRAL_TRANSITION"}</strong></div>
-                <div><span>Behavioral State</span><strong>{aiccSummary.behavioralState || "TRANSITIONING_BEHAVIOR"}</strong></div>
-                <div><span>Failsafe State</span><strong>{aiccSummary.failsafeState || "ELEVATED_UNCERTAINTY"}</strong></div>
-                <div><span>Consensus State</span><strong>{aiccSummary.consensusState || "ELEVATED_UNCERTAINTY"}</strong></div>
-                <div><span>Regime</span><strong>{aiccSummary.regime || "TRANSITION"}</strong></div>
-                <div><span>Narrative</span><strong>{aiccNarrativeHeadline}</strong></div>
-                <div><span>Overall Confidence</span><strong>{aiccSummary.overallConfidence ?? 45}%</strong></div>
               </div>
             </div>
 
@@ -1446,47 +1558,10 @@ function CommandCenter() {
               </div>
             </div>
           </div>
-        </section>
 
-        <section className="command-section overview-brain-section">
-          <h2>Brain Intelligence</h2>
-          <div className="overview-brain-grid">
-            <div className="overview-brain-card">
-              <h3>Tactical Brain</h3>
-              <div className="overview-status-list">
-                <div><span>Trend</span><strong>{aiccTactical.trend || "NEUTRAL"}</strong></div>
-                <div><span>Momentum</span><strong>{aiccTactical.momentum || "SLOWING"}</strong></div>
-                <div><span>Structure</span><strong>{aiccTactical.structure || "RANGE"}</strong></div>
-                <div><span>Confidence</span><strong>{aiccTactical.confidence ?? 45}%</strong></div>
-              </div>
-            </div>
-
-            <div className="overview-brain-card">
-              <h3>Behavioral Brain</h3>
-              <div className="overview-status-list">
-                <div><span>Behavioral State</span><strong>{aiccBehavioral.behavioralState || "TRANSITIONING_BEHAVIOR"}</strong></div>
-                <div><span>Participation</span><strong>{aiccBehavioral.participation || "WEAK_PARTICIPATION"}</strong></div>
-                <div><span>Leadership</span><strong>{aiccBehavioral.leadership || "NO_CLEAR_LEADERSHIP"}</strong></div>
-                <div><span>Confidence</span><strong>{aiccBehavioral.confidence ?? 45}%</strong></div>
-              </div>
-            </div>
-
-            <div className="overview-brain-card">
-              <h3>Failsafe Brain</h3>
-              <div className="overview-status-list">
-                <div><span>Failsafe State</span><strong>{aiccFailsafe.failsafeState || "ELEVATED_UNCERTAINTY"}</strong></div>
-                <div><span>Reliability</span><strong>{aiccFailsafe.reliability ?? 45}%</strong></div>
-                <div><span>Risk Escalation</span><strong>{aiccFailsafe.riskEscalation || "ELEVATED"}</strong></div>
-                <div><span>Validation</span><strong>{aiccFailsafe.validation || "WEAK_VALIDATION"}</strong></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="command-section overview-feed-section">
           <div className="overview-feed-grid">
             <div className="overview-feed-card">
-              <h2>Signal Feed</h2>
+              <h2>Scanner Results</h2>
               <div className="overview-signal-grid">
                 {(topProviderSignals.length ? topProviderSignals : watchlistPreviewRows).slice(0, 6).map((signal) => (
                   <div className="overview-signal-card" key={`${signal.symbol}-${signal.signal}`}>
@@ -1499,7 +1574,7 @@ function CommandCenter() {
             </div>
 
             <div className="overview-feed-card">
-              <h2>Replay / Intelligence Timeline</h2>
+              <h2>Market Intelligence Modules</h2>
               <div className="overview-timeline-list">
                 {narrativeTimeline.slice(0, 5).map((event, index) => (
                   <div key={`${event.label}-${index}`}>
@@ -1510,7 +1585,28 @@ function CommandCenter() {
               </div>
             </div>
           </div>
+
+          <div className="command-grid">
+            <ExpansionPanel data={strategicEnvironment} />
+            <CrisisManagementPanel data={strategicEnvironment} />
+            <VolatilityCompressionPanel data={liquidityPressure} />
+            <InstitutionalAccumlationPanel data={institutionalFlow} />
+          </div>
         </section>
+
+        <details className="command-section">
+          <summary>Research Layer</summary>
+          <div className="command-grid">
+            <GlobalScanPanel />
+            <MarketPulsePanel
+              confidence={confidence}
+              liquidityPressure={liquidityPressure}
+              institutionalFlow={institutionalFlow}
+            />
+            <NewsLetterPanel />
+            <DataStreamsPanel />
+          </div>
+        </details>
 
         <section className="command-section compact-infrastructure-section">
           <div className="compact-infra-chip-row">
@@ -1520,63 +1616,6 @@ function CommandCenter() {
                 <strong>{chip.value}</strong>
               </div>
             ))}
-          </div>
-        </section>
-
-        <section className="command-section executive-intelligence-section">
-          <h2>INTELLIGENCE SPOTLIGHT</h2>
-          <p className="executive-subtitle">
-            {aiccNarrativeHeadline}
-          </p>
-
-          <div className="executive-intelligence-grid">
-            <div className="executive-card">
-              <span>Executive State</span>
-              <strong>{aiccSummary.consensusState || executiveState}</strong>
-            </div>
-
-            <div className="executive-card">
-              <span>Strategic Direction</span>
-              <strong>{aiccSummary.regime || executiveDirection}</strong>
-            </div>
-
-            <div className="executive-card">
-              <span>Confidence</span>
-              <strong>{aiccSummary.overallConfidence ?? finalConfidenceScore}%</strong>
-            </div>
-
-            <div className="executive-card">
-              <span>Forecast</span>
-              <strong>{cognitiveTrajectory}</strong>
-            </div>
-
-            <div className="executive-card">
-              <span>Operator Action</span>
-              <strong>{recommendedAction}</strong>
-            </div>
-          </div>
-
-          <div className="executive-brief-card">
-            <h3>{aiccNarrativeHeadline}</h3>
-
-            <p>{aiccShortNarrative}</p>
-            <p>{aiccNarrative.spotlightNarrative || aiccNarrative.riskNarrative || "AICC Intelligence Limited"}</p>
-
-            {aiccKeyDrivers.map((driver, index) => (
-              <p key={`driver-${index}`}>Driver {index + 1}: {driver}</p>
-            ))}
-
-            {aiccKeyRisks.map((risk, index) => (
-              <p key={`risk-${index}`}>Risk {index + 1}: {risk}</p>
-            ))}
-          </div>
-
-          <div className="executive-status-bar">
-            <span>CONSENSUS: {aiccSummary.consensusState || consensusStrength}</span>
-            <span>CONFIDENCE: {aiccSummary.overallConfidence ?? finalConfidenceScore}%</span>
-            <span>RISK: {aiccFailsafe.riskEscalation || executiveRisk}</span>
-            <span>REGIME: {aiccSummary.regime || cognitiveTrajectory}</span>
-            <span>ACTION: {recommendedAction}</span>
           </div>
         </section>
 
@@ -2310,29 +2349,6 @@ function CommandCenter() {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className="command-section">
-          <h2>Market Intelligence Modules</h2>
-          <div className="command-grid">
-            <GlobalScanPanel />
-            <MarketPulsePanel
-              confidence={confidence}
-              liquidityPressure={liquidityPressure}
-              institutionalFlow={institutionalFlow}
-            />
-            <NewsLetterPanel />
-          </div>
-        </section>
-
-        <section className="command-section">
-          <h2>Market Regime Intelligence</h2>
-          <div className="command-grid">
-            <ExpansionPanel data={strategicEnvironment} />
-            <CrisisManagementPanel data={strategicEnvironment} />
-            <VolatilityCompressionPanel data={liquidityPressure} />
-            <InstitutionalAccumlationPanel data={institutionalFlow} />
           </div>
         </section>
 

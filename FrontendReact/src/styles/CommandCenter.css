@@ -1224,10 +1224,18 @@
     inset 0 0 34px rgba(83, 211, 218, 0.05);
 }
 
+.market-status-section {
+  display: grid;
+  gap: 18px;
+  border-width: 1px;
+  background:
+    linear-gradient(135deg, rgba(2, 18, 28, 0.98), rgba(5, 15, 32, 0.96));
+}
+
 .verdict-banner-header {
   display: grid;
   gap: 8px;
-  margin-bottom: 22px;
+  margin-bottom: 0;
 }
 
 .verdict-banner-header h2 {
@@ -1253,12 +1261,12 @@
 }
 
 .verdict-metric-card {
-  min-height: 150px;
+  min-height: 132px;
   padding: 22px;
-  border: 1px solid rgba(83, 211, 218, 0.22);
-  border-radius: 14px;
-  background: rgba(5, 15, 32, 0.9);
-  box-shadow: inset 0 0 18px rgba(83, 211, 218, 0.04);
+  border: 0;
+  border-radius: 10px;
+  background: rgba(5, 15, 32, 0.72);
+  box-shadow: inset 0 -1px 0 rgba(83, 211, 218, 0.14);
 }
 
 .verdict-metric-card span,
@@ -1284,18 +1292,53 @@
   font-size: 1.95rem;
 }
 
+.market-status-answer-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr) minmax(280px, 1fr);
+  gap: 14px;
+}
+
+.market-status-answer-card {
+  min-height: 118px;
+  padding: 18px;
+  border-radius: 10px;
+  background: rgba(0, 14, 24, 0.72);
+}
+
+.market-status-answer-card span {
+  display: block;
+  color: #8fa6b8;
+  font-size: 0.66rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.market-status-answer-card strong {
+  display: block;
+  margin-top: 10px;
+  color: #e8fbff;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.market-status-answer-card p {
+  margin: 8px 0 0;
+  color: #b7c7e6;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .verdict-meter-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(260px, 1fr));
   gap: 16px;
-  margin-top: 16px;
 }
 
 .verdict-meter-card {
   padding: 18px;
-  border: 1px solid rgba(57, 255, 136, 0.2);
-  border-radius: 14px;
-  background: rgba(0, 14, 24, 0.82);
+  border: 0;
+  border-radius: 10px;
+  background: rgba(0, 14, 24, 0.72);
 }
 
 .verdict-meter-card > div:first-child {
@@ -1340,12 +1383,9 @@
 
 .mission-briefing-section {
   padding: 30px;
-  border-color: rgba(57, 255, 136, 0.28);
-  background:
-    linear-gradient(135deg, rgba(7, 28, 42, 0.96), rgba(5, 15, 32, 0.94));
-  box-shadow:
-    0 0 42px rgba(57, 255, 136, 0.1),
-    inset 0 0 32px rgba(83, 211, 218, 0.05);
+  border-color: rgba(83, 211, 218, 0.14);
+  background: rgba(5, 15, 32, 0.88);
+  box-shadow: none;
 }
 
 .mission-briefing-header {
@@ -1414,9 +1454,9 @@
 .mission-driver-risk-grid > div,
 .spotlight-hero-grid > div {
   padding: 18px;
-  border: 1px solid rgba(83, 211, 218, 0.2);
-  border-radius: 14px;
-  background: rgba(5, 15, 32, 0.9);
+  border: 0;
+  border-radius: 10px;
+  background: rgba(0, 14, 24, 0.72);
   box-shadow: inset 0 0 18px rgba(83, 211, 218, 0.04);
 }
 
@@ -1445,12 +1485,12 @@
 }
 
 .operator-briefing-card {
-  min-height: 220px;
+  min-height: 180px;
   padding: 24px;
-  border: 1px solid rgba(57, 255, 136, 0.2);
-  border-radius: 14px;
-  background: rgba(0, 14, 24, 0.88);
-  box-shadow: 0 0 28px rgba(57, 255, 136, 0.08);
+  border: 0;
+  border-radius: 10px;
+  background: rgba(0, 14, 24, 0.72);
+  box-shadow: none;
 }
 
 .operator-briefing-card h3,
@@ -1497,7 +1537,8 @@
   line-height: 1.55;
 }
 
-.intelligence-stack-ribbon {
+.intelligence-stack-ribbon,
+.intelligence-flow-panel {
   width: min(100%, 1760px);
   max-width: 1760px;
   margin: -6px auto 0;
@@ -1510,6 +1551,44 @@
   border: 1px solid rgba(83, 211, 218, 0.18);
   border-radius: 14px;
   background: rgba(3, 12, 24, 0.86);
+}
+
+.intelligence-flow-panel {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 8px;
+  padding: 18px;
+  border-color: rgba(83, 211, 218, 0.14);
+}
+
+.intelligence-flow-node {
+  width: min(320px, 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(0, 14, 24, 0.78);
+}
+
+.intelligence-flow-node span,
+.intelligence-flow-node strong,
+.intelligence-flow-panel b {
+  color: #dff7ff;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.intelligence-flow-node strong {
+  color: #39ff88;
+}
+
+.intelligence-flow-panel b {
+  color: #53d3da;
+  font-size: 1rem;
 }
 
 .intelligence-stack-ribbon span,
@@ -1530,6 +1609,28 @@
 
 .compressed-brain-card {
   padding: 16px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(5, 15, 32, 0.78);
+  box-shadow: none;
+}
+
+.subsystem-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.subsystem-card-header h3 {
+  color: #dff7ff;
+}
+
+.subsystem-card-header span {
+  color: #39ff88;
+  font-size: 0.66rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
 }
 
 .compressed-brain-state {
@@ -1573,9 +1674,8 @@
 
 .spotlight-hero-section {
   padding: 28px;
-  border-color: rgba(83, 211, 218, 0.28);
-  background:
-    linear-gradient(135deg, rgba(4, 21, 34, 0.96), rgba(9, 17, 34, 0.94));
+  border-color: rgba(83, 211, 218, 0.14);
+  background: rgba(5, 15, 32, 0.88);
 }
 
 .spotlight-hero-header {
@@ -1616,9 +1716,9 @@
 
 .market-story-grid > div {
   padding: 18px;
-  border: 1px solid rgba(83, 211, 218, 0.2);
-  border-radius: 14px;
-  background: rgba(5, 15, 32, 0.9);
+  border: 0;
+  border-radius: 10px;
+  background: rgba(0, 14, 24, 0.72);
   box-shadow: inset 0 0 18px rgba(83, 211, 218, 0.04);
 }
 
@@ -2621,6 +2721,7 @@
 @media (max-width: 768px) {
   .verdict-banner-grid,
   .verdict-meter-grid,
+  .market-status-answer-grid,
   .market-story-grid {
     grid-template-columns: 1fr;
   }

@@ -1411,9 +1411,9 @@ function CommandCenter() {
           <span><i className="live-dot"></i> Failsafe Monitoring</span>
         </div>
 
-        <section className="command-section executive-intelligence-section verdict-banner-section">
+        <section className="command-section executive-intelligence-section verdict-banner-section market-status-section">
           <div className="verdict-banner-header">
-            <span className="mission-eyebrow">AICC Verdict</span>
+            <span className="mission-eyebrow">Market Status</span>
             <h2>{aiccVerdict}</h2>
             <p>{aiccMarketStatusLine}</p>
           </div>
@@ -1435,8 +1435,28 @@ function CommandCenter() {
             </div>
 
             <div className="verdict-metric-card">
-              <span>Risk Environment</span>
+              <span>Risk State</span>
               <strong>{aiccRiskEnvironment}</strong>
+            </div>
+          </div>
+
+          <div className="market-status-answer-grid">
+            <div className="market-status-answer-card">
+              <span>What Is Happening</span>
+              <strong>{aiccVerdict}</strong>
+              <p>{aiccMarketBias} bias inside a {aiccRegimeState} regime.</p>
+            </div>
+
+            <div className="market-status-answer-card">
+              <span>Why</span>
+              <strong>{aiccPrimaryDriver}</strong>
+            </div>
+
+            <div className="market-status-answer-card">
+              <span>What To Monitor</span>
+              {aiccAreasToMonitor.slice(0, 3).map((area, index) => (
+                <p key={`status-monitor-${index}`}>{area}</p>
+              ))}
             </div>
           </div>
 
@@ -1469,7 +1489,7 @@ function CommandCenter() {
               <span className="mission-eyebrow">AICC Mission Briefing</span>
               <h2>AICC Market Assessment</h2>
               <p className="executive-subtitle">
-                Operator context from the current AICC stack.
+                Stack context and operator briefing.
               </p>
             </div>
           </div>
@@ -1505,11 +1525,14 @@ function CommandCenter() {
           </div>
         </section>
 
-        <section className="intelligence-stack-ribbon" aria-label="AICC intelligence stack">
+        <section className="intelligence-flow-panel" aria-label="AICC intelligence flow">
           {["TACTICAL", "BEHAVIORAL", "FAILSAFE", "CONSENSUS", "REGIME", "NARRATIVE"].map((layer, index, stack) => (
             <Fragment key={layer}>
-              <span>{layer}</span>
-              {index < stack.length - 1 && <strong aria-hidden="true">-&gt;</strong>}
+              <div className="intelligence-flow-node">
+                <span>{layer}</span>
+                <strong>ONLINE</strong>
+              </div>
+              {index < stack.length - 1 && <b aria-hidden="true">↓</b>}
             </Fragment>
           ))}
         </section>
@@ -1554,7 +1577,10 @@ function CommandCenter() {
           <h2>AICC Intelligence Panel</h2>
           <div className="overview-brain-grid compressed-brain-grid">
             <div className="overview-brain-card compressed-brain-card">
-              <h3>Tactical Brain Summary</h3>
+              <div className="subsystem-card-header">
+                <h3>Tactical Brain</h3>
+                <span>ONLINE</span>
+              </div>
               <div className="compressed-brain-state">
                 <span>State</span>
                 <strong>{aiccTactical.tacticalState || "NEUTRAL_TRANSITION"}</strong>
@@ -1569,7 +1595,10 @@ function CommandCenter() {
             </div>
 
             <div className="overview-brain-card compressed-brain-card">
-              <h3>Behavioral Brain Summary</h3>
+              <div className="subsystem-card-header">
+                <h3>Behavioral Brain</h3>
+                <span>ONLINE</span>
+              </div>
               <div className="compressed-brain-state">
                 <span>State</span>
                 <strong>{aiccBehavioral.behavioralState || "TRANSITIONING_BEHAVIOR"}</strong>
@@ -1584,7 +1613,10 @@ function CommandCenter() {
             </div>
 
             <div className="overview-brain-card compressed-brain-card">
-              <h3>Failsafe Brain Summary</h3>
+              <div className="subsystem-card-header">
+                <h3>Failsafe Brain</h3>
+                <span>ONLINE</span>
+              </div>
               <div className="compressed-brain-state">
                 <span>State</span>
                 <strong>{aiccFailsafe.failsafeState || "ELEVATED_UNCERTAINTY"}</strong>
@@ -1695,7 +1727,7 @@ function CommandCenter() {
         </section>
 
         <details className="command-section">
-          <summary>Research Layer</summary>
+          <summary>INTELLIGENCE SOURCES</summary>
           <div className="command-grid">
             <GlobalScanPanel />
             <MarketPulsePanel

@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { analyzeBehavioralDataset } from "../services/intelligence/behavioralDatasetMonitor";
+import { analyzeBehavioralPipeline } from "../services/intelligence/behavioralPipelineStatus";
+import { evaluateBehavioralTrainingCandidate } from "../services/intelligence/behavioralTrainingQueue";
 import { createBehavioralDatasetRecord } from "../services/intelligence/replayBehavioralDatasetBridge";
 import { analyzeReplayIntelligence } from "../services/intelligence/replayIntelligenceEngine";
 import "../styles/ReplayCenter.css";
@@ -146,6 +148,23 @@ function ReplayCenter() {
   const behavioralDatasetStatus = useMemo(
     () => analyzeBehavioralDataset(behavioralDatasetRecord),
     [behavioralDatasetRecord]
+  );
+  const behavioralTrainingQueueStatus = useMemo(
+    () =>
+      evaluateBehavioralTrainingCandidate({
+        ...behavioralDatasetRecord,
+        monitorContext: behavioralDatasetStatus,
+      }),
+    [behavioralDatasetRecord, behavioralDatasetStatus]
+  );
+  const behavioralPipelineStatus = useMemo(
+    () =>
+      analyzeBehavioralPipeline({
+        record: behavioralDatasetRecord,
+        datasetStatus: behavioralDatasetStatus,
+        queueEvaluation: behavioralTrainingQueueStatus,
+      }),
+    [behavioralDatasetRecord, behavioralDatasetStatus, behavioralTrainingQueueStatus]
   );
   const replaySessionVerdict = useMemo(
     () =>
@@ -355,25 +374,9 @@ function ReplayCenter() {
         </div>
       </section>
 
-      <section className="replay-section replay-improvement-section">
-        <div className="replay-section-title">
-          <span>08</span>
-          <h2>MISSION FOR NEXT SESSION</h2>
-        </div>
-
-        <div className="replay-improvement-grid">
-          {replayIntelligence.missionForNextSession.map((item) => (
-            <div className="replay-improvement-card" key={item.label}>
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
-            </div>
-          ))}
-        </div>
-      </section>
-
       <section className="replay-section replay-operator-debrief">
         <div className="replay-section-title">
-          <span>09</span>
+          <span>08</span>
           <h2>BEHAVIORAL DATASET STATUS</h2>
         </div>
 
@@ -410,6 +413,113 @@ function ReplayCenter() {
             <span>Persisted</span>
             <strong>{behavioralDatasetRecord.metadata.persisted ? "TRUE" : "FALSE"}</strong>
           </div>
+        </div>
+      </section>
+
+      <section className="replay-section replay-operator-debrief">
+        <div className="replay-section-title">
+          <span>09</span>
+          <h2>TRAINING QUEUE STATUS</h2>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Queue Eligible</span>
+            <strong>{behavioralTrainingQueueStatus.queueEligible ? "TRUE" : "FALSE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Queue Score</span>
+            <strong>{behavioralTrainingQueueStatus.queueScore}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Queue Priority</span>
+            <strong>{behavioralTrainingQueueStatus.queuePriority}</strong>
+          </div>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Acceptance Reasons</span>
+            <ul>
+              {behavioralTrainingQueueStatus.acceptanceReasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Rejection Reasons</span>
+            <ul>
+              {behavioralTrainingQueueStatus.rejectionReasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          </div>
+          {behavioralTrainingQueueStatus.warnings.length > 0 && (
+            <div className="replay-debrief-card">
+              <span>Warnings</span>
+              <ul>
+                {behavioralTrainingQueueStatus.warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="replay-section replay-operator-debrief">
+        <div className="replay-section-title">
+          <span>10</span>
+          <h2>BEHAVIORAL PIPELINE STATUS</h2>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Current Stage</span>
+            <strong>{behavioralPipelineStatus.pipelineStage || "JOURNAL_CAPTURED"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Completion</span>
+            <strong>{behavioralPipelineStatus.completionPercent ?? 0}%</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Next Required Action</span>
+            <strong>{behavioralPipelineStatus.nextRequiredAction || "Complete replay review"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Dataset Ready</span>
+            <strong>{behavioralPipelineStatus.datasetReady ? "TRUE" : "FALSE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Queue Eligible</span>
+            <strong>{behavioralPipelineStatus.queueEligible ? "TRUE" : "FALSE"}</strong>
+          </div>
+          {behavioralPipelineStatus.warnings.length > 0 && (
+            <div className="replay-debrief-card">
+              <span>Warnings</span>
+              <ul>
+                {behavioralPipelineStatus.warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="replay-section replay-improvement-section">
+        <div className="replay-section-title">
+          <span>11</span>
+          <h2>MISSION FOR NEXT SESSION</h2>
+        </div>
+
+        <div className="replay-improvement-grid">
+          {replayIntelligence.missionForNextSession.map((item) => (
+            <div className="replay-improvement-card" key={item.label}>
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </div>
+          ))}
         </div>
       </section>
     </div>

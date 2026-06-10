@@ -3,6 +3,7 @@ import { getBrainStatus, getCognitionOverview, getConfidence } from "../services
 import { getAiccReplay } from "../services/aiccApi";
 import { analyzeBehavioralState } from "../services/intelligence/behavioralBrain";
 import "../styles/ClosedBetaPages.css";
+import "../styles/BehavioralBrain.css";
 
 const CLOSED_BETA_BEHAVIORAL_FALLBACK = {
   symbol: "SPY",
@@ -183,6 +184,16 @@ function BehavioralBrain() {
   const warnings = behavioralAnalysis.warnings?.length
     ? behavioralAnalysis.warnings
     : ["No behavioral warnings active."];
+  const behavioralHeadline = `${displayState(behavioralAnalysis.behavioralState)} / ${displayState(behavioralAnalysis.riskAppetite)}`;
+  const primaryBehavioralDriver =
+    evidence.find((item) => /participation|leadership|rotation|risk|conviction/i.test(item))
+    || evidence[0]
+    || "Behavioral driver unavailable.";
+  const primaryBehavioralRisk =
+    warnings.find((item) => !/No behavioral warnings active/i.test(item))
+    || `Primary risk context: ${displayState(behavioralAnalysis.riskAppetite)}`;
+  const behavioralSummary =
+    `${displayState(behavioralAnalysis.participation)} participation with ${displayState(behavioralAnalysis.leadership)} leadership and ${displayState(behavioralAnalysis.conviction)} conviction.`;
 
   return (
     <div className="closed-beta-page">
@@ -192,50 +203,93 @@ function BehavioralBrain() {
         <span className="closed-beta-version">AICC Closed Beta v0.1</span>
       </header>
 
-      <section className="closed-beta-summary-grid">
-        <div className="closed-beta-card">
-          <span>Behavioral State</span>
-          <strong>{displayState(behavioralAnalysis.behavioralState)}</strong>
+      <section className="closed-beta-panel behavioral-state-section">
+        <div className="behavioral-section-title">
+          <span>01</span>
+          <h2>BEHAVIORAL STATE</h2>
         </div>
-        <div className="closed-beta-card">
-          <span>Confidence</span>
-          <strong>{behavioralAnalysis.confidence}% {displayState(behavioralAnalysis.confidenceLabel)}</strong>
+
+        <div className="closed-beta-summary-grid behavioral-state-grid">
+          <div className="closed-beta-card behavioral-state-primary">
+            <span>Behavioral State</span>
+            <strong>{displayState(behavioralAnalysis.behavioralState)}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Confidence</span>
+            <strong>{behavioralAnalysis.confidence}% {displayState(behavioralAnalysis.confidenceLabel)}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Participation</span>
+            <strong>{displayState(behavioralAnalysis.participation)}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Leadership</span>
+            <strong>{displayState(behavioralAnalysis.leadership)}</strong>
+          </div>
         </div>
-        <div className="closed-beta-card">
-          <span>Participation</span>
-          <strong>{displayState(behavioralAnalysis.participation)}</strong>
+      </section>
+
+      <section className="closed-beta-panel behavioral-assessment-section">
+        <div className="behavioral-section-title">
+          <span>02</span>
+          <h2>BEHAVIORAL ASSESSMENT</h2>
         </div>
-        <div className="closed-beta-card">
-          <span>Leadership</span>
-          <strong>{displayState(behavioralAnalysis.leadership)}</strong>
+
+        <div className="behavioral-assessment-grid">
+          <div className="closed-beta-card">
+            <span>Risk Appetite</span>
+            <strong>{displayState(behavioralAnalysis.riskAppetite)}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Narrative Adoption</span>
+            <strong>{displayState(behavioralAnalysis.narrativeAdoption)}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Conviction</span>
+            <strong>{displayState(behavioralAnalysis.conviction)}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Consensus State</span>
+            <strong>{displayState(consensusState)}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Market Sentiment</span>
+            <strong>{displayState(marketSentiment)}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Crowd Alignment</span>
+            <strong>{displayState(behavioralBrain.bias || "ALIGNED")}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Rotation</span>
+            <strong>{displayState(behavioralAnalysis.rotation)}</strong>
+          </div>
         </div>
-        <div className="closed-beta-card">
-          <span>Rotation</span>
-          <strong>{displayState(behavioralAnalysis.rotation)}</strong>
+      </section>
+
+      <section className="closed-beta-panel behavioral-narrative-section">
+        <div className="behavioral-section-title">
+          <span>03</span>
+          <h2>BEHAVIORAL NARRATIVE</h2>
         </div>
-        <div className="closed-beta-card">
-          <span>Risk Appetite</span>
-          <strong>{displayState(behavioralAnalysis.riskAppetite)}</strong>
-        </div>
-        <div className="closed-beta-card">
-          <span>Narrative Adoption</span>
-          <strong>{displayState(behavioralAnalysis.narrativeAdoption)}</strong>
-        </div>
-        <div className="closed-beta-card">
-          <span>Conviction</span>
-          <strong>{displayState(behavioralAnalysis.conviction)}</strong>
-        </div>
-        <div className="closed-beta-card">
-          <span>Consensus State</span>
-          <strong>{displayState(consensusState)}</strong>
-        </div>
-        <div className="closed-beta-card">
-          <span>Market Sentiment</span>
-          <strong>{displayState(marketSentiment)}</strong>
-        </div>
-        <div className="closed-beta-card">
-          <span>Crowd Alignment</span>
-          <strong>{displayState(behavioralBrain.bias || "ALIGNED")}</strong>
+
+        <div className="behavioral-narrative-grid">
+          <div className="behavioral-narrative-headline">
+            <span>Headline</span>
+            <strong>{behavioralHeadline}</strong>
+          </div>
+          <div>
+            <span>Behavioral Summary</span>
+            <p>{behavioralSummary}</p>
+          </div>
+          <div>
+            <span>Primary Behavioral Driver</span>
+            <p>{primaryBehavioralDriver}</p>
+          </div>
+          <div>
+            <span>Primary Behavioral Risk</span>
+            <p>{primaryBehavioralRisk}</p>
+          </div>
         </div>
       </section>
 
@@ -246,32 +300,39 @@ function BehavioralBrain() {
         </section>
       )}
 
-      <section className="closed-beta-grid">
-        <div className="closed-beta-panel">
-          <h2>Evidence</h2>
-          <div className="closed-beta-list">
-            {evidence.map((item) => (
-              <div key={item}>
-                <p>{item}</p>
-              </div>
-            ))}
-          </div>
+      <section className="closed-beta-panel">
+        <div className="behavioral-section-title">
+          <span>04</span>
+          <h2>BEHAVIORAL EVIDENCE</h2>
         </div>
-
-        <div className="closed-beta-panel">
-          <h2>Warnings</h2>
-          <div className="closed-beta-list">
-            {warnings.map((warning) => (
-              <div key={warning}>
-                <p>{warning}</p>
-              </div>
-            ))}
-          </div>
+        <div className="closed-beta-list">
+          {evidence.map((item) => (
+            <div key={item}>
+              <p>{item}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       <section className="closed-beta-panel">
-        <h2>Recent Behavioral Notes</h2>
+        <div className="behavioral-section-title">
+          <span>05</span>
+          <h2>BEHAVIORAL WARNINGS</h2>
+        </div>
+        <div className="closed-beta-list">
+          {warnings.map((warning) => (
+            <div key={warning}>
+              <p>{warning}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="closed-beta-panel">
+        <div className="behavioral-section-title">
+          <span>06</span>
+          <h2>BEHAVIORAL SOURCES</h2>
+        </div>
         <div className="closed-beta-list">
           {notes.slice(0, 6).map((event) => (
             <article key={event.id}>
@@ -282,6 +343,7 @@ function BehavioralBrain() {
           ))}
         </div>
       </section>
+
     </div>
   );
 }

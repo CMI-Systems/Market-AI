@@ -196,6 +196,14 @@ function BehavioralBrain() {
     `${displayState(behavioralAnalysis.participation)} participation with ${displayState(behavioralAnalysis.leadership)} leadership and ${displayState(behavioralAnalysis.conviction)} conviction.`;
   const behavioralStatusLine =
     `Market participants are showing ${displayState(behavioralAnalysis.participation).toLowerCase()} participation with ${displayState(behavioralAnalysis.leadership).toLowerCase()} leadership and ${displayState(behavioralAnalysis.riskAppetite).toLowerCase()} appetite.`;
+  const behavioralFlow = [
+    { label: "PARTICIPATION", value: displayState(behavioralAnalysis.participation) },
+    { label: "LEADERSHIP", value: displayState(behavioralAnalysis.leadership) },
+    { label: "RISK APPETITE", value: displayState(behavioralAnalysis.riskAppetite) },
+    { label: "CONVICTION", value: displayState(behavioralAnalysis.conviction) },
+    { label: "CONSENSUS", value: displayState(consensusState) },
+    { label: "BEHAVIORAL STATE", value: displayState(behavioralAnalysis.behavioralState) },
+  ];
 
   return (
     <div className="closed-beta-page">
@@ -236,9 +244,30 @@ function BehavioralBrain() {
         </div>
       </section>
 
-      <section className="closed-beta-panel behavioral-state-section">
+      <section className="closed-beta-panel behavioral-flow-section">
         <div className="behavioral-section-title">
           <span>02</span>
+          <h2>BEHAVIORAL INTELLIGENCE FLOW</h2>
+        </div>
+
+        <div className="behavioral-flow-stack">
+          {behavioralFlow.map((node, index) => (
+            <div className="behavioral-flow-step" key={node.label}>
+              <div className="behavioral-flow-node">
+                <span>{node.label}</span>
+                <strong>{node.value}</strong>
+              </div>
+              {index < behavioralFlow.length - 1 && (
+                <b aria-hidden="true">↓</b>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="closed-beta-panel behavioral-state-section">
+        <div className="behavioral-section-title">
+          <span>03</span>
           <h2>BEHAVIORAL STATE</h2>
         </div>
 
@@ -264,7 +293,7 @@ function BehavioralBrain() {
 
       <section className="closed-beta-panel behavioral-assessment-section">
         <div className="behavioral-section-title">
-          <span>03</span>
+          <span>04</span>
           <h2>BEHAVIORAL ASSESSMENT</h2>
         </div>
 
@@ -302,7 +331,7 @@ function BehavioralBrain() {
 
       <section className="closed-beta-panel behavioral-narrative-section">
         <div className="behavioral-section-title">
-          <span>04</span>
+          <span>05</span>
           <h2>BEHAVIORAL NARRATIVE</h2>
         </div>
 
@@ -335,7 +364,7 @@ function BehavioralBrain() {
 
       <section className="closed-beta-panel">
         <div className="behavioral-section-title">
-          <span>05</span>
+          <span>06</span>
           <h2>BEHAVIORAL EVIDENCE</h2>
         </div>
         <div className="closed-beta-list">
@@ -349,7 +378,7 @@ function BehavioralBrain() {
 
       <section className="closed-beta-panel">
         <div className="behavioral-section-title">
-          <span>06</span>
+          <span>07</span>
           <h2>BEHAVIORAL WARNINGS</h2>
         </div>
         <div className="closed-beta-list">
@@ -363,7 +392,7 @@ function BehavioralBrain() {
 
       <section className="closed-beta-panel">
         <div className="behavioral-section-title">
-          <span>07</span>
+          <span>08</span>
           <h2>BEHAVIORAL SOURCES</h2>
         </div>
         <div className="closed-beta-list">

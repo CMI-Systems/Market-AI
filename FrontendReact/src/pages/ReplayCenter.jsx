@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { analyzeBehavioralDataset } from "../services/intelligence/behavioralDatasetMonitor";
+import { createBehavioralDatasetRecord } from "../services/intelligence/replayBehavioralDatasetBridge";
 import { analyzeReplayIntelligence } from "../services/intelligence/replayIntelligenceEngine";
 import "../styles/ReplayCenter.css";
 
@@ -124,6 +126,26 @@ function ReplayCenter() {
   const replayIntelligence = useMemo(
     () => analyzeReplayIntelligence(journalEntry || {}),
     [journalEntry]
+  );
+  const behavioralDatasetRecord = useMemo(
+    () =>
+      createBehavioralDatasetRecord({
+        symbol: journalEntry?.symbol,
+        journalEntry: journalEntry || {},
+        replayIntelligence,
+        sessionContext: {
+          sessionVerdict: "GOOD SESSION",
+          sessionScore: 82,
+          executionGrade: "B+",
+          behaviorGrade: "B",
+          disciplineGrade: "A-",
+        },
+      }),
+    [journalEntry, replayIntelligence]
+  );
+  const behavioralDatasetStatus = useMemo(
+    () => analyzeBehavioralDataset(behavioralDatasetRecord),
+    [behavioralDatasetRecord]
   );
   const replaySessionVerdict = useMemo(
     () =>
@@ -346,6 +368,48 @@ function ReplayCenter() {
               <strong>{item.value}</strong>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="replay-section replay-operator-debrief">
+        <div className="replay-section-title">
+          <span>09</span>
+          <h2>BEHAVIORAL DATASET STATUS</h2>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Dataset Ready</span>
+            <strong>{behavioralDatasetStatus.datasetReady ? "TRUE" : "FALSE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Readiness Score</span>
+            <strong>{behavioralDatasetStatus.readinessScore}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Quality</span>
+            <strong>{behavioralDatasetStatus.quality}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Positive Signals</span>
+            <strong>{behavioralDatasetStatus.positiveSignals.length}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Negative Signals</span>
+            <strong>{behavioralDatasetStatus.negativeSignals.length}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Risk Signals</span>
+            <strong>{behavioralDatasetStatus.riskSignals.length}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Execution Signals</span>
+            <strong>{behavioralDatasetStatus.executionSignals.length}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Persisted</span>
+            <strong>{behavioralDatasetRecord.metadata.persisted ? "TRUE" : "FALSE"}</strong>
+          </div>
         </div>
       </section>
     </div>

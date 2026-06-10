@@ -19,10 +19,63 @@
   text-transform: uppercase;
 }
 
-.behavioral-state-section {
-  border-color: rgba(57, 255, 136, 0.28);
+.behavioral-verdict-section {
+  padding: 30px;
+  border-color: rgba(57, 255, 136, 0.36);
   background:
-    linear-gradient(135deg, rgba(5, 24, 32, 0.94), rgba(5, 15, 32, 0.9));
+    linear-gradient(135deg, rgba(2, 18, 28, 0.98), rgba(5, 15, 32, 0.94));
+  box-shadow:
+    0 0 42px rgba(57, 255, 136, 0.1),
+    inset 0 0 26px rgba(83, 211, 218, 0.04);
+}
+
+.behavioral-verdict-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.6fr) repeat(4, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.behavioral-verdict-grid > div {
+  min-height: 138px;
+  padding: 18px;
+  border-radius: 10px;
+  background: rgba(0, 14, 24, 0.76);
+  box-shadow: inset 0 -1px 0 rgba(83, 211, 218, 0.12);
+}
+
+.behavioral-verdict-grid span {
+  display: block;
+  color: #8fa6b8;
+  font-size: 0.66rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.behavioral-verdict-grid strong {
+  display: block;
+  margin-top: 10px;
+  color: #39ff88;
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+
+.behavioral-verdict-primary strong {
+  font-size: 1.7rem;
+}
+
+.behavioral-verdict-primary p {
+  margin: 12px 0 0;
+  color: #d7eaff;
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.behavioral-state-section {
+  border-color: rgba(83, 211, 218, 0.14);
+  background: rgba(5, 15, 32, 0.84);
+  box-shadow: none;
 }
 
 .behavioral-state-grid,
@@ -33,21 +86,26 @@
 }
 
 .behavioral-state-grid {
-  grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(160px, 1fr));
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
   margin-bottom: 0;
 }
 
 .behavioral-state-primary {
-  border-color: rgba(57, 255, 136, 0.34);
-  background: rgba(0, 18, 24, 0.84);
+  border-color: rgba(83, 211, 218, 0.18);
+  background: rgba(0, 14, 24, 0.68);
 }
 
 .behavioral-state-primary strong {
-  font-size: 1.45rem;
+  font-size: 1rem;
 }
 
 .behavioral-assessment-grid {
   grid-template-columns: repeat(4, minmax(160px, 1fr));
+}
+
+.behavioral-assessment-section {
+  border-color: rgba(83, 211, 218, 0.14);
+  background: rgba(5, 15, 32, 0.84);
 }
 
 .behavioral-narrative-section {
@@ -95,6 +153,7 @@
 }
 
 @media (max-width: 1000px) {
+  .behavioral-verdict-grid,
   .behavioral-state-grid,
   .behavioral-assessment-grid,
   .behavioral-narrative-grid {

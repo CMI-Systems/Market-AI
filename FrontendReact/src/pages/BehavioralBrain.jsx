@@ -194,6 +194,8 @@ function BehavioralBrain() {
     || `Primary risk context: ${displayState(behavioralAnalysis.riskAppetite)}`;
   const behavioralSummary =
     `${displayState(behavioralAnalysis.participation)} participation with ${displayState(behavioralAnalysis.leadership)} leadership and ${displayState(behavioralAnalysis.conviction)} conviction.`;
+  const behavioralStatusLine =
+    `Market participants are showing ${displayState(behavioralAnalysis.participation).toLowerCase()} participation with ${displayState(behavioralAnalysis.leadership).toLowerCase()} leadership and ${displayState(behavioralAnalysis.riskAppetite).toLowerCase()} appetite.`;
 
   return (
     <div className="closed-beta-page">
@@ -203,9 +205,40 @@ function BehavioralBrain() {
         <span className="closed-beta-version">AICC Closed Beta v0.1</span>
       </header>
 
-      <section className="closed-beta-panel behavioral-state-section">
+      <section className="closed-beta-panel behavioral-verdict-section">
         <div className="behavioral-section-title">
           <span>01</span>
+          <h2>BEHAVIORAL VERDICT</h2>
+        </div>
+
+        <div className="behavioral-verdict-grid">
+          <div className="behavioral-verdict-primary">
+            <span>Behavioral State</span>
+            <strong>{displayState(behavioralAnalysis.behavioralState)}</strong>
+            <p>{behavioralStatusLine}</p>
+          </div>
+          <div>
+            <span>Confidence</span>
+            <strong>{behavioralAnalysis.confidence}%</strong>
+          </div>
+          <div>
+            <span>Risk Appetite</span>
+            <strong>{displayState(behavioralAnalysis.riskAppetite)}</strong>
+          </div>
+          <div>
+            <span>Participation</span>
+            <strong>{displayState(behavioralAnalysis.participation)}</strong>
+          </div>
+          <div>
+            <span>Leadership</span>
+            <strong>{displayState(behavioralAnalysis.leadership)}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="closed-beta-panel behavioral-state-section">
+        <div className="behavioral-section-title">
+          <span>02</span>
           <h2>BEHAVIORAL STATE</h2>
         </div>
 
@@ -231,7 +264,7 @@ function BehavioralBrain() {
 
       <section className="closed-beta-panel behavioral-assessment-section">
         <div className="behavioral-section-title">
-          <span>02</span>
+          <span>03</span>
           <h2>BEHAVIORAL ASSESSMENT</h2>
         </div>
 
@@ -269,7 +302,7 @@ function BehavioralBrain() {
 
       <section className="closed-beta-panel behavioral-narrative-section">
         <div className="behavioral-section-title">
-          <span>03</span>
+          <span>04</span>
           <h2>BEHAVIORAL NARRATIVE</h2>
         </div>
 
@@ -279,7 +312,7 @@ function BehavioralBrain() {
             <strong>{behavioralHeadline}</strong>
           </div>
           <div>
-            <span>Behavioral Summary</span>
+            <span>Why It Matters</span>
             <p>{behavioralSummary}</p>
           </div>
           <div>
@@ -302,7 +335,7 @@ function BehavioralBrain() {
 
       <section className="closed-beta-panel">
         <div className="behavioral-section-title">
-          <span>04</span>
+          <span>05</span>
           <h2>BEHAVIORAL EVIDENCE</h2>
         </div>
         <div className="closed-beta-list">
@@ -316,7 +349,7 @@ function BehavioralBrain() {
 
       <section className="closed-beta-panel">
         <div className="behavioral-section-title">
-          <span>05</span>
+          <span>06</span>
           <h2>BEHAVIORAL WARNINGS</h2>
         </div>
         <div className="closed-beta-list">
@@ -330,7 +363,7 @@ function BehavioralBrain() {
 
       <section className="closed-beta-panel">
         <div className="behavioral-section-title">
-          <span>06</span>
+          <span>07</span>
           <h2>BEHAVIORAL SOURCES</h2>
         </div>
         <div className="closed-beta-list">

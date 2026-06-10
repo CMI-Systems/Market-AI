@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { analyzeReplayIntelligence } from "../services/intelligence/replayIntelligenceEngine";
 import "../styles/ReplayCenter.css";
 
 const sessionVerdict = [
@@ -102,15 +103,6 @@ const sampleTrades = [
   },
 ];
 
-const behavioralReview = [
-  { label: "Patience", score: 78 },
-  { label: "Discipline", score: 84 },
-  { label: "Conviction", score: 72 },
-  { label: "Risk Management", score: 80 },
-  { label: "Execution Quality", score: 76 },
-  { label: "Emotional Stability", score: 88 },
-];
-
 const mistakeIntelligence = [
   { type: "FOMO", frequency: 1, severity: "Moderate", impact: "Pulled entry timing forward." },
   { type: "Chasing", frequency: 2, severity: "High", impact: "Reduced reward-to-risk quality." },
@@ -124,23 +116,28 @@ const mistakeIntelligence = [
   { type: "Risk Ignored", frequency: 1, severity: "High", impact: "Held after liquidity support weakened." },
 ];
 
-const topMistakes = [
-  mistakeIntelligence.find((item) => item.type === "Chasing"),
-  mistakeIntelligence.find((item) => item.type === "Rule Violation"),
-  mistakeIntelligence.find((item) => item.type === "Risk Ignored"),
-].filter(Boolean);
-
-const nextSessionFocus = [
-  { label: "Primary Focus", value: "Late-session selectivity" },
-  { label: "Behavioral Goal", value: "Pause before entries when urgency increases." },
-  { label: "Execution Goal", value: "Wait for structure confirmation before breakout continuation." },
-  { label: "Risk Goal", value: "Cut exposure when liquidity support weakens." },
-];
-
 function ReplayCenter() {
   const location = useLocation();
   const journalEntry = location.state?.journalEntry || null;
   const [selectedTradeId, setSelectedTradeId] = useState(sampleTrades[0].id);
+
+  const replayIntelligence = useMemo(
+    () => analyzeReplayIntelligence(journalEntry || {}),
+    [journalEntry]
+  );
+  const replaySessionVerdict = useMemo(
+    () =>
+      sessionVerdict.map((item) => {
+        if (item.label === "Strongest Trait") {
+          return { ...item, value: replayIntelligence.strongestTrait };
+        }
+        if (item.label === "Weakest Trait") {
+          return { ...item, value: replayIntelligence.weakestTrait };
+        }
+        return item;
+      }),
+    [replayIntelligence]
+  );
 
   const selectedTrade = useMemo(
     () => sampleTrades.find((trade) => trade.id === selectedTradeId) || sampleTrades[0],
@@ -176,6 +173,10 @@ function ReplayCenter() {
               <strong>{journalEntry.result || "WIN"}</strong>
             </div>
             <div className="replay-debrief-card">
+              <span>Trade Assessment</span>
+              <strong>{journalEntry.tradeAssessment || "No assessment supplied."}</strong>
+            </div>
+            <div className="replay-debrief-card">
               <span>Behavioral Tags</span>
               <strong>{journalEntry.behavioralTags?.join(", ") || "No tags selected"}</strong>
             </div>
@@ -202,7 +203,7 @@ function ReplayCenter() {
         </div>
 
         <div className="replay-verdict-grid">
-          {sessionVerdict.map((item) => (
+          {replaySessionVerdict.map((item) => (
             <div className="replay-summary-card" key={item.label}>
               <span>{item.label}</span>
               <strong>{item.value}</strong>
@@ -234,7 +235,7 @@ function ReplayCenter() {
         </div>
 
         <div className="replay-scorecard-grid">
-          {behavioralReview.map((item) => (
+          {replayIntelligence.behavioralScores.map((item) => (
             <div className="replay-scorecard" key={item.label}>
               <span>{item.label}</span>
               <strong>{item.score}</strong>
@@ -253,7 +254,7 @@ function ReplayCenter() {
         </div>
 
         <div className="replay-top-mistakes-grid">
-          {topMistakes.map((item, index) => (
+          {replayIntelligence.topMistakes.map((item, index) => (
             <div className="replay-top-mistake-card" key={item.type}>
               <span>#{index + 1} {item.type}</span>
               <div><em>Frequency</em><strong>{item.frequency}</strong></div>
@@ -339,7 +340,7 @@ function ReplayCenter() {
         </div>
 
         <div className="replay-improvement-grid">
-          {nextSessionFocus.map((item) => (
+          {replayIntelligence.missionForNextSession.map((item) => (
             <div className="replay-improvement-card" key={item.label}>
               <span>{item.label}</span>
               <strong>{item.value}</strong>

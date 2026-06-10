@@ -268,14 +268,10 @@ function BehavioralBrain() {
       <section className="closed-beta-panel behavioral-state-section">
         <div className="behavioral-section-title">
           <span>03</span>
-          <h2>BEHAVIORAL STATE</h2>
+          <h2>BEHAVIORAL STATUS BOARD</h2>
         </div>
 
         <div className="closed-beta-summary-grid behavioral-state-grid">
-          <div className="closed-beta-card behavioral-state-primary">
-            <span>Behavioral State</span>
-            <strong>{displayState(behavioralAnalysis.behavioralState)}</strong>
-          </div>
           <div className="closed-beta-card">
             <span>Confidence</span>
             <strong>{behavioralAnalysis.confidence}% {displayState(behavioralAnalysis.confidenceLabel)}</strong>
@@ -287,6 +283,18 @@ function BehavioralBrain() {
           <div className="closed-beta-card">
             <span>Leadership</span>
             <strong>{displayState(behavioralAnalysis.leadership)}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Risk Appetite</span>
+            <strong>{displayState(behavioralAnalysis.riskAppetite)}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Conviction</span>
+            <strong>{displayState(behavioralAnalysis.conviction)}</strong>
+          </div>
+          <div className="closed-beta-card">
+            <span>Rotation</span>
+            <strong>{displayState(behavioralAnalysis.rotation)}</strong>
           </div>
         </div>
       </section>
@@ -362,7 +370,7 @@ function BehavioralBrain() {
         </section>
       )}
 
-      <section className="closed-beta-panel">
+      <section className="closed-beta-panel behavioral-support-section">
         <div className="behavioral-section-title">
           <span>06</span>
           <h2>BEHAVIORAL EVIDENCE</h2>
@@ -390,7 +398,7 @@ function BehavioralBrain() {
         </div>
       </section>
 
-      <section className="closed-beta-panel">
+      <section className="closed-beta-panel behavioral-support-section">
         <div className="behavioral-section-title">
           <span>08</span>
           <h2>BEHAVIORAL SOURCES</h2>

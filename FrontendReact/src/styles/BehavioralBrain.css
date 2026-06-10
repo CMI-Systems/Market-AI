@@ -76,6 +76,7 @@
   border-color: rgba(83, 211, 218, 0.14);
   background: rgba(5, 15, 32, 0.84);
   box-shadow: none;
+  padding: 18px;
 }
 
 .behavioral-state-grid,
@@ -135,7 +136,7 @@
 }
 
 .behavioral-state-grid {
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(6, minmax(130px, 1fr));
   margin-bottom: 0;
 }
 
@@ -150,17 +151,36 @@
 
 .behavioral-state-section .closed-beta-card {
   min-height: auto;
-  padding: 14px;
+  padding: 12px;
   background: rgba(0, 10, 25, 0.58);
+  border-color: rgba(83, 211, 218, 0.1);
+  box-shadow: none;
+}
+
+.behavioral-state-section .closed-beta-card strong {
+  font-size: 0.78rem;
 }
 
 .behavioral-assessment-grid {
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
 }
 
 .behavioral-assessment-section {
   border-color: rgba(83, 211, 218, 0.14);
   background: rgba(5, 15, 32, 0.84);
+  padding: 18px;
+}
+
+.behavioral-assessment-section .closed-beta-card {
+  min-height: auto;
+  padding: 12px;
+  border-color: rgba(83, 211, 218, 0.1);
+  background: rgba(0, 10, 25, 0.58);
+  box-shadow: none;
+}
+
+.behavioral-assessment-section .closed-beta-card strong {
+  font-size: 0.76rem;
 }
 
 .behavioral-narrative-section {
@@ -205,6 +225,18 @@
   color: #d7eaff;
   font-size: 0.9rem;
   line-height: 1.55;
+}
+
+.behavioral-support-section {
+  border-color: rgba(83, 211, 218, 0.1);
+  background: rgba(5, 15, 32, 0.72);
+  box-shadow: none;
+}
+
+.behavioral-support-section .closed-beta-list article,
+.behavioral-support-section .closed-beta-list div {
+  border-color: rgba(83, 211, 218, 0.08);
+  background: rgba(0, 10, 25, 0.52);
 }
 
 @media (max-width: 1000px) {

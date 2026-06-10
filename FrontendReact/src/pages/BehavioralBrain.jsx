@@ -258,7 +258,7 @@ function BehavioralBrain() {
                 <strong>{node.value}</strong>
               </div>
               {index < behavioralFlow.length - 1 && (
-                <b aria-hidden="true">↓</b>
+                <b aria-hidden="true">&darr;</b>
               )}
             </div>
           ))}

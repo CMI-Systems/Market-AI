@@ -1532,7 +1532,7 @@ function CommandCenter() {
                 <span>{layer}</span>
                 <strong>ONLINE</strong>
               </div>
-              {index < stack.length - 1 && <b aria-hidden="true">↓</b>}
+              {index < stack.length - 1 && <b aria-hidden="true">&darr;</b>}
             </Fragment>
           ))}
         </section>

@@ -205,7 +205,7 @@ function FailsafeBrain() {
             </p>
           </div>
           <div>
-            <span>Trust Read</span>
+            <span>Trust Level</span>
             <strong>{displayState(failsafeAnalysis.reliabilityLabel)}</strong>
           </div>
           <div>

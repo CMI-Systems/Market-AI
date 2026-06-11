@@ -272,7 +272,7 @@ function ReplayCenter() {
       <section className="replay-section replay-behavior-hero">
         <div className="replay-section-title">
           <span>03</span>
-          <h2>BEHAVIORAL REVIEW HERO</h2>
+          <h2>BEHAVIORAL REVIEW</h2>
         </div>
 
         <div className="replay-scorecard-grid">

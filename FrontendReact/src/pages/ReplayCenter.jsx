@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { createAiccDatasetRecord } from "../services/intelligence/aiccDatasetCapture";
+import { validateAiccDatasetRecord } from "../services/intelligence/aiccDatasetQualityValidator";
+import { evaluateShadowTrainingReadiness } from "../services/intelligence/aiccShadowTrainingEvaluator";
 import { analyzeBehavioralDataset } from "../services/intelligence/behavioralDatasetMonitor";
 import { analyzeBehavioralPipeline } from "../services/intelligence/behavioralPipelineStatus";
 import { evaluateBehavioralTrainingCandidate } from "../services/intelligence/behavioralTrainingQueue";
@@ -165,6 +168,38 @@ function ReplayCenter() {
         queueEvaluation: behavioralTrainingQueueStatus,
       }),
     [behavioralDatasetRecord, behavioralDatasetStatus, behavioralTrainingQueueStatus]
+  );
+  const aiccDatasetRecord = useMemo(
+    () =>
+      createAiccDatasetRecord({
+        symbol: journalEntry?.symbol,
+        journalEntry: journalEntry || {},
+        replayIntelligence,
+        datasetStatus: behavioralDatasetStatus,
+        trainingQueueStatus: behavioralTrainingQueueStatus,
+        pipelineStatus: behavioralPipelineStatus,
+        marketContext: {
+          source: "REPLAY_CENTER",
+          selectedTradeId,
+          behavioralTags: journalEntry?.behavioralTags || [],
+        },
+      }),
+    [
+      journalEntry,
+      replayIntelligence,
+      behavioralDatasetStatus,
+      behavioralTrainingQueueStatus,
+      behavioralPipelineStatus,
+      selectedTradeId,
+    ]
+  );
+  const aiccDatasetValidation = useMemo(
+    () => validateAiccDatasetRecord(aiccDatasetRecord),
+    [aiccDatasetRecord]
+  );
+  const shadowTrainingReadiness = useMemo(
+    () => evaluateShadowTrainingReadiness(aiccDatasetRecord, aiccDatasetValidation),
+    [aiccDatasetRecord, aiccDatasetValidation]
   );
   const replaySessionVerdict = useMemo(
     () =>
@@ -510,6 +545,132 @@ function ReplayCenter() {
       <section className="replay-section replay-improvement-section">
         <div className="replay-section-title">
           <span>11</span>
+          <h2>AICC DATASET CAPTURE STATUS</h2>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Dataset ID</span>
+            <strong>{aiccDatasetRecord.id}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Quality Score</span>
+            <strong>{aiccDatasetValidation.qualityScore}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Quality Label</span>
+            <strong>{aiccDatasetValidation.qualityLabel}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Valid</span>
+            <strong>{aiccDatasetValidation.valid ? "TRUE" : "FALSE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Accepted For Shadow Training</span>
+            <strong>{aiccDatasetValidation.acceptedForShadowTraining ? "TRUE" : "FALSE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Persisted</span>
+            <strong>{aiccDatasetRecord.metadata.persisted ? "TRUE" : "FALSE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Training Activated</span>
+            <strong>{aiccDatasetRecord.metadata.trainingActivated ? "TRUE" : "FALSE"}</strong>
+          </div>
+          {aiccDatasetValidation.warnings.length > 0 && (
+            <div className="replay-debrief-card">
+              <span>Warnings</span>
+              <ul>
+                {aiccDatasetValidation.warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {aiccDatasetValidation.missingFields.length > 0 && (
+            <div className="replay-debrief-card">
+              <span>Missing Fields</span>
+              <ul>
+                {aiccDatasetValidation.missingFields.map((field) => (
+                  <li key={field}>{field}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="replay-section replay-improvement-section">
+        <div className="replay-section-title">
+          <span>12</span>
+          <h2>SHADOW TRAINING READINESS</h2>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Ready</span>
+            <strong>{shadowTrainingReadiness.shadowTrainingReady ? "TRUE" : "FALSE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Readiness Score</span>
+            <strong>{shadowTrainingReadiness.readinessScore}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Readiness Label</span>
+            <strong>{shadowTrainingReadiness.readinessLabel}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Priority</span>
+            <strong>{shadowTrainingReadiness.priority}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Tactical Ready</span>
+            <strong>{shadowTrainingReadiness.tacticalReady ? "TRUE" : "FALSE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Behavioral Ready</span>
+            <strong>{shadowTrainingReadiness.behavioralReady ? "TRUE" : "FALSE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Failsafe Ready</span>
+            <strong>{shadowTrainingReadiness.failsafeReady ? "TRUE" : "FALSE"}</strong>
+          </div>
+          {shadowTrainingReadiness.acceptanceReasons.length > 0 && (
+            <div className="replay-debrief-card">
+              <span>Acceptance Reasons</span>
+              <ul>
+                {shadowTrainingReadiness.acceptanceReasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {shadowTrainingReadiness.rejectionReasons.length > 0 && (
+            <div className="replay-debrief-card">
+              <span>Rejection Reasons</span>
+              <ul>
+                {shadowTrainingReadiness.rejectionReasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {shadowTrainingReadiness.warnings.length > 0 && (
+            <div className="replay-debrief-card">
+              <span>Warnings</span>
+              <ul>
+                {shadowTrainingReadiness.warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="replay-section replay-improvement-section">
+        <div className="replay-section-title">
+          <span>13</span>
           <h2>MISSION FOR NEXT SESSION</h2>
         </div>
 

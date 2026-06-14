@@ -4,9 +4,13 @@ import { analyzeConsistency } from './consistencyEngine.js';
 import { analyzeDataIntegrity } from './dataIntegrityEngine.js';
 import { analyzeRiskEscalation } from './riskEscalationEngine.js';
 import { analyzeValidation } from './validationEngine.js';
+import { mergeProvenance } from './provenanceValidator.js';
 
 const FAILSAFE_STATE = {
   CONFIRMED_ENVIRONMENT: 'CONFIRMED_ENVIRONMENT',
+  DEGRADED_ENVIRONMENT: 'DEGRADED_ENVIRONMENT',
+  DATA_UNAVAILABLE: 'DATA_UNAVAILABLE',
+  BLOCKED: 'BLOCKED',
   ELEVATED_UNCERTAINTY: 'ELEVATED_UNCERTAINTY',
   INTELLIGENCE_CONFLICT: 'INTELLIGENCE_CONFLICT',
   DATA_INTEGRITY_CONCERN: 'DATA_INTEGRITY_CONCERN',
@@ -121,6 +125,13 @@ function calculateReliability(engines) {
   );
 }
 
+function adjustReliabilityForProvenance(reliability, provenance) {
+  if (provenance.status === 'BLOCKED') return Math.min(reliability, provenance.riskLevel === 'CRITICAL' ? 15 : 25);
+  if (provenance.status === 'DATA_UNAVAILABLE') return Math.min(reliability, 30);
+  if (provenance.status === 'DEGRADED') return Math.min(reliability, 55);
+  return reliability;
+}
+
 function flattenEvidence(engines) {
   return [
     ...engines.dataIntegrity.evidence.map((item) => `Data integrity: ${item}`),
@@ -136,7 +147,9 @@ function dedupeWarnings(warnings) {
   return [...new Set(warnings.filter(Boolean))];
 }
 
-function determineFailsafeState(engines, reliability) {
+function determineFailsafeState(engines, reliability, provenance) {
+  if (provenance.status === 'BLOCKED') return FAILSAFE_STATE.BLOCKED;
+  if (provenance.status === 'DATA_UNAVAILABLE') return FAILSAFE_STATE.DATA_UNAVAILABLE;
   if (engines.validation.validation === 'NO_VALIDATION') return FAILSAFE_STATE.CRITICAL_VALIDATION_FAILURE;
   if (engines.riskEscalation.riskEscalation === 'CRITICAL' || engines.riskEscalation.riskEscalation === 'HIGH_RISK') {
     return FAILSAFE_STATE.RISK_ESCALATION;
@@ -146,7 +159,10 @@ function determineFailsafeState(engines, reliability) {
     return FAILSAFE_STATE.DATA_INTEGRITY_CONCERN;
   }
   if (reliability < 55) return FAILSAFE_STATE.LOW_RELIABILITY_ENVIRONMENT;
-  if (reliability >= 70 && engines.validation.validation !== 'WEAK_VALIDATION') return FAILSAFE_STATE.CONFIRMED_ENVIRONMENT;
+  if (provenance.status === 'DEGRADED') return FAILSAFE_STATE.DEGRADED_ENVIRONMENT;
+  if (reliability >= 70 && engines.validation.validation !== 'WEAK_VALIDATION' && provenance.trusted) {
+    return FAILSAFE_STATE.CONFIRMED_ENVIRONMENT;
+  }
   return FAILSAFE_STATE.ELEVATED_UNCERTAINTY;
 }
 
@@ -162,6 +178,23 @@ export function analyzeFailsafeState(input = {}) {
   if (!input || typeof input !== 'object') {
     warnings.push('Input was invalid, so Failsafe Brain returned safe defaults.');
   }
+
+  const streamInputs = Array.isArray(safeInput.dataStreams)
+    ? safeInput.dataStreams
+    : safeInput.dataStreams && typeof safeInput.dataStreams === 'object'
+      ? Object.values(safeInput.dataStreams)
+      : [];
+  const provenance = mergeProvenance(
+    [
+      safeInput.tactical,
+      safeInput.behavioral,
+      safeInput.marketIntelligence,
+      safeInput.globalScan,
+      safeInput.newsletterData,
+      ...streamInputs,
+    ],
+    { requireAll: false, timestampRequired: false },
+  );
 
   if (!hasFailsafeInput(safeInput)) {
     warnings.push('Failsafe input data is empty or unavailable.');
@@ -179,24 +212,41 @@ export function analyzeFailsafeState(input = {}) {
       riskEscalation: engines.riskEscalation.riskEscalation,
       consistency: engines.consistency.consistency,
       confidenceCalibration: engines.confidenceCalibration.confidenceCalibration,
+      available: false,
+      sourceType: 'DATA_UNAVAILABLE',
+      provider: provenance.provider,
+      simulated: false,
+      generated: false,
+      dataAge: provenance.dataAge,
+      sessionState: provenance.sessionState,
+      marketOpen: provenance.marketOpen,
+      dataState: 'DATA_UNAVAILABLE',
+      rawDataCertified: false,
+      trainingEligible: false,
+      provenance,
       engines,
       evidence: flattenEvidence(engines),
-      warnings: dedupeWarnings([...warnings, ...Object.values(engines).flatMap((engine) => engine.warnings)]),
+      warnings: dedupeWarnings([
+        ...warnings,
+        ...provenance.warnings,
+        ...provenance.blockingReasons,
+        ...Object.values(engines).flatMap((engine) => engine.warnings),
+      ]),
       timestamp,
     };
   }
 
   const dataIntegrity = runEngine(
     analyzeDataIntegrity,
-    safeInput,
+    { ...safeInput, provenance },
     defaults.dataIntegrity,
     warnings,
     'Data integrity engine',
   );
-  const validation = runEngine(analyzeValidation, safeInput, defaults.validation, warnings, 'Validation engine');
+  const validation = runEngine(analyzeValidation, { ...safeInput, provenance }, defaults.validation, warnings, 'Validation engine');
   const conflictDetection = runEngine(
     analyzeConflicts,
-    safeInput,
+    { ...safeInput, provenance },
     defaults.conflictDetection,
     warnings,
     'Conflict detection engine',
@@ -231,11 +281,11 @@ export function analyzeFailsafeState(input = {}) {
     consistency,
     confidenceCalibration,
   };
-  const reliability = calculateReliability(engines);
+  const reliability = adjustReliabilityForProvenance(calculateReliability(engines), provenance);
 
   return {
     symbol,
-    failsafeState: determineFailsafeState(engines, reliability),
+    failsafeState: determineFailsafeState(engines, reliability, provenance),
     reliability,
     reliabilityLabel: getReliabilityLabel(reliability),
     dataIntegrity: engines.dataIntegrity.dataIntegrity,
@@ -244,9 +294,25 @@ export function analyzeFailsafeState(input = {}) {
     riskEscalation: engines.riskEscalation.riskEscalation,
     consistency: engines.consistency.consistency,
     confidenceCalibration: engines.confidenceCalibration.confidenceCalibration,
+    available: provenance.status !== 'BLOCKED' && provenance.status !== 'DATA_UNAVAILABLE',
+    sourceType: provenance.sourceType,
+    provider: provenance.provider,
+    simulated: provenance.simulated,
+    generated: provenance.generated,
+    dataAge: provenance.dataAge,
+    sessionState: provenance.sessionState,
+    marketOpen: provenance.marketOpen,
+    dataState: provenance.dataState,
+    rawDataCertified: false,
+    trainingEligible: false,
+    provenance,
     engines,
     evidence: flattenEvidence(engines),
-    warnings: dedupeWarnings(warnings),
+    warnings: dedupeWarnings([
+      ...warnings,
+      ...provenance.warnings,
+      ...provenance.blockingReasons,
+    ]),
     timestamp,
   };
 }

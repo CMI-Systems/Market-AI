@@ -15,6 +15,9 @@ function displayState(value) {
 
 function displayActiveProvider(value) {
   if (!value) return "PENDING";
+  if (value === "BACKEND_UNAVAILABLE" || value === "DATA_UNAVAILABLE") {
+    return "DATA UNAVAILABLE";
+  }
   if (String(value).endsWith("_ACTIVE")) {
     return String(value).replace("_ACTIVE", "").replace(/_/g, " ");
   }
@@ -34,6 +37,10 @@ function displayStreamMode(systemStatus, activeProvider, fallbackMode) {
     return "SIMULATION ACTIVE";
   }
 
+  if (activeProvider === "BACKEND_UNAVAILABLE" || fallbackMode === "OFFLINE") {
+    return "DATA UNAVAILABLE";
+  }
+
   return activeProvider ? "LIVE PROVIDER" : displayState(fallbackMode);
 }
 
@@ -44,6 +51,9 @@ function isLiveProviderActive(providerStatus) {
 function displayResolvedProvider(systemStatus, providerStatus) {
   if (systemStatus.streamMode === "LIVE_ALPACA") return "ALPACA";
   if (systemStatus.simulationActive) return "SIMULATION";
+  if (providerStatus.available === false || providerStatus.sourceType === "DATA_UNAVAILABLE") {
+    return "DATA UNAVAILABLE";
+  }
   return displayActiveProvider(`${providerStatus.activeProvider}_ACTIVE`);
 }
 
@@ -69,7 +79,7 @@ function SystemBootPanel() {
   }, []);
 
   const liveProviderActive = systemStatus.streamMode === "LIVE_ALPACA" && isLiveProviderActive(providerStatus);
-  const backendOnline = systemStatus.backend === "ONLINE";
+  const backendOnline = systemStatus.backend === "ONLINE" && systemStatus.available !== false;
   const tacticalBrainState = liveProviderActive ? "ANALYZING" : "STANDBY";
   const behavioralBrainState = liveProviderActive ? "OBSERVING" : "STANDBY";
   const failsafeBrainState = backendOnline ? "ACTIVE" : "STANDBY";

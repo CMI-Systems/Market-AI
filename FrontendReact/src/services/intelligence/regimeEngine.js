@@ -19,15 +19,15 @@ function getConfidenceLabel(confidence) {
 function getFallback(symbol = 'MARKET') {
   const engines = {
     environmentClassification: {
-      regime: 'TRANSITION',
-      score: 45,
-      evidence: ['Environment classification defaulted to transition.'],
+      regime: 'UNKNOWN',
+      score: 0,
+      evidence: ['Environment classification unavailable because verified raw market inputs are missing.'],
       warnings: ['Regime input is empty or malformed.'],
     },
     volatilityContext: {
-      volatilityContext: 'CONTROLLED_VOLATILITY',
-      score: 45,
-      evidence: ['Volatility context defaulted to controlled.'],
+      volatilityContext: 'UNKNOWN',
+      score: 0,
+      evidence: ['Volatility context unavailable because verified volatility inputs are missing.'],
       warnings: ['Volatility inputs are unavailable.'],
     },
     participationContext: {
@@ -52,9 +52,13 @@ function getFallback(symbol = 'MARKET') {
 
   return {
     symbol,
-    regime: 'TRANSITION',
-    confidence: 45,
-    confidenceLabel: 'LOW',
+    regime: 'UNKNOWN',
+    confidence: 0,
+    confidenceLabel: 'VERY_LOW',
+    available: false,
+    sourceType: 'DATA_UNAVAILABLE',
+    simulated: false,
+    generated: false,
     stability: engines.regimeStability.stability,
     volatilityContext: engines.volatilityContext.volatilityContext,
     participationContext: engines.participationContext.participationContext,
@@ -120,6 +124,52 @@ function hasRegimeInput(input) {
   );
 }
 
+function isUnavailableLayer(layer) {
+  return Boolean(
+    layer?.available === false
+    || layer?.simulated === true
+    || layer?.generated === true
+    || [
+      'DATA_UNAVAILABLE',
+      'BACKEND_UNAVAILABLE',
+      'PROVIDER_OFFLINE',
+      'INSUFFICIENT_DATA',
+      'UNKNOWN_SOURCE',
+      'INVALID_TIMESTAMP',
+      'SIMULATED',
+      'GENERATED',
+      'BLOCKED',
+    ].includes(String(layer?.sourceType || '').toUpperCase())
+    || ['UNAVAILABLE', 'INSUFFICIENT_DATA', 'BLOCKED'].includes(String(layer?.tacticalState || '').toUpperCase())
+    || ['UNAVAILABLE', 'INSUFFICIENT_DATA', 'BLOCKED'].includes(String(layer?.behavioralState || '').toUpperCase())
+    || ['UNAVAILABLE'].includes(String(layer?.consensusState || '').toUpperCase())
+  );
+}
+
+function hasVerifiedRawContext(input) {
+  const marketPulseUnavailable = isUnavailableLayer(input?.marketPulse);
+  const globalScanUnavailable = isUnavailableLayer(input?.globalScan);
+
+  return Boolean(
+    (!marketPulseUnavailable && (
+      hasNumber(input?.marketPulse?.trendScore)
+      || hasNumber(input?.marketPulse?.volatility)
+      || hasNumber(input?.marketPulse?.volatilityIndex)
+      || hasNumber(input?.marketPulse?.riskScore)
+      || hasBreadth(input?.marketPulse)
+      || hasHistory(input?.marketPulse)
+    ))
+    || (!globalScanUnavailable && (
+      hasNumber(input?.globalScan?.trendScore)
+      || hasNumber(input?.globalScan?.volatility)
+      || hasNumber(input?.globalScan?.volatilityIndex)
+      || hasNumber(input?.globalScan?.riskScore)
+      || hasBreadth(input?.globalScan)
+      || hasHistory(input?.globalScan)
+    ))
+  );
+}
+
 function runEngine(engine, input, fallback, warnings, name) {
   try {
     const result = engine(input);
@@ -166,7 +216,15 @@ export function analyzeRegime(input = {}) {
     ? safeInput.symbol.trim().toUpperCase()
     : 'MARKET';
 
-  if (!input || typeof input !== 'object' || !hasRegimeInput(safeInput)) {
+  if (
+    !input
+    || typeof input !== 'object'
+    || !hasRegimeInput(safeInput)
+    || !hasVerifiedRawContext(safeInput)
+    || isUnavailableLayer(safeInput.tactical)
+    || isUnavailableLayer(safeInput.behavioral)
+    || isUnavailableLayer(safeInput.consensus)
+  ) {
     return getFallback(symbol);
   }
 

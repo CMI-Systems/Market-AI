@@ -22,6 +22,17 @@ function isKnownTarget(value, unknownValue) {
   return Boolean(normalized && normalized !== unknownValue);
 }
 
+function hasBlockedProvenance(record, validation) {
+  const provenance = validation?.provenance;
+  return Boolean(
+    provenance?.status === "BLOCKED" ||
+    provenance?.status === "DATA_UNAVAILABLE" ||
+    record?.metadata?.rawDataCertified === true ||
+    record?.metadata?.trainingEligible === true ||
+    record?.metadata?.trainingActivated === true
+  );
+}
+
 function getReadinessLabel(score) {
   if (score >= 90) return READINESS_LABELS.READY;
   if (score >= 70) return READINESS_LABELS.HIGH;
@@ -62,6 +73,7 @@ export function evaluateShadowTrainingReadiness(record = {}, validation = {}) {
     hasObjectContent(operatorContext.pipelineStatus);
 
   const marketContextAvailable = hasObjectContent(safeRecord.marketContext);
+  const provenanceBlocked = hasBlockedProvenance(safeRecord, safeValidation);
 
   let readinessScore = 0;
 
@@ -111,10 +123,17 @@ export function evaluateShadowTrainingReadiness(record = {}, validation = {}) {
     rejectionReasons.push("Missing one or more learning targets.");
   }
 
+  if (provenanceBlocked) {
+    warnings.push("Dataset provenance blocks shadow-training readiness.");
+    rejectionReasons.push("Dataset provenance is not eligible for shadow-training readiness.");
+    readinessScore = Math.min(readinessScore, 39);
+  }
+
   const shadowTrainingReady =
     validationPassed &&
     acceptedForShadowTraining &&
-    readinessScore >= 80;
+    readinessScore >= 80 &&
+    !provenanceBlocked;
 
   if (!tacticalReady) warnings.push("Missing tactical target.");
   if (!behavioralReady) warnings.push("Missing behavioral target.");

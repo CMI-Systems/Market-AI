@@ -1,3 +1,5 @@
+import { validateProvenance } from "./provenanceValidator.js";
+
 const QUALITY_LABELS = {
   LOW: "LOW",
   MODERATE: "MODERATE",
@@ -50,6 +52,14 @@ export function validateAiccDatasetRecord(record = {}) {
   const learningTargets = safeObject(safeRecord.learningTargets);
   const operatorContext = safeObject(safeRecord.operatorContext);
   const metadata = safeObject(safeRecord.metadata);
+  const provenance = validateProvenance(
+    {
+      ...safeObject(safeRecord.marketContext),
+      rawDataCertified: metadata.rawDataCertified,
+      trainingEligible: metadata.trainingEligible,
+    },
+    { timestampRequired: false },
+  );
   const warnings = [];
   const validationReasons = [];
   const rejectionReasons = [];
@@ -71,6 +81,7 @@ export function validateAiccDatasetRecord(record = {}) {
 
   const hasMarketContext = hasObjectContent(safeRecord.marketContext);
   const trainingActivated = metadata.trainingActivated === true;
+  const provenanceBlocked = provenance.status === "BLOCKED" || provenance.status === "DATA_UNAVAILABLE";
 
   const checks = [
     {
@@ -167,7 +178,16 @@ export function validateAiccDatasetRecord(record = {}) {
     rejectionReasons.push("Training activation flag is true.");
   }
 
-  const valid = qualityScore >= 70;
+  if (provenanceBlocked) {
+    warnings.push("Dataset market-context provenance is unavailable or untrusted.");
+    rejectionReasons.push("Dataset provenance is blocked or unavailable.");
+    missingFields.push("marketContext.provenance");
+  }
+
+  warnings.push(...provenance.warnings);
+  rejectionReasons.push(...provenance.blockingReasons);
+
+  const valid = qualityScore >= 70 && !provenanceBlocked && trainingActivated === false;
   const acceptedForShadowTraining =
     qualityScore >= 80 &&
     hasOperatorIdentity &&
@@ -175,7 +195,10 @@ export function validateAiccDatasetRecord(record = {}) {
     hasBehavioralTarget &&
     hasFailsafeTarget &&
     hasReplayOperatorContext &&
-    trainingActivated === false;
+    trainingActivated === false &&
+    !provenanceBlocked &&
+    provenance.rawDataCertified === false &&
+    provenance.trainingEligible === false;
 
   if (valid) {
     validationReasons.push("Dataset record meets the minimum quality threshold.");
@@ -198,5 +221,6 @@ export function validateAiccDatasetRecord(record = {}) {
     validationReasons,
     rejectionReasons,
     warnings,
+    provenance,
   };
 }

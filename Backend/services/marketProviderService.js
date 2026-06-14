@@ -1,10 +1,17 @@
 const axios = require("axios");
-const { getMarketHoursStatus } = require("./marketHours");
 const {
   getWebullCapabilities,
   getWebullConfigStatus,
   getWebullHealth
 } = require("./webullService");
+const {
+  getSimulationPolicy,
+  normalizeRuntimeEnvironment
+} = require("../config/runtimePolicy");
+const {
+  evaluateMarketAvailability,
+  resolveMarketSession
+} = require("./marketSessionPolicy");
 
 const TRACKED_SYMBOLS = ["SPY", "QQQ", "NVDA", "AAPL", "MSFT"];
 
@@ -61,6 +68,20 @@ function normalizeSimulation(value) {
   return SIMULATION_FAILURES.has(value) ? value : null;
 }
 
+function getAuthorizedSimulation(options = {}, env = process.env) {
+  const requestedSimulation = normalizeSimulation(options.simulate);
+  const policy = getSimulationPolicy(env);
+
+  return {
+    policy,
+    requestedSimulation,
+    simulation: requestedSimulation && policy.simulationAllowed
+      ? requestedSimulation
+      : null,
+    simulationRejected: Boolean(requestedSimulation && !policy.simulationAllowed)
+  };
+}
+
 function normalizeTimeframe(timeframe = "5Min") {
   const key = String(timeframe || "5Min").replace(/\s+/g, "").toUpperCase();
 
@@ -109,20 +130,62 @@ function formatVolume(volume) {
 
 function normalizeQuote(quote, provider, providerStatus = getProviderStatus()) {
   const normalizedSymbol = String(quote.symbol || "SPY").toUpperCase();
+  const sourceType = quote.sourceType ||
+    (provider === "SIMULATION"
+      ? "SIMULATED"
+      : provider === "ALPACA" || provider === "WEBULL"
+        ? "RAW_DELAYED"
+        : "PROVIDER_UNAVAILABLE");
+  const available = quote.available !== undefined ? Boolean(quote.available) : sourceType !== "PROVIDER_UNAVAILABLE";
+  const updatedAt = quote.updatedAt || quote.timestamp || null;
+  const marketAvailability = evaluateMarketAvailability({
+    provider,
+    sourceType,
+    available,
+    timestamp: updatedAt,
+    providerAvailable: provider === "ALPACA" || provider === "WEBULL",
+    simulated: quote.simulated !== undefined ? Boolean(quote.simulated) : provider === "SIMULATION",
+    generated: quote.generated !== undefined ? Boolean(quote.generated) : provider === "SIMULATION",
+    environment: quote.environment || normalizeRuntimeEnvironment().runtimeEnvironment
+  });
+  const price = Number(quote.price);
+  const changePercent = Number(quote.changePercent);
+  const volume = Number(quote.volume);
 
   return {
     symbol: normalizedSymbol,
     name: SYMBOL_NAMES[normalizedSymbol] || normalizedSymbol,
-    price: Number(quote.price || 0),
-    changePercent: Number(quote.changePercent || 0),
-    volume: typeof quote.volume === "string" ? quote.volume : formatVolume(Number(quote.volume || 0)),
+    price: available && Number.isFinite(price) ? price : null,
+    changePercent: available && Number.isFinite(changePercent) ? changePercent : null,
+    volume: available
+      ? typeof quote.volume === "string" ? quote.volume : formatVolume(Number.isFinite(volume) ? volume : 0)
+      : null,
     provider,
     providerStatus: providerStatus.providerHealth,
-    updatedAt: quote.updatedAt || new Date().toISOString()
+    updatedAt,
+    timestamp: quote.timestamp || updatedAt,
+    source: quote.source || provider,
+    sourceType,
+    dataState: marketAvailability.dataState,
+    dataAge: marketAvailability.dataAge,
+    sessionState: marketAvailability.sessionState,
+    marketOpen: marketAvailability.marketOpen,
+    extendedHours: marketAvailability.extendedHours,
+    sessionSource: marketAvailability.source,
+    sessionVerified: marketAvailability.verified,
+    nextOpen: marketAvailability.nextOpen,
+    previousClose: marketAvailability.previousClose,
+    available,
+    simulated: quote.simulated !== undefined ? Boolean(quote.simulated) : provider === "SIMULATION",
+    generated: quote.generated !== undefined ? Boolean(quote.generated) : provider === "SIMULATION",
+    error: quote.error || null,
+    environment: quote.environment || normalizeRuntimeEnvironment().runtimeEnvironment,
+    warnings: marketAvailability.warnings
   };
 }
 
 function formatCandleTime(timestamp) {
+  if (!timestamp) return "Unavailable";
   const date = new Date(timestamp);
 
   if (Number.isNaN(date.getTime())) return "00:00";
@@ -136,17 +199,55 @@ function formatCandleTime(timestamp) {
 }
 
 function normalizeCandle(candle, provider) {
-  const timestamp = candle.timestamp || candle.t || new Date().toISOString();
+  const timestamp = candle.timestamp || candle.t || null;
+  const sourceType = candle.sourceType ||
+    (provider === "SIMULATION"
+      ? "SIMULATED"
+      : provider === "ALPACA" || provider === "WEBULL"
+        ? "RAW_DELAYED"
+        : "PROVIDER_UNAVAILABLE");
+  const available = candle.available !== undefined ? Boolean(candle.available) : sourceType !== "PROVIDER_UNAVAILABLE";
+  const marketAvailability = evaluateMarketAvailability({
+    provider,
+    sourceType,
+    available,
+    timestamp,
+    providerAvailable: provider === "ALPACA" || provider === "WEBULL",
+    simulated: candle.simulated !== undefined ? Boolean(candle.simulated) : provider === "SIMULATION",
+    generated: candle.generated !== undefined ? Boolean(candle.generated) : provider === "SIMULATION",
+    environment: candle.environment || normalizeRuntimeEnvironment().runtimeEnvironment
+  });
+  const open = Number(candle.open ?? candle.o);
+  const high = Number(candle.high ?? candle.h);
+  const low = Number(candle.low ?? candle.l);
+  const close = Number(candle.close ?? candle.c);
+  const volume = Number(candle.volume ?? candle.v);
 
   return {
     time: candle.time || formatCandleTime(timestamp),
     timestamp,
-    open: Number(candle.open ?? candle.o ?? 0),
-    high: Number(candle.high ?? candle.h ?? 0),
-    low: Number(candle.low ?? candle.l ?? 0),
-    close: Number(candle.close ?? candle.c ?? 0),
-    volume: Number(candle.volume ?? candle.v ?? 0),
-    provider
+    open: available && Number.isFinite(open) ? open : null,
+    high: available && Number.isFinite(high) ? high : null,
+    low: available && Number.isFinite(low) ? low : null,
+    close: available && Number.isFinite(close) ? close : null,
+    volume: available && Number.isFinite(volume) ? volume : null,
+    provider,
+    source: candle.source || provider,
+    sourceType,
+    dataState: marketAvailability.dataState,
+    dataAge: marketAvailability.dataAge,
+    sessionState: marketAvailability.sessionState,
+    marketOpen: marketAvailability.marketOpen,
+    extendedHours: marketAvailability.extendedHours,
+    sessionSource: marketAvailability.source,
+    sessionVerified: marketAvailability.verified,
+    nextOpen: marketAvailability.nextOpen,
+    previousClose: marketAvailability.previousClose,
+    available,
+    simulated: candle.simulated !== undefined ? Boolean(candle.simulated) : provider === "SIMULATION",
+    generated: candle.generated !== undefined ? Boolean(candle.generated) : provider === "SIMULATION",
+    environment: candle.environment || normalizeRuntimeEnvironment().runtimeEnvironment,
+    warnings: marketAvailability.warnings
   };
 }
 
@@ -155,7 +256,7 @@ function isWebullConfigured(env = process.env) {
 }
 
 function isWebullEnabled(env = process.env, options = {}) {
-  if (normalizeSimulation(options.simulate) === "no_provider") return false;
+  if (getAuthorizedSimulation(options, env).simulation === "no_provider") return false;
   return getWebullConfigStatus(env).enabled;
 }
 
@@ -164,7 +265,7 @@ function getAlpacaDataUrl(env = process.env) {
 }
 
 function isAlpacaAvailable(env = process.env, options = {}) {
-  const simulate = normalizeSimulation(options.simulate);
+  const simulate = getAuthorizedSimulation(options, env).simulation;
   if (simulate === "alpaca_down" || simulate === "no_provider" || simulate === "provider_timeout") {
     return false;
   }
@@ -172,19 +273,20 @@ function isAlpacaAvailable(env = process.env, options = {}) {
 }
 
 function getActiveProvider(env = process.env, options = {}) {
+  if (getAuthorizedSimulation(options, env).simulation) return "SIMULATION";
   if (isWebullEnabled(env, options)) return "WEBULL";
   if (isAlpacaAvailable(env, options)) return "ALPACA";
-  return "FALLBACK";
+  return "PROVIDER_UNAVAILABLE";
 }
 
 function getMarketStatus() {
-  const marketHours = getMarketHoursStatus();
+  const marketHours = resolveMarketSession();
 
-  return marketHours.isOpen ? "OPEN" : "CLOSED";
+  return marketHours.marketOpen ? "OPEN" : "CLOSED";
 }
 
 function getProviderCapabilities(provider = getActiveProvider(), options = {}) {
-  const simulate = normalizeSimulation(options.simulate);
+  const simulate = getAuthorizedSimulation(options, options.env || process.env).simulation;
 
   if (simulate === "no_provider") {
     return {
@@ -212,22 +314,34 @@ function getProviderCapabilities(provider = getActiveProvider(), options = {}) {
     };
   }
 
+  if (provider === "SIMULATION") {
+    return {
+      equities: true,
+      options: false,
+      futures: false,
+      historicalCandles: true,
+      quotes: true,
+      news: false
+    };
+  }
+
   return {
-    equities: true,
+    equities: false,
     options: false,
     futures: false,
-    historicalCandles: true,
-    quotes: true,
+    historicalCandles: false,
+    quotes: false,
     news: false
   };
 }
 
 function getProviderHealth(provider = getActiveProvider(), options = {}) {
-  const simulate = normalizeSimulation(options.simulate);
+  const simulate = getAuthorizedSimulation(options, options.env || process.env).simulation;
 
   if (simulate === "no_provider") return "OFFLINE";
-  if (provider === "FALLBACK" || simulate) return "DEGRADED";
-  return provider === "FALLBACK" ? "DEGRADED" : "HEALTHY";
+  if (provider === "SIMULATION" || simulate) return "DEGRADED";
+  if (provider === "PROVIDER_UNAVAILABLE") return "OFFLINE";
+  return "HEALTHY";
 }
 
 function getProviderStatus(options = {}) {
@@ -235,31 +349,76 @@ function getProviderStatus(options = {}) {
   const activeProvider = getActiveProvider(env, options);
   const providerHealth = getProviderHealth(activeProvider, options);
   const capabilities = getProviderCapabilities(activeProvider, options);
+  const simulationContext = getAuthorizedSimulation(options, env);
+  const runtime = normalizeRuntimeEnvironment(env);
   const warnings = [];
+  const session = resolveMarketSession({ currentTime: options.currentTime });
+  const marketAvailability = evaluateMarketAvailability({
+    provider: activeProvider,
+    sourceType: activeProvider === "SIMULATION"
+      ? "SIMULATED"
+      : activeProvider === "PROVIDER_UNAVAILABLE"
+        ? "PROVIDER_UNAVAILABLE"
+        : "RAW_DELAYED",
+    available: activeProvider === "ALPACA" || activeProvider === "WEBULL",
+    providerAvailable: activeProvider === "ALPACA" || activeProvider === "WEBULL",
+    simulated: activeProvider === "SIMULATION",
+    generated: activeProvider === "SIMULATION",
+    environment: runtime.runtimeEnvironment,
+    currentTime: options.currentTime,
+    session
+  });
 
-  if (activeProvider === "FALLBACK") {
-    warnings.push("Primary live provider unavailable; simulation fallback is active.");
+  if (activeProvider === "PROVIDER_UNAVAILABLE") {
+    warnings.push("Primary live provider unavailable; raw market data is unavailable.");
   }
 
-  if (normalizeSimulation(options.simulate)) {
+  if (simulationContext.simulationRejected) {
+    warnings.push("Simulation was requested but is blocked in the current runtime environment.");
+  }
+
+  if (simulationContext.simulation) {
     warnings.push(`Provider simulation active: ${options.simulate}.`);
   }
 
   return {
     primaryProvider: isWebullEnabled(env, options) ? "WEBULL" : "WEBULL_PENDING",
-    activeProvider: activeProvider === "FALLBACK" ? "SIMULATION" : activeProvider,
-    fallbackProvider: "SIMULATION",
-    marketStatus: getMarketStatus(),
+    activeProvider,
+    fallbackProvider: simulationContext.policy.simulationAllowed ? "SIMULATION_DEV_ONLY" : "NONE",
+    marketStatus: session.marketOpen ? "OPEN" : "CLOSED",
+    sessionState: session.sessionState,
+    marketOpen: session.marketOpen,
+    extendedHours: session.extendedHours,
+    sessionSource: session.source,
+    sessionVerified: session.verified,
+    currentTime: session.currentTime,
+    nextOpen: session.nextOpen,
+    previousClose: session.previousClose,
+    dataState: marketAvailability.dataState,
+    dataAge: marketAvailability.dataAge,
     providerHealth,
     capabilities,
     trackedSymbols: TRACKED_SYMBOLS,
-    lastUpdate: new Date().toISOString(),
-    failoverReady: true,
-    warnings
+    lastUpdate: marketAvailability.available ? session.currentTime : null,
+    failoverReady: false,
+    sourceType: activeProvider === "SIMULATION"
+      ? "SIMULATED"
+      : activeProvider === "PROVIDER_UNAVAILABLE"
+        ? "PROVIDER_UNAVAILABLE"
+        : "RAW_DELAYED",
+    simulated: activeProvider === "SIMULATION",
+    generated: activeProvider === "SIMULATION",
+    environment: runtime.runtimeEnvironment,
+    runtimeEnvironment: runtime.runtimeEnvironment,
+    simulationAllowed: simulationContext.policy.simulationAllowed,
+    simulationActive: activeProvider === "SIMULATION",
+    providerAvailable: activeProvider === "ALPACA" || activeProvider === "WEBULL",
+    rawDataAvailable: activeProvider === "ALPACA" || activeProvider === "WEBULL",
+    warnings: [...warnings, ...marketAvailability.warnings]
   };
 }
 
-function fallbackQuote(symbol, providerHealth = "DEGRADED") {
+function simulatedQuote(symbol, providerHealth = "DEGRADED", env = process.env) {
   const normalizedSymbol = String(symbol || "SPY").toUpperCase();
   const quote = FALLBACK_QUOTES[normalizedSymbol] || FALLBACK_QUOTES.SPY;
 
@@ -267,14 +426,43 @@ function fallbackQuote(symbol, providerHealth = "DEGRADED") {
     {
       ...quote,
       symbol: normalizedSymbol,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      sourceType: "SIMULATED",
+      available: true,
+      simulated: true,
+      generated: true,
+      environment: normalizeRuntimeEnvironment(env).runtimeEnvironment
     },
     "SIMULATION",
     { providerHealth }
   );
 }
 
-function fallbackCandles(symbol, limit = 80, timeframe = "5Min") {
+function unavailableQuote(symbol, providerHealth = "OFFLINE", error = "RAW_DATA_UNAVAILABLE", env = process.env) {
+  const normalizedSymbol = String(symbol || "SPY").toUpperCase();
+
+  return normalizeQuote(
+    {
+      symbol: normalizedSymbol,
+      price: null,
+      changePercent: null,
+      volume: null,
+      updatedAt: null,
+      timestamp: null,
+      source: "PROVIDER_UNAVAILABLE",
+      sourceType: "PROVIDER_UNAVAILABLE",
+      available: false,
+      simulated: false,
+      generated: false,
+      error,
+      environment: normalizeRuntimeEnvironment(env).runtimeEnvironment
+    },
+    "PROVIDER_UNAVAILABLE",
+    { providerHealth }
+  );
+}
+
+function simulatedCandles(symbol, limit = 80, timeframe = "5Min", env = process.env) {
   const normalizedSymbol = String(symbol || "SPY").toUpperCase();
   const quote = FALLBACK_QUOTES[normalizedSymbol] || FALLBACK_QUOTES.SPY;
   const requestedLimit = Math.max(12, Math.min(Number(limit) || 80, 120));
@@ -302,7 +490,12 @@ function fallbackCandles(symbol, limit = 80, timeframe = "5Min") {
         high: Number(high.toFixed(2)),
         low: Number(low.toFixed(2)),
         close: Number(close.toFixed(2)),
-        volume: Math.round((quote.volume || 1000000) / requestedLimit)
+        volume: Math.round((quote.volume || 1000000) / requestedLimit),
+        sourceType: "SIMULATED",
+        available: true,
+        simulated: true,
+        generated: true,
+        environment: normalizeRuntimeEnvironment(env).runtimeEnvironment
       },
       "SIMULATION"
     );
@@ -340,7 +533,8 @@ async function getAlpacaQuote(symbol, env = process.env) {
       price,
       changePercent: Number(changePercent.toFixed(2)),
       volume: bar.v ?? 0,
-      updatedAt: trade.t || bar.t || new Date().toISOString()
+      updatedAt: trade.t || bar.t || null,
+      timestamp: trade.t || bar.t || null
     },
     "ALPACA",
     {
@@ -352,25 +546,29 @@ async function getAlpacaQuote(symbol, env = process.env) {
 async function getQuote(symbol, options = {}) {
   const env = options.env || process.env;
   const activeProvider = getActiveProvider(env, options);
-  const simulate = normalizeSimulation(options.simulate);
+  const { simulation: simulate, simulationRejected } = getAuthorizedSimulation(options, env);
 
   if (simulate === "quotes_down" || simulate === "provider_timeout" || simulate === "alpaca_down") {
-    return fallbackQuote(symbol, "DEGRADED");
+    return simulatedQuote(symbol, "DEGRADED", env);
   }
 
   if (simulate === "no_provider") {
-    return fallbackQuote(symbol, "OFFLINE");
+    return simulatedQuote(symbol, "OFFLINE", env);
+  }
+
+  if (simulationRejected) {
+    return unavailableQuote(symbol, "OFFLINE", "SIMULATION_NOT_ALLOWED", env);
   }
 
   if (activeProvider === "ALPACA") {
     try {
       return await getAlpacaQuote(symbol, env);
     } catch {
-      return fallbackQuote(symbol);
+      return unavailableQuote(symbol, "OFFLINE", "RAW_DATA_UNAVAILABLE", env);
     }
   }
 
-  return fallbackQuote(symbol);
+  return unavailableQuote(symbol, "OFFLINE", "RAW_DATA_UNAVAILABLE", env);
 }
 
 async function getQuotes(symbols, options = {}) {
@@ -433,23 +631,27 @@ async function getAlpacaHistoricalCandles(symbol, timeframe = "5Min", limit = 80
 async function getHistoricalCandles(symbol, timeframe = "5Min", limit = 80, options = {}) {
   const env = options.env || process.env;
   const activeProvider = getActiveProvider(env, options);
-  const simulate = normalizeSimulation(options.simulate);
+  const { simulation: simulate, simulationRejected } = getAuthorizedSimulation(options, env);
 
   if (simulate === "candles_down" || simulate === "provider_timeout" || simulate === "alpaca_down" || simulate === "no_provider") {
-    return fallbackCandles(symbol, limit, timeframe);
+    return simulatedCandles(symbol, limit, timeframe, env);
+  }
+
+  if (simulationRejected) {
+    return [];
   }
 
   if (activeProvider === "ALPACA") {
     try {
       const candles = await getAlpacaHistoricalCandles(symbol, timeframe, limit, env);
 
-      return candles.length ? candles : fallbackCandles(symbol, limit, timeframe);
+      return candles;
     } catch {
-      return fallbackCandles(symbol, limit, timeframe);
+      return [];
     }
   }
 
-  return fallbackCandles(symbol, limit, timeframe);
+  return [];
 }
 
 function averageClose(candles) {
@@ -505,6 +707,31 @@ function signalConfidence({ changePercent, latestClose, recentAverage, rising, v
 }
 
 function generateProviderSignal(quote, candles) {
+  if (!quote?.available || quote.sourceType === "PROVIDER_UNAVAILABLE" || !Array.isArray(candles) || !candles.length) {
+    return {
+      symbol: quote?.symbol || "UNKNOWN",
+      price: Number(quote?.price || 0),
+      changePercent: Number(quote?.changePercent || 0),
+      volume: quote?.volume || "0",
+      signal: "UNAVAILABLE",
+      signalType: "DATA_UNAVAILABLE",
+      confidence: 0,
+      risk: "UNKNOWN",
+      reason: "Raw provider data is unavailable; provider signal was not generated.",
+      provider: quote?.provider || "PROVIDER_UNAVAILABLE",
+      updatedAt: quote?.timestamp || quote?.updatedAt || null,
+      available: false,
+      dataState: quote?.dataState || "DATA_UNAVAILABLE",
+      dataAge: quote?.dataAge ?? null,
+      sessionState: quote?.sessionState || "UNKNOWN_SESSION",
+      marketOpen: quote?.marketOpen === true,
+      sourceType: quote?.sourceType || "PROVIDER_UNAVAILABLE",
+      simulated: false,
+      generated: false,
+      error: quote?.error || "RAW_DATA_UNAVAILABLE"
+    };
+  }
+
   const latest = candles[candles.length - 1];
   const recent = candles.slice(-20);
   const recentAverage = averageClose(recent);
@@ -560,7 +787,11 @@ function generateProviderSignal(quote, candles) {
     risk,
     reason,
     provider: quote.provider,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    available: true,
+    sourceType: quote.sourceType || "RAW_DELAYED",
+    simulated: Boolean(quote.simulated),
+    generated: false
   };
 }
 
@@ -581,7 +812,7 @@ async function getProviderSignals(symbols, options = {}) {
 
 function getProviderDiagnostics(options = {}) {
   const env = options.env || process.env;
-  const simulate = normalizeSimulation(options.simulate);
+  const { simulation: simulate, simulationRejected, policy } = getAuthorizedSimulation(options, env);
   const webullHealth = getWebullHealth(env);
   const alpacaConfigured = Boolean(env.ALPACA_API_KEY && env.ALPACA_SECRET_KEY && getAlpacaDataUrl(env));
   const alpacaEnabled = alpacaConfigured && simulate !== "no_provider";
@@ -593,7 +824,11 @@ function getProviderDiagnostics(options = {}) {
   const warnings = [...providerStatus.warnings];
 
   if (!alpacaHealthy) {
-    warnings.push("Alpaca provider path is unavailable or simulated down.");
+    warnings.push("Alpaca provider path is unavailable.");
+  }
+
+  if (simulationRejected) {
+    warnings.push("Simulation was requested but blocked by runtime policy.");
   }
 
   return {
@@ -612,12 +847,21 @@ function getProviderDiagnostics(options = {}) {
       candles: candlesHealthy
     },
     fallback: {
-      enabled: true,
-      status: "AVAILABLE"
+      enabled: policy.simulationAllowed,
+      status: policy.simulationAllowed ? "AVAILABLE_DEV_ONLY" : "DISABLED"
     },
     activeProvider: providerStatus.activeProvider,
     providerHealth: providerStatus.providerHealth,
-    failoverReady: true,
+    failoverReady: false,
+    sourceType: providerStatus.sourceType,
+    simulated: providerStatus.simulated,
+    generated: providerStatus.generated,
+    environment: providerStatus.environment,
+    runtimeEnvironment: providerStatus.runtimeEnvironment,
+    simulationAllowed: providerStatus.simulationAllowed,
+    simulationActive: providerStatus.simulationActive,
+    providerAvailable: providerStatus.providerAvailable,
+    rawDataAvailable: providerStatus.rawDataAvailable,
     warnings
   };
 }

@@ -36,7 +36,7 @@ function displayFallbackStatus(providerStatus, providerDiagnostics) {
     return "SIMULATION";
   }
 
-  return providerDiagnostics.fallback?.status || "AVAILABLE";
+  return providerDiagnostics.fallback?.status || "UNAVAILABLE";
 }
 
 function normalizeSymbol(symbol) {
@@ -68,13 +68,17 @@ function getFallbackRow(symbol) {
     price: fallback?.price ?? null,
     changePercent: fallback?.changePercent ?? null,
     volume: fallback?.volume || "--",
-    consensus: fallback?.consensus || "NEUTRAL",
-    confidence: fallback?.confidence ?? 50,
-    signal: fallback?.signal || "NEUTRAL",
-    risk: fallback?.risk || "MODERATE",
+    consensus: fallback?.consensus || "DATA_UNAVAILABLE",
+    confidence: fallback?.confidence ?? null,
+    signal: fallback?.signal || "DATA_UNAVAILABLE",
+    risk: fallback?.risk || "UNKNOWN",
     provider: fallback?.provider || "--",
     providerStatus: "--",
     updatedAt: fallback?.updatedAt || null,
+    available: fallback?.available === true,
+    sourceType: fallback?.sourceType || "DATA_UNAVAILABLE",
+    simulated: fallback?.simulated === true,
+    generated: fallback?.generated === true,
   };
 }
 
@@ -85,18 +89,19 @@ function mergeRow(symbol, previousRows, quoteBySymbol, signalBySymbol, providerS
   const price = Number(signal?.price ?? quote?.price);
   const changePercent = Number(signal?.changePercent ?? quote?.changePercent);
   const confidence = Number(signal?.confidence);
+  const quoteUnavailable = quote?.available === false || quote?.sourceType === "DATA_UNAVAILABLE";
 
   return {
     ...previous,
     symbol,
     name: quote?.name || previous.name || symbol,
-    price: Number.isFinite(price) ? price : previous.price,
-    changePercent: Number.isFinite(changePercent) ? changePercent : previous.changePercent,
-    volume: signal?.volume || quote?.volume || previous.volume || "--",
-    consensus: previous.consensus || "NEUTRAL",
-    signal: signal?.signal || previous.signal || "NEUTRAL",
-    confidence: Number.isFinite(confidence) ? confidence : previous.confidence ?? 50,
-    risk: signal?.risk || previous.risk || "MODERATE",
+    price: quoteUnavailable ? null : Number.isFinite(price) ? price : previous.price,
+    changePercent: quoteUnavailable ? null : Number.isFinite(changePercent) ? changePercent : previous.changePercent,
+    volume: quoteUnavailable ? "--" : signal?.volume || quote?.volume || previous.volume || "--",
+    consensus: previous.consensus || "DATA_UNAVAILABLE",
+    signal: signal?.signal || previous.signal || "DATA_UNAVAILABLE",
+    confidence: Number.isFinite(confidence) ? confidence : previous.confidence ?? null,
+    risk: signal?.risk || previous.risk || "UNKNOWN",
     signalType: signal?.signalType || previous.signalType,
     reason: signal?.reason || previous.reason,
     provider: signal?.provider || quote?.provider || providerStatus.activeProvider || previous.provider || "--",
@@ -241,16 +246,23 @@ function Watchlists() {
     String(item.signal || "").includes("WATCH")
   ).length;
   const averageConfidence = watchlistRows.length
-    ? Math.round(
-        watchlistRows.reduce((total, item) => total + Number(item.confidence || 50), 0) /
-          watchlistRows.length
-      )
+    ? (() => {
+        const confidenceValues = watchlistRows
+          .map((item) => Number(item.confidence))
+          .filter(Number.isFinite);
+
+        return confidenceValues.length
+          ? Math.round(confidenceValues.reduce((total, value) => total + value, 0) / confidenceValues.length)
+          : 0;
+      })()
     : 0;
   const highestRisk = watchlistRows.some((item) => item.risk === "HIGH")
     ? "HIGH"
     : watchlistRows.some((item) => item.risk === "MODERATE")
       ? "MODERATE"
-      : "LOW";
+      : watchlistRows.some((item) => item.risk === "LOW")
+        ? "LOW"
+        : "UNKNOWN";
 
   function addSymbol(event) {
     event.preventDefault();

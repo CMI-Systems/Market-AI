@@ -8,29 +8,9 @@ import { analyzeFailsafeState } from "../services/intelligence/failsafeBrain";
 import "../styles/ClosedBetaPages.css";
 import "../styles/FailsafeBrain.css";
 
-const CLOSED_BETA_TACTICAL_FALLBACK = {
-  symbol: "SPY",
-  tacticalState: "NEUTRAL_TRANSITION",
-  trend: "NEUTRAL",
-  confidence: 45,
-};
-
-const CLOSED_BETA_BEHAVIORAL_FALLBACK = {
-  symbol: "SPY",
-  behavioralState: "TRANSITIONING_BEHAVIOR",
-  riskAppetite: "NEUTRAL",
-  confidence: 45,
-};
-
 function displayState(value) {
   if (!value) return "STANDBY";
   return String(value).replace(/_/g, " ");
-}
-
-function normalizeConfidence(value, fallback = 45) {
-  const number = Number(value);
-  if (!Number.isFinite(number)) return fallback;
-  return number <= 1 ? Math.round(number * 100) : Math.round(number);
 }
 
 function buildDataStreams(systemStatus, providerDiagnostics) {
@@ -72,13 +52,7 @@ function buildMockHistory(alerts, systemStatus) {
       }))
     : [];
 
-  if (alertHistory.length >= 3) return alertHistory;
-
-  return [
-    { state: systemStatus?.brains?.failsafe === "ACTIVE" ? "RISK_ESCALATION" : "ELEVATED_UNCERTAINTY" },
-    { state: "ELEVATED_UNCERTAINTY" },
-    { state: "CONFIRMED_ENVIRONMENT" },
-  ];
+  return alertHistory;
 }
 
 function buildFailsafeInput({ systemStatus, providerDiagnostics, alerts }) {
@@ -86,40 +60,28 @@ function buildFailsafeInput({ systemStatus, providerDiagnostics, alerts }) {
   const tacticalLive = systemStatus?.tactical || systemStatus?.tacticalBrain || null;
   const behavioralLive = systemStatus?.behavioral || systemStatus?.behavioralBrain || null;
   const usingFallbackBrains = !tacticalLive || !behavioralLive;
-  const alertRiskHigh = Array.isArray(alerts)
-    && alerts.some((alert) => ["WARNING", "CRITICAL"].includes(alert?.severity));
-
-  const tactical = tacticalLive || {
-    ...CLOSED_BETA_TACTICAL_FALLBACK,
-    symbol,
-    tacticalState: alertRiskHigh ? "HIGH_VOLATILITY_TRANSITION" : "NEUTRAL_TRANSITION",
-    confidence: normalizeConfidence(systemStatus?.score, 45),
-  };
-
-  const behavioral = behavioralLive || {
-    ...CLOSED_BETA_BEHAVIORAL_FALLBACK,
-    symbol,
-    behavioralState: alertRiskHigh ? "RISK_AVERSION" : "TRANSITIONING_BEHAVIOR",
-    riskAppetite: alertRiskHigh ? "RISK_OFF" : "NEUTRAL",
-    confidence: normalizeConfidence(systemStatus?.score, 45),
-  };
 
   return {
     input: {
       symbol,
-      tactical,
-      behavioral,
+      tactical: tacticalLive,
+      behavioral: behavioralLive,
       dataStreams: buildDataStreams(systemStatus, providerDiagnostics),
       marketIntelligence: {
-        dataQuality: providerDiagnostics?.providerHealth === "HEALTHY" ? 82 : 48,
+        dataQuality: providerDiagnostics?.providerHealth === "HEALTHY" ? 82 : 0,
         providerHealth: providerDiagnostics?.providerHealth,
         failoverReady: providerDiagnostics?.failoverReady,
+        available: providerDiagnostics?.available !== false,
+        sourceType: providerDiagnostics?.sourceType || "UNKNOWN",
       },
       globalScan: {
-        dataQuality: systemStatus?.backend === "ONLINE" ? 78 : 42,
+        dataQuality: systemStatus?.backend === "ONLINE" ? 78 : 0,
+        available: systemStatus?.available !== false,
+        sourceType: systemStatus?.sourceType || "UNKNOWN",
       },
       newsletterData: {
         alertCount: Array.isArray(alerts) ? alerts.length : 0,
+        available: Array.isArray(alerts) && alerts.some((alert) => alert?.available !== false),
       },
       history: buildMockHistory(alerts, systemStatus),
     },
@@ -251,7 +213,7 @@ function FailsafeBrain() {
         </div>
         <p>
           {failsafeInput.usingFallbackBrains
-            ? "Closed-beta validation inputs are active. Tactical and behavioral validation snapshots are using safe fallback conclusions."
+            ? "Verified tactical or behavioral validation inputs are unavailable. No fallback brain conclusions are being substituted."
             : "Live tactical, behavioral, provider, and system validation inputs are active."}
         </p>
       </section>

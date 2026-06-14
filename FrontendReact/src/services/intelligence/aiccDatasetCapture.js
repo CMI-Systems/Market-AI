@@ -157,6 +157,8 @@ export function createAiccDatasetRecord(input = {}) {
       version: "M1",
       persisted: false,
       trainingActivated: false,
+      rawDataCertified: false,
+      trainingEligible: false,
     },
     warnings: buildWarnings({
       operator,

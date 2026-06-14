@@ -252,9 +252,18 @@ function CommandCenter() {
   const betaStabilityState = providerHealthy ? "STABLE" : "MONITORING";
   const betaConfidenceState = liveProviderActive ? "HIGH" : "MODERATE";
   const betaConfidenceScore = liveProviderActive ? 0.9 : 0.6;
+  const overviewAvailable =
+    overview?.available !== false && overview?.sourceType !== "DATA_UNAVAILABLE";
+  const providerDataAvailable =
+    providerDiagnostics?.available !== false
+    && providerDiagnostics?.sourceType !== "DATA_UNAVAILABLE"
+    && providerDiagnostics.providerHealth !== "OFFLINE";
   const backendOnline =
-    Boolean(overview?.backend || overview?.runtimeHealth?.status) ||
-    providerDiagnostics.providerHealth !== "OFFLINE";
+    overviewAvailable
+    && (
+      Boolean(overview?.backend || overview?.runtimeHealth?.status)
+      || providerDataAvailable
+    );
   const tacticalBrainState = liveProviderActive ? "ANALYZING" : "STANDBY";
   const behavioralBrainState = liveProviderActive ? "OBSERVING" : "STANDBY";
   const failsafeBrainState = backendOnline ? "ACTIVE" : "STANDBY";
@@ -1071,6 +1080,11 @@ function CommandCenter() {
   const primaryChartData = getMarketChartData(overviewCandles, overviewQuote);
   const secondaryChartData = getMarketChartData(secondaryCandles, secondaryQuote);
   const overviewChangePercent = primaryChartData.changePercent;
+  const rawMarketInputsAvailable =
+    providerDataAvailable
+    && overviewQuote?.available !== false
+    && overviewQuote?.sourceType !== "DATA_UNAVAILABLE"
+    && overviewCandles.length > 0;
   const aiccDataStreams = [
     {
       name: "provider",
@@ -1144,20 +1158,20 @@ function CommandCenter() {
   };
   const aiccIntelligence = analyzeAiccIntelligence({
     symbol: selectedOverviewSymbol,
-    candles: overviewCandles,
-    quote: overviewQuote,
-    marketContext: activeEnvironment,
-    benchmarkCandles: secondaryCandles,
-    sectorContext: {
+    candles: rawMarketInputsAvailable ? overviewCandles : [],
+    quote: rawMarketInputsAvailable ? overviewQuote : null,
+    marketContext: rawMarketInputsAvailable ? activeEnvironment : null,
+    benchmarkCandles: rawMarketInputsAvailable ? secondaryCandles : [],
+    sectorContext: rawMarketInputsAvailable ? {
       performancePct: Number(overviewChangePercent) || 0,
-    },
-    marketPulse: aiccMarketPulse,
-    marketIntelligence: aiccMarketIntelligence,
-    globalScan: aiccGlobalScan,
-    newsletterData: aiccNewsletterData,
-    crossAssetData: {
+    } : null,
+    marketPulse: rawMarketInputsAvailable ? aiccMarketPulse : null,
+    marketIntelligence: rawMarketInputsAvailable ? aiccMarketIntelligence : null,
+    globalScan: rawMarketInputsAvailable ? aiccGlobalScan : null,
+    newsletterData: rawMarketInputsAvailable ? aiccNewsletterData : null,
+    crossAssetData: rawMarketInputsAvailable ? {
       assetReturns: aiccMarketIntelligence.leadership,
-    },
+    } : null,
     dataStreams: aiccDataStreams,
     history: predictionEntries.map((entry) => ({
       state: entry.consensusState || entry.environment,
@@ -1316,6 +1330,11 @@ function CommandCenter() {
     { label: "Provider", value: providerHealthy ? "HEALTHY" : "DEGRADED" },
     { label: "Failover", value: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
   ];
+  const marketSessionLabel =
+    providerDiagnostics.sessionState
+    || providerDiagnostics.dataState
+    || overview?.sessionState
+    || (overview?.marketOpen === true ? "REGULAR_MARKET" : overview?.marketOpen === false ? "MARKET_CLOSED" : "UNKNOWN_SESSION");
 
   return (
     <div className="command-layout">
@@ -1363,7 +1382,7 @@ function CommandCenter() {
 
             <div className="command-hero-meta">
               <span>{formattedDate} | {formattedTime}</span>
-              <span>Market: {overview?.marketOpen ? "OPEN" : "CLOSED"}</span>
+              <span>Market: {displayState(marketSessionLabel)}</span>
               <span>Provider: {providerDiagnostics.activeProvider || "ALPACA"}</span>
               <span>Backend: {backendOnline ? "ONLINE" : "OFFLINE"}</span>
               <span>Failover: {providerDiagnostics.failoverReady ? "READY" : "PENDING"}</span>

@@ -20,25 +20,25 @@ function getSafeFallback(symbol = 'MARKET') {
       warnings: ['Consensus weighting used safe defaults.'],
     },
     synthesis: {
-      synthesis: 'ELEVATED_UNCERTAINTY',
-      score: 45,
-      evidence: ['Consensus synthesis defaulted to elevated uncertainty.'],
+      synthesis: 'UNAVAILABLE',
+      score: 0,
+      evidence: ['Consensus synthesis unavailable because required intelligence sources are unavailable.'],
       warnings: ['Consensus synthesis has insufficient source intelligence.'],
     },
     confidence: {
-      confidence: 45,
-      confidenceLabel: 'LOW',
-      score: 45,
-      evidence: ['Consensus confidence defaulted to low.'],
+      confidence: 0,
+      confidenceLabel: 'VERY_LOW',
+      score: 0,
+      evidence: ['Consensus confidence unavailable because source intelligence is missing.'],
       warnings: ['Consensus confidence used safe defaults.'],
     },
   };
 
   return {
     symbol,
-    consensusState: 'ELEVATED_UNCERTAINTY',
-    confidence: 45,
-    confidenceLabel: 'LOW',
+    consensusState: 'UNAVAILABLE',
+    confidence: 0,
+    confidenceLabel: 'VERY_LOW',
     alignment: engines.alignment.alignment,
     weighting: engines.weighting.weighting,
     synthesis: engines.synthesis.synthesis,
@@ -55,6 +55,28 @@ function hasConsensusInput(input) {
     input?.tactical && typeof input.tactical === 'object'
     || input?.behavioral && typeof input.behavioral === 'object'
     || input?.failsafe && typeof input.failsafe === 'object'
+  );
+}
+
+function isUnavailableLayer(layer) {
+  return Boolean(
+    layer?.available === false
+    || layer?.simulated === true
+    || layer?.generated === true
+    || [
+      'DATA_UNAVAILABLE',
+      'BACKEND_UNAVAILABLE',
+      'PROVIDER_OFFLINE',
+      'INSUFFICIENT_DATA',
+      'UNKNOWN_SOURCE',
+      'INVALID_TIMESTAMP',
+      'SIMULATED',
+      'GENERATED',
+      'BLOCKED',
+    ].includes(String(layer?.sourceType || '').toUpperCase())
+    || ['UNAVAILABLE', 'INSUFFICIENT_DATA', 'BLOCKED'].includes(String(layer?.tacticalState || '').toUpperCase())
+    || ['UNAVAILABLE', 'INSUFFICIENT_DATA', 'BLOCKED'].includes(String(layer?.behavioralState || '').toUpperCase())
+    || ['DATA_UNAVAILABLE', 'BLOCKED'].includes(String(layer?.failsafeState || '').toUpperCase())
   );
 }
 
@@ -93,7 +115,13 @@ export function analyzeConsensus(input = {}) {
     ? safeInput.symbol.trim().toUpperCase()
     : 'MARKET';
 
-  if (!input || typeof input !== 'object' || !hasConsensusInput(safeInput)) {
+  if (
+    !input
+    || typeof input !== 'object'
+    || !hasConsensusInput(safeInput)
+    || isUnavailableLayer(safeInput.tactical)
+    || isUnavailableLayer(safeInput.behavioral)
+  ) {
     return getSafeFallback(symbol);
   }
 

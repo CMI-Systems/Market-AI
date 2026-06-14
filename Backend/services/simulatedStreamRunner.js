@@ -52,16 +52,23 @@ function createInitialStatus({
   intervalMs,
   maxEvents,
   mode,
-  marketOpen
+  marketOpen,
+  runtimeEnvironment
 }) {
   return {
     active: true,
     source: "simulated",
+    sourceType: "SIMULATED",
     symbol: symbols[0],
     symbols,
     provider,
     mode,
     marketOpen,
+    runtimeEnvironment,
+    simulationAllowed: true,
+    simulationActive: true,
+    simulated: true,
+    generated: true,
     eventsProcessed: 0,
     maxEvents,
     intervalMs,
@@ -112,6 +119,7 @@ function stopSimulatedStream(streamHandle) {
   clearInterval(streamHandle.timer);
   streamHandle.stopped = true;
   streamHandle.status.active = false;
+  streamHandle.status.simulationActive = false;
   streamHandle.status.stoppedAt = new Date().toISOString();
   recordStreamStop();
   activeStreams.delete(streamHandle);
@@ -146,7 +154,10 @@ function startSimulatedStream(options = {}) {
     ...systemContext,
     mode,
     marketOpen,
-    marketHoursReason: systemContext.marketHoursReason || marketHoursStatus.reason
+    marketHoursReason: systemContext.marketHoursReason || marketHoursStatus.reason,
+    sourceType: "SIMULATED",
+    simulated: true,
+    generated: true
   };
 
   let resolveCompletion;
@@ -163,7 +174,8 @@ function startSimulatedStream(options = {}) {
       intervalMs,
       maxEvents,
       mode,
-      marketOpen
+      marketOpen,
+      runtimeEnvironment: systemContext.runtimeEnvironment || "DEVELOPMENT"
     }),
     stopped: false,
     timer: null

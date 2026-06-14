@@ -1,3 +1,9 @@
+import {
+  createDemoMetadata,
+  createUnavailableMetadata,
+  getFrontendDemoPolicy,
+} from "./frontendRuntimePolicy";
+
 const MOCK_WATCHLIST_DATA = [
   {
     symbol: "NVDA",
@@ -245,16 +251,48 @@ const MOCK_FUTURE_CONNECTIONS = [
   "AlphaVantage",
 ];
 
+function demoAllowed() {
+  return getFrontendDemoPolicy().demoAllowed;
+}
+
+function unavailableMarketRecord(symbol, base = {}) {
+  return {
+    ...base,
+    symbol,
+    price: null,
+    changePercent: null,
+    volume: null,
+    consensus: "DATA_UNAVAILABLE",
+    confidence: null,
+    signal: "DATA_UNAVAILABLE",
+    risk: "UNKNOWN",
+    updatedAt: null,
+    ...createUnavailableMetadata("RAW_MARKET_DATA_UNAVAILABLE"),
+  };
+}
+
+function withDemoMarketMetadata(item) {
+  return {
+    ...item,
+    ...createDemoMetadata(),
+  };
+}
+
 export function getWatchlistSymbols() {
   return MOCK_WATCHLIST_DATA.map((item) => item.symbol);
 }
 
 export function getMarketQuote(symbol) {
-  return (
+  if (!demoAllowed()) {
+    return unavailableMarketRecord(symbol?.toUpperCase?.() || symbol || "UNKNOWN");
+  }
+
+  const quote =
     MOCK_WATCHLIST_DATA.find(
       (item) => item.symbol.toUpperCase() === symbol.toUpperCase()
-    ) || null
-  );
+    ) || null;
+
+  return quote ? withDemoMarketMetadata(quote) : null;
 }
 
 export function getMarketQuotes(symbols) {
@@ -264,10 +302,20 @@ export function getMarketQuotes(symbols) {
 }
 
 export function getDefaultWatchlists() {
-  return MOCK_WATCHLIST_DATA;
+  if (!demoAllowed()) {
+    return MOCK_WATCHLIST_DATA.map(({ symbol, name, category }) =>
+      unavailableMarketRecord(symbol, { name, category })
+    );
+  }
+
+  return MOCK_WATCHLIST_DATA.map(withDemoMarketMetadata);
 }
 
 export function getHistoricalCandles(symbol) {
+  if (!demoAllowed()) {
+    return [];
+  }
+
   const quote = getMarketQuote(symbol);
   const anchorPrice = quote?.price || MOCK_CANDLES[0].close;
   const baseClose = MOCK_CANDLES[MOCK_CANDLES.length - 1].close;
@@ -279,16 +327,22 @@ export function getHistoricalCandles(symbol) {
     high: Number((candle.high + offset).toFixed(2)),
     low: Number((candle.low + offset).toFixed(2)),
     close: Number((candle.close + offset).toFixed(2)),
+    ...createDemoMetadata(),
   }));
 }
 
 export function getSignalMarkers(symbol) {
+  if (!demoAllowed()) {
+    return [];
+  }
+
   const quote = getMarketQuote(symbol);
 
   return MOCK_SIGNAL_MARKERS.map((marker, index) => ({
     ...marker,
     type: index === 0 ? quote?.signal || marker.type : marker.type,
     confidence: index === 0 ? quote?.confidence || marker.confidence : marker.confidence,
+    ...createDemoMetadata(),
   }));
 }
 
@@ -297,15 +351,42 @@ export function getChartSymbols() {
 }
 
 export function getStreamStatuses() {
-  return MOCK_STREAM_STATUSES;
+  if (!demoAllowed()) {
+    const unavailable = createUnavailableMetadata("BACKEND_UNAVAILABLE");
+
+    return MOCK_STREAM_STATUSES.map(({ name }) => ({
+      name,
+      status: "DATA_UNAVAILABLE",
+      latency: "Unavailable",
+      lastUpdate: "Unavailable",
+      health: "BACKEND_UNAVAILABLE",
+      ...unavailable,
+    }));
+  }
+
+  return MOCK_STREAM_STATUSES.map(withDemoMarketMetadata);
 }
 
 export function getStreamHealth() {
+  if (!demoAllowed()) {
+    return MOCK_STREAM_HEALTH.map(({ label }) => ({ label, value: 0 }));
+  }
+
   return MOCK_STREAM_HEALTH;
 }
 
 export function getActiveStreamEvents() {
-  return MOCK_ACTIVE_STREAM_EVENTS;
+  if (!demoAllowed()) {
+    return [
+      {
+        time: "Unavailable",
+        message: "Backend stream events unavailable. No simulated stream events are active.",
+        ...createUnavailableMetadata("BACKEND_UNAVAILABLE"),
+      },
+    ];
+  }
+
+  return MOCK_ACTIVE_STREAM_EVENTS.map(withDemoMarketMetadata);
 }
 
 export function getPipelineNodes() {

@@ -5,79 +5,24 @@ import { analyzeBehavioralState } from "../services/intelligence/behavioralBrain
 import "../styles/ClosedBetaPages.css";
 import "../styles/BehavioralBrain.css";
 
-const CLOSED_BETA_BEHAVIORAL_FALLBACK = {
-  symbol: "SPY",
-  marketPulse: {
-    breadth: { percentPositive: 54 },
-    volumeRatio: 0.95,
-    retailActivity: 48,
-  },
-  marketIntelligence: {
-    institutionalFlow: 52,
-    leadership: {
-      growth: 0.8,
-      value: 0.4,
-      defensive: 0.2,
-      commodity: 0,
-      bond: -0.2,
-      international: 0.1,
-    },
-    rotation: {
-      value: 0.4,
-      defensive: 0.2,
-      growth: 0.8,
-    },
-    dominantNarrative: "closed beta market alignment",
-    narrativeAdoption: 45,
-  },
-  newsletterData: {
-    dominantNarrative: "closed beta market alignment",
-    mentionCount: 2,
-    symbolBreadth: 40,
-  },
-  crossAssetData: {
-    assetReturns: {
-      growth: 0.8,
-      value: 0.4,
-      defensive: 0.2,
-      bond: -0.2,
-      commodity: 0,
-      international: 0.1,
-    },
-  },
-};
-
 function displayState(value) {
   if (!value) return "OBSERVING";
   return String(value).replace(/_/g, " ");
 }
 
-function normalizeScore(value, fallback = 0.5) {
-  const number = Number(value);
-  if (!Number.isFinite(number)) return fallback;
-  return number > 1 ? Math.max(0, Math.min(100, number)) / 100 : Math.max(0, Math.min(1, number));
-}
-
 function buildBehavioralInput({ brainStatus, overview, confidence, replay }) {
-  const confidenceScore = normalizeScore(
-    confidence?.score ?? overview?.confidence?.score ?? brainStatus?.behavioralBrain?.confidence,
-    0.5
-  );
-  const consensusStrength = overview?.consensus?.consensusStrength || confidence?.consensusStrength || "MODERATE";
-  const environment = overview?.strategicEnvironment?.environment || "STABILIZING";
   const replayNotes = Array.isArray(replay) ? replay : [];
-  const narrativeMentions = replayNotes.filter((event) =>
-    ["CONSENSUS", "EXECUTIVE", "SIGNAL"].includes(event?.type)
-  ).length;
   const symbol = overview?.symbol || replayNotes.find((event) => event?.symbol)?.symbol || "SPY";
-  const riskTilt = environment === "EXPANSION" || consensusStrength === "STRONG";
-  const defensiveTilt = environment === "CAUTION" || confidenceScore < 0.45;
   const liveBehavioralInputAvailable = Boolean(
+    overview?.available !== false
+    && overview?.sourceType !== "DATA_UNAVAILABLE"
+    && (
     overview?.marketPulse
     || overview?.marketIntelligence
     || overview?.globalScan
     || overview?.newsletterData
     || overview?.crossAssetData
+    )
   );
 
   if (liveBehavioralInputAvailable) {
@@ -97,39 +42,17 @@ function buildBehavioralInput({ brainStatus, overview, confidence, replay }) {
   return {
     limited: true,
     input: {
-      ...CLOSED_BETA_BEHAVIORAL_FALLBACK,
       symbol,
-      marketPulse: {
-        ...CLOSED_BETA_BEHAVIORAL_FALLBACK.marketPulse,
-        breadth: { percentPositive: Math.round(35 + confidenceScore * 35) },
-        volumeRatio: riskTilt ? 1.15 : defensiveTilt ? 0.78 : 0.95,
-        retailActivity: riskTilt ? 64 : defensiveTilt ? 34 : 48,
-      },
-      marketIntelligence: {
-        ...CLOSED_BETA_BEHAVIORAL_FALLBACK.marketIntelligence,
-        institutionalFlow: Math.round(35 + confidenceScore * 40),
-        leadership: {
-          growth: riskTilt ? 2.1 : 0.4,
-          value: defensiveTilt ? 0.8 : 0.6,
-          defensive: defensiveTilt ? 2.2 : 0.2,
-          commodity: 0.1,
-          bond: defensiveTilt ? 1.6 : -0.2,
-          international: 0.2,
-        },
-        rotation: {
-          riskOn: riskTilt ? 68 : 45,
-          safety: defensiveTilt ? 72 : 42,
-          growth: riskTilt ? 1.8 : 0.2,
-          defensive: defensiveTilt ? 2 : 0.2,
-        },
-        dominantNarrative: `${environment.toLowerCase()} behavioral alignment`,
-        narrativeAdoption: Math.round(30 + confidenceScore * 35),
-      },
-      newsletterData: {
-        dominantNarrative: `${environment.toLowerCase()} behavioral alignment`,
-        mentionCount: narrativeMentions,
-        symbolBreadth: Math.round(30 + confidenceScore * 35),
-      },
+      marketPulse: null,
+      marketIntelligence: null,
+      globalScan: null,
+      newsletterData: null,
+      crossAssetData: null,
+      available: false,
+      sourceType: "DATA_UNAVAILABLE",
+      simulated: false,
+      generated: false,
+      warnings: ["Verified behavioral participant inputs are unavailable."],
     },
   };
 }
@@ -366,7 +289,7 @@ function BehavioralBrain() {
       {behavioralInput.limited && (
         <section className="closed-beta-panel">
           <h2>Input Notice</h2>
-          <p>Limited behavioral inputs. Closed-beta fallback data is being blended with available cognition status.</p>
+          <p>Verified behavioral inputs are unavailable. No demo or fallback participant data is being blended.</p>
         </section>
       )}
 

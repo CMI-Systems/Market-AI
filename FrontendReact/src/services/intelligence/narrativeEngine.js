@@ -78,6 +78,31 @@ function hasNarrativeInput(input) {
   );
 }
 
+function isBlockedLayer(layer) {
+  const sourceType = String(layer?.sourceType || '').toUpperCase();
+  return Boolean(
+    layer?.available === false
+    || layer?.simulated === true
+    || layer?.generated === true
+    || [
+      'DATA_UNAVAILABLE',
+      'BACKEND_UNAVAILABLE',
+      'PROVIDER_OFFLINE',
+      'INSUFFICIENT_DATA',
+      'UNKNOWN_SOURCE',
+      'INVALID_TIMESTAMP',
+      'SIMULATED',
+      'GENERATED',
+      'BLOCKED',
+    ].includes(sourceType)
+    || ['BLOCKED', 'UNAVAILABLE', 'INSUFFICIENT_DATA'].includes(String(layer?.tacticalState || '').toUpperCase())
+    || ['BLOCKED', 'UNAVAILABLE', 'INSUFFICIENT_DATA'].includes(String(layer?.behavioralState || '').toUpperCase())
+    || ['BLOCKED', 'DATA_UNAVAILABLE'].includes(String(layer?.failsafeState || '').toUpperCase())
+    || String(layer?.consensusState || '').toUpperCase() === 'UNAVAILABLE'
+    || String(layer?.regime || '').toUpperCase() === 'UNKNOWN'
+  );
+}
+
 function getFallback(symbol = 'MARKET') {
   const engines = {
     intelligenceSummary: {
@@ -183,7 +208,16 @@ export function analyzeNarrative(input = {}) {
     ? safeInput.symbol.trim().toUpperCase()
     : 'MARKET';
 
-  if (!input || typeof input !== 'object' || !hasNarrativeInput(safeInput)) {
+  if (
+    !input
+    || typeof input !== 'object'
+    || !hasNarrativeInput(safeInput)
+    || isBlockedLayer(safeInput.tactical)
+    || isBlockedLayer(safeInput.behavioral)
+    || isBlockedLayer(safeInput.failsafe)
+    || isBlockedLayer(safeInput.consensus)
+    || isBlockedLayer(safeInput.regime)
+  ) {
     return getFallback(symbol);
   }
 

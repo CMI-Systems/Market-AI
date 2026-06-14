@@ -4,6 +4,7 @@ import { analyzeNarrativeAdoption } from './narrativeAdoptionEngine.js';
 import { analyzeParticipation } from './participationEngine.js';
 import { analyzeRiskAppetite } from './riskAppetiteEngine.js';
 import { analyzeRotation } from './rotationEngine.js';
+import { mergeProvenance } from './provenanceValidator.js';
 
 const BEHAVIORAL_STATE = {
   RISK_ON_EXPANSION: 'RISK_ON_EXPANSION',
@@ -181,25 +182,74 @@ export function analyzeBehavioralState(input = {}) {
     warnings.push('Input was invalid, so Behavioral Brain returned safe defaults.');
   }
 
+  const provenance = mergeProvenance(
+    [
+      safeInput.marketPulse,
+      safeInput.marketIntelligence,
+      safeInput.globalScan,
+      safeInput.newsletterData,
+      safeInput.crossAssetData,
+    ],
+    { requireAll: false, timestampRequired: false },
+  );
+
   if (!hasBehavioralData(safeInput)) {
     warnings.push('Behavioral input data is empty or unavailable.');
     const engines = defaults;
-    const confidence = 45;
+    const confidence = 0;
 
     return {
       symbol,
-      behavioralState: BEHAVIORAL_STATE.TRANSITIONING_BEHAVIOR,
+      behavioralState: 'UNAVAILABLE',
       confidence,
       confidenceLabel: getConfidenceLabel(confidence),
-      participation: engines.participation.participation,
-      leadership: engines.leadership.leadership,
-      rotation: engines.rotation.rotation,
-      riskAppetite: engines.riskAppetite.riskAppetite,
-      narrativeAdoption: engines.narrativeAdoption.adoptionLevel,
-      conviction: engines.conviction.conviction,
+      participation: 'UNAVAILABLE',
+      leadership: 'UNAVAILABLE',
+      rotation: 'UNAVAILABLE',
+      riskAppetite: 'UNAVAILABLE',
+      narrativeAdoption: 'UNAVAILABLE',
+      conviction: 'UNAVAILABLE',
+      available: false,
+      sourceType: 'DATA_UNAVAILABLE',
+      simulated: false,
+      generated: false,
+      provenance,
       engines,
       evidence: flattenEvidence(engines),
-      warnings,
+      warnings: [...new Set([...warnings, ...provenance.warnings, ...provenance.blockingReasons])],
+      timestamp,
+    };
+  }
+
+  if (!provenance.valid || provenance.status === 'BLOCKED' || provenance.status === 'DATA_UNAVAILABLE') {
+    warnings.push('Behavioral Brain blocked market-behavior assessment because input provenance is unavailable or untrusted.');
+    const engines = defaults;
+    return {
+      symbol,
+      behavioralState: provenance.status === 'BLOCKED' ? 'BLOCKED' : 'UNAVAILABLE',
+      confidence: 0,
+      confidenceLabel: getConfidenceLabel(0),
+      participation: 'UNAVAILABLE',
+      leadership: 'UNAVAILABLE',
+      rotation: 'UNAVAILABLE',
+      riskAppetite: 'UNAVAILABLE',
+      narrativeAdoption: 'UNAVAILABLE',
+      conviction: 'UNAVAILABLE',
+      available: false,
+      sourceType: provenance.sourceType,
+      provider: provenance.provider,
+      simulated: provenance.simulated,
+      generated: provenance.generated,
+      dataAge: provenance.dataAge,
+      sessionState: provenance.sessionState,
+      marketOpen: provenance.marketOpen,
+      dataState: provenance.dataState,
+      rawDataCertified: false,
+      trainingEligible: false,
+      provenance,
+      engines,
+      evidence: flattenEvidence(engines),
+      warnings: [...new Set([...warnings, ...provenance.warnings, ...provenance.blockingReasons])],
       timestamp,
     };
   }
@@ -250,9 +300,21 @@ export function analyzeBehavioralState(input = {}) {
     riskAppetite: engines.riskAppetite.riskAppetite,
     narrativeAdoption: engines.narrativeAdoption.adoptionLevel,
     conviction: engines.conviction.conviction,
+    available: true,
+    sourceType: provenance.sourceType,
+    provider: provenance.provider,
+    simulated: provenance.simulated,
+    generated: provenance.generated,
+    dataAge: provenance.dataAge,
+    sessionState: provenance.sessionState,
+    marketOpen: provenance.marketOpen,
+    dataState: provenance.dataState,
+    rawDataCertified: false,
+    trainingEligible: false,
+    provenance,
     engines,
     evidence: flattenEvidence(engines),
-    warnings,
+    warnings: [...new Set([...warnings, ...provenance.warnings])],
     timestamp,
   };
 }

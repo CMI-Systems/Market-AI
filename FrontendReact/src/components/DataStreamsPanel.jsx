@@ -26,19 +26,26 @@ function displayStreamMode(systemStatus, activeProvider, fallbackMode) {
     return "SIMULATION ACTIVE";
   }
 
+  if (activeProvider === "BACKEND_UNAVAILABLE" || fallbackMode === "OFFLINE") {
+    return "DATA UNAVAILABLE";
+  }
+
   return activeProvider ? "LIVE PROVIDER" : displayState(fallbackMode);
 }
 
 function displayResolvedProvider(systemStatus, providerStatus) {
   if (systemStatus.streamMode === "LIVE_ALPACA") return "ALPACA";
   if (systemStatus.simulationActive) return "SIMULATION";
+  if (providerStatus.available === false || providerStatus.sourceType === "DATA_UNAVAILABLE") {
+    return "DATA UNAVAILABLE";
+  }
   return displayState(providerStatus.activeProvider);
 }
 
 function displayFallbackStatus(systemStatus, activeProvider) {
   return systemStatus.simulationActive || activeProvider === "SIMULATION" || activeProvider === "FALLBACK"
     ? "SIMULATION ACTIVE"
-    : "AVAILABLE";
+    : "UNAVAILABLE";
 }
 
 function DataStreamsPanel() {
@@ -73,7 +80,7 @@ function DataStreamsPanel() {
       <div className="brain-metrics">
         <div>
           <span>Equities</span>
-          <strong>{providerStatus.capabilities?.equities ? "ONLINE" : "OFFLINE"}</strong>
+          <strong>{providerStatus.available !== false && providerStatus.capabilities?.equities ? "ONLINE" : "OFFLINE"}</strong>
         </div>
 
         <div>
@@ -118,7 +125,7 @@ function DataStreamsPanel() {
 
         <div>
           <span>Symbol</span>
-          <strong>{systemStatus.feeds?.symbol || "SPY"}</strong>
+          <strong>{systemStatus.available === false ? "UNAVAILABLE" : systemStatus.feeds?.symbol || "SPY"}</strong>
         </div>
 
         <div>
@@ -153,7 +160,7 @@ function DataStreamsPanel() {
 
         <div>
           <span>Memory</span>
-          <strong>{systemStatus.feeds?.memory ?? "LOCAL"}</strong>
+          <strong>{systemStatus.feeds?.memory ?? "DATA_UNAVAILABLE"}</strong>
         </div>
       </div>
     </div>

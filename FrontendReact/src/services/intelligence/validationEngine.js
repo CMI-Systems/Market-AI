@@ -1,3 +1,5 @@
+import { validateProvenance } from './provenanceValidator.js';
+
 function toNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
@@ -25,25 +27,33 @@ export function analyzeValidation(input = {}) {
   const marketIntelligence = input?.marketIntelligence;
   const globalScan = input?.globalScan;
   const newsletterData = input?.newsletterData;
+  const tacticalProvenance = validateProvenance(tactical, { timestampRequired: false });
+  const behavioralProvenance = validateProvenance(behavioral, { timestampRequired: false });
   let score = 50;
 
   // Validation checks whether independent intelligence layers and context sources exist and confirm each other.
-  if (hasObject(tactical)) {
+  if (hasObject(tactical) && tacticalProvenance.status !== 'BLOCKED' && tacticalProvenance.status !== 'DATA_UNAVAILABLE') {
     score += 15;
     evidence.push('Tactical intelligence is available for validation.');
   } else {
     score -= 20;
-    warnings.push('Tactical intelligence is missing.');
+    warnings.push(hasObject(tactical) ? 'Tactical intelligence provenance is not trusted.' : 'Tactical intelligence is missing.');
     evidence.push('Tactical intelligence is unavailable.');
   }
 
-  if (hasObject(behavioral)) {
+  if (hasObject(behavioral) && behavioralProvenance.status !== 'BLOCKED' && behavioralProvenance.status !== 'DATA_UNAVAILABLE') {
     score += 15;
     evidence.push('Behavioral intelligence is available for validation.');
   } else {
     score -= 20;
-    warnings.push('Behavioral intelligence is missing.');
+    warnings.push(hasObject(behavioral) ? 'Behavioral intelligence provenance is not trusted.' : 'Behavioral intelligence is missing.');
     evidence.push('Behavioral intelligence is unavailable.');
+  }
+
+  if (tacticalProvenance.status === 'BLOCKED' || behavioralProvenance.status === 'BLOCKED') {
+    score -= 25;
+    warnings.push('Blocked provenance prevents strong validation.');
+    evidence.push('One or more intelligence layers are blocked by provenance validation.');
   }
 
   if (hasObject(marketIntelligence)) {

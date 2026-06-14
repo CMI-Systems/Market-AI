@@ -12,11 +12,29 @@ const {
 const {
   getRuntimeMetrics
 } = require("../services/runtimeMetrics");
+const {
+  getSimulationPolicy
+} = require("../config/runtimePolicy");
 
 const router = express.Router();
 
 router.post("/stream/start", (req, res) => {
   const body = req.body || {};
+  const policy = getSimulationPolicy();
+
+  if (!policy.simulationAllowed) {
+    return res.status(403).json({
+      status: "NOT_STARTED",
+      developmentOnly: true,
+      started: false,
+      code: "SIMULATION_NOT_ALLOWED",
+      reason: policy.blockReason,
+      runtimeEnvironment: policy.runtimeEnvironment,
+      simulationAllowed: false,
+      message: "Simulated stream startup is blocked outside explicitly enabled development/test runtimes."
+    });
+  }
+
   const result = startStream({
     source: body.source || "simulated",
     symbol: body.symbol,
@@ -24,7 +42,12 @@ router.post("/stream/start", (req, res) => {
     provider: body.provider,
     intervalMs: body.intervalMs,
     maxEvents: body.maxEvents,
-    systemContext: body.systemContext
+    systemContext: {
+      ...(body.systemContext || {}),
+      runtimeEnvironment: policy.runtimeEnvironment,
+      simulated: true,
+      sourceType: "SIMULATED"
+    }
   });
 
   if (!result.started) {
@@ -58,8 +81,12 @@ router.post("/stream/stop", (req, res) => {
 });
 
 router.get("/stream/status", (req, res) => {
+  const policy = getSimulationPolicy();
+
   res.json({
     developmentOnly: true,
+    runtimeEnvironment: policy.runtimeEnvironment,
+    simulationAllowed: policy.simulationAllowed,
     status: getStreamStatus()
   });
 });

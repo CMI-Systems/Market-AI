@@ -11,6 +11,13 @@ const {
 const {
   getMarketHoursStatus
 } = require("./marketHours");
+const {
+  evaluateMarketAvailability,
+  resolveMarketSession
+} = require("./marketSessionPolicy");
+const {
+  getSimulationPolicy
+} = require("../config/runtimePolicy");
 
 let activeSimulatedStream = null;
 let lastSimulatedStatus = null;
@@ -32,6 +39,21 @@ function startStream(options = {}) {
 
   if (source !== "simulated") {
     return providerPlaceholder(source || "unknown");
+  }
+
+  const policy = getSimulationPolicy(options.env || process.env);
+
+  if (!policy.simulationAllowed) {
+    return {
+      started: false,
+      source,
+      reason: "simulation_not_allowed",
+      code: "SIMULATION_NOT_ALLOWED",
+      runtimeEnvironment: policy.runtimeEnvironment,
+      simulationAllowed: false,
+      simulated: false,
+      generated: false
+    };
   }
 
   if (activeSimulatedStream) {
@@ -81,6 +103,16 @@ function stopStream() {
 
 function createIdleStatus() {
   const marketHoursStatus = getMarketHoursStatus();
+  const session = resolveMarketSession();
+  const dataAvailability = evaluateMarketAvailability({
+    available: false,
+    provider: null,
+    sourceType: session.marketOpen ? "DATA_UNAVAILABLE" : "MARKET_CLOSED",
+    providerAvailable: false,
+    backendAvailable: true,
+    session
+  });
+  const policy = getSimulationPolicy();
 
   return {
     active: false,
@@ -89,6 +121,13 @@ function createIdleStatus() {
     provider: null,
     mode: null,
     marketOpen: marketHoursStatus.isOpen,
+    sessionState: session.sessionState,
+    extendedHours: session.extendedHours,
+    sessionSource: session.source,
+    sessionVerified: session.verified,
+    dataState: dataAvailability.dataState,
+    dataAge: dataAvailability.dataAge,
+    sourceType: dataAvailability.sourceType,
     eventsProcessed: 0,
     maxEvents: null,
     intervalMs: null,
@@ -96,7 +135,13 @@ function createIdleStatus() {
     stoppedAt: null,
     lastEventAt: null,
     lastActionBias: null,
-    lastFailsafeStatus: null
+    lastFailsafeStatus: null,
+    runtimeEnvironment: policy.runtimeEnvironment,
+    simulationAllowed: policy.simulationAllowed,
+    simulationActive: false,
+    simulated: false,
+    generated: false,
+    warnings: dataAvailability.warnings
   };
 }
 

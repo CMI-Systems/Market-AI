@@ -51,8 +51,8 @@ function firstDefined(...values) {
 
 function normalizeOptions(options = {}) {
   return {
-    rawDataCertified: options.rawDataCertified === true,
-    trainingEnabled: options.trainingEnabled === true,
+    rawDataCertified: false,
+    trainingEnabled: false,
     retentionDays: safeNumber(options.retentionDays, DEFAULT_OPTIONS.retentionDays),
     policyVersion: safeString(options.policyVersion, DEFAULT_OPTIONS.policyVersion),
     operatorId: safeString(options.operatorId),

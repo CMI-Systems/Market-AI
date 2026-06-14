@@ -12,8 +12,20 @@ const {
   getWebullHealth,
   getWebullQuote
 } = require("../services/webullService");
+const {
+  rejectSimulationRequest
+} = require("../config/runtimePolicy");
 
 const router = express.Router();
+
+function rejectBlockedSimulation(req, res) {
+  const rejection = rejectSimulationRequest(req.query.simulate);
+
+  if (!rejection) return false;
+
+  res.status(403).json(rejection);
+  return true;
+}
 
 function normalizeVolume(value) {
   if (typeof value === "number") return value;
@@ -29,10 +41,14 @@ function normalizeVolume(value) {
 }
 
 router.get("/provider-status", (req, res) => {
+  if (rejectBlockedSimulation(req, res)) return;
+
   res.json(getProviderStatus({ simulate: req.query.simulate }));
 });
 
 router.get("/provider-diagnostics", (req, res) => {
+  if (rejectBlockedSimulation(req, res)) return;
+
   res.json(getProviderDiagnostics({ simulate: req.query.simulate }));
 });
 
@@ -64,7 +80,9 @@ router.get("/provider-quote-compare", async (req, res) => {
     getQuote(symbol),
     getWebullQuote(symbol)
   ]);
-  const alpacaStatus = activeQuote.provider === "ALPACA"
+  const alpacaStatus = activeQuote.available === false
+    ? "UNAVAILABLE"
+    : activeQuote.provider === "ALPACA"
     ? "SUCCESS"
     : activeQuote.provider === "SIMULATION"
       ? "PENDING"
@@ -80,7 +98,10 @@ router.get("/provider-quote-compare", async (req, res) => {
       price: Number(activeQuote.price || 0),
       changePercent: Number(activeQuote.changePercent || 0),
       volume: normalizeVolume(activeQuote.volume),
-      timestamp: activeQuote.updatedAt || new Date().toISOString()
+      timestamp: activeQuote.updatedAt || activeQuote.timestamp || null,
+      sessionState: activeQuote.sessionState,
+      dataState: activeQuote.dataState,
+      sourceType: activeQuote.sourceType
     },
     webull: {
       status: webullQuote.status,
@@ -102,6 +123,8 @@ router.get("/provider-quote-compare", async (req, res) => {
 });
 
 router.get("/quotes", async (req, res) => {
+  if (rejectBlockedSimulation(req, res)) return;
+
   const symbols = String(req.query.symbols || "")
     .split(",")
     .map((symbol) => symbol.trim().toUpperCase())
@@ -112,6 +135,8 @@ router.get("/quotes", async (req, res) => {
 });
 
 router.get("/candles", async (req, res) => {
+  if (rejectBlockedSimulation(req, res)) return;
+
   const symbol = String(req.query.symbol || "SPY").trim().toUpperCase();
   const timeframe = String(req.query.timeframe || "5Min").trim();
   const limit = Number.parseInt(req.query.limit, 10) || 80;
@@ -123,6 +148,8 @@ router.get("/candles", async (req, res) => {
 });
 
 router.get("/provider-signals", async (req, res) => {
+  if (rejectBlockedSimulation(req, res)) return;
+
   const symbols = String(req.query.symbols || "")
     .split(",")
     .map((symbol) => symbol.trim().toUpperCase())

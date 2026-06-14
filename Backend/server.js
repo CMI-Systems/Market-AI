@@ -10,6 +10,7 @@ const devStreamRoutes = require("./routes/devStreamRoutes");
 const marketRoutes = require("./routes/marketRoutes");
 const { createApiV1Router } = require("./routes/apiV1Routes");
 const { loadEnvironmentConfig } = require("./config/environment");
+const { getSimulationPolicy } = require("./config/runtimePolicy");
 const logger = require("./services/structuredLogger");
 const {
   getStreamStatus,
@@ -112,8 +113,54 @@ function getAlpacaDataUrl() {
   return process.env.ALPACA_DATA_URL || process.env.ALPACA_BASE_URL;
 }
 
+function requireFiniteMarketNumber(value, fieldName) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    throw new Error(`RAW_DATA_UNAVAILABLE: missing ${fieldName}`);
+  }
+
+  return number;
+}
+
+function requireProviderTimestamp(value, fieldName) {
+  if (!value) {
+    throw new Error(`RAW_DATA_UNAVAILABLE: missing ${fieldName}`);
+  }
+
+  const timestamp = new Date(value);
+
+  if (Number.isNaN(timestamp.getTime())) {
+    throw new Error(`RAW_DATA_UNAVAILABLE: invalid ${fieldName}`);
+  }
+
+  return value;
+}
+
+function rawDataUnavailableResponse(message) {
+  return {
+    available: false,
+    sourceType: "PROVIDER_UNAVAILABLE",
+    provider: "ALPACA",
+    simulated: false,
+    generated: false,
+    error: "RAW_DATA_UNAVAILABLE",
+    details: message
+  };
+}
+
 function autoStartSimulatedStreamIfEnabled() {
   if (!runtimeConfig.autoSim) {
+    return;
+  }
+
+  const simulationPolicy = getSimulationPolicy(process.env);
+
+  if (!simulationPolicy.simulationAllowed) {
+    logger.warn("stream", "[Market AI] Auto simulated stream blocked by runtime policy.", {
+      runtimeEnvironment: simulationPolicy.runtimeEnvironment,
+      reason: simulationPolicy.blockReason
+    });
     return;
   }
 
@@ -137,7 +184,10 @@ function autoStartSimulatedStreamIfEnabled() {
       systemContext: {
         mode,
         marketOpen: marketHoursStatus.isOpen,
-        marketHoursReason: marketHoursStatus.reason
+        marketHoursReason: marketHoursStatus.reason,
+        runtimeEnvironment: simulationPolicy.runtimeEnvironment,
+        simulated: true,
+        sourceType: "SIMULATED"
       }
     });
 
@@ -168,11 +218,21 @@ async function getLiveStock(symbol) {
       }
     }
   );
+  const trade = response.data?.trade;
+
+  if (!trade) {
+    throw new Error("RAW_DATA_UNAVAILABLE: missing latest trade");
+  }
 
   return {
     symbol,
-    price: response.data?.trade?.p ?? 0,
-    timestamp: response.data?.trade?.t ?? Date.now()
+    price: requireFiniteMarketNumber(trade.p, "latest trade price"),
+    timestamp: requireProviderTimestamp(trade.t, "latest trade timestamp"),
+    provider: "ALPACA",
+    sourceType: "RAW_DELAYED",
+    available: true,
+    simulated: false,
+    generated: false
   };
 }
 
@@ -187,16 +247,25 @@ async function getLatestStockBar(symbol) {
     }
   );
 
-  const bar = response.data?.bar ?? {};
+  const bar = response.data?.bar;
+
+  if (!bar) {
+    throw new Error("RAW_DATA_UNAVAILABLE: missing latest bar");
+  }
 
   return {
     symbol,
-    open: bar.o ?? 0,
-    high: bar.h ?? 0,
-    low: bar.l ?? 0,
-    close: bar.c ?? 0,
-    volume: bar.v ?? 0,
-    timestamp: bar.t ?? Date.now()
+    open: requireFiniteMarketNumber(bar.o, "bar open"),
+    high: requireFiniteMarketNumber(bar.h, "bar high"),
+    low: requireFiniteMarketNumber(bar.l, "bar low"),
+    close: requireFiniteMarketNumber(bar.c, "bar close"),
+    volume: requireFiniteMarketNumber(bar.v, "bar volume"),
+    timestamp: requireProviderTimestamp(bar.t, "bar timestamp"),
+    provider: "ALPACA",
+    sourceType: "RAW_DELAYED",
+    available: true,
+    simulated: false,
+    generated: false
   };
 }
 
@@ -250,7 +319,12 @@ async function getAnomaliesData() {
       volumeRatio: Number(volumeRatio.toFixed(2)),
       severity,
       score,
-      direction: changePercent >= 0 ? "BULLISH" : "BEARISH"
+      direction: changePercent >= 0 ? "BULLISH" : "BEARISH",
+      provider: b.provider,
+      sourceType: b.sourceType,
+      available: true,
+      simulated: false,
+      generated: false
     };
   }).filter(x => x.score > 0);
 }
@@ -271,7 +345,7 @@ app.get("/api/stock/:symbol", async (req, res) => {
   } catch (err) {
     res.status(500).json({
       error: "Stock fetch failed",
-      details: err.message
+      ...rawDataUnavailableResponse(err.message)
     });
   }
 });
@@ -288,7 +362,7 @@ app.get("/api/watchlist", async (req, res) => {
   } catch (err) {
     res.status(500).json({
       error: "Watchlist failed",
-      details: err.message
+      ...rawDataUnavailableResponse(err.message)
     });
   }
 });
@@ -328,14 +402,19 @@ app.get("/api/chart/:symbol", async (req, res) => {
       high: bar.h,
       low: bar.l,
       close: bar.c,
-      volume: bar.v
+      volume: bar.v,
+      provider: "ALPACA",
+      sourceType: "RAW_DELAYED",
+      available: true,
+      simulated: false,
+      generated: false
     }));
 
     res.json(bars);
   } catch (err) {
     res.status(500).json({
       error: "Chart fetch failed",
-      details: err.message
+      ...rawDataUnavailableResponse(err.message)
     });
   }
 });
@@ -347,7 +426,7 @@ app.get("/api/anomalies", async (req, res) => {
   } catch (err) {
     res.status(500).json({
       error: "Anomalies failed",
-      details: err.message
+      ...rawDataUnavailableResponse(err.message)
     });
   }
 });
@@ -361,7 +440,8 @@ app.get("/api/summary", async (req, res) => {
     } catch {
       return res.json({
         title: "Market Intelligence Summary",
-        message: "Anomaly engine temporarily unavailable."
+        message: "Anomaly engine temporarily unavailable.",
+        ...rawDataUnavailableResponse("Anomaly engine raw provider data unavailable.")
       });
     }
 
@@ -389,7 +469,7 @@ app.get("/api/summary", async (req, res) => {
   } catch (err) {
     res.status(500).json({
       error: "Summary failed",
-      details: err.message
+      ...rawDataUnavailableResponse(err.message)
     });
   }
 });

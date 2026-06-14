@@ -1,3 +1,5 @@
+import { createDemoMetadata } from "./frontendRuntimePolicy";
+
 const regimes = ["EXPANSION", "CAUTION", "STABILIZING", "OPTIMAL"];
 const consensusStates = ["MODERATE", "STRONG", "WEAK", "STRONG"];
 const escalationLevels = ["NONE", "LOW", "NONE", "MODERATE"];
@@ -258,5 +260,18 @@ export function getDemoResponse(endpoint) {
     },
   };
 
-  return responses[endpoint] || null;
+  const response = responses[endpoint] || null;
+
+  if (!response) {
+    return null;
+  }
+
+  return {
+    ...response,
+    ...createDemoMetadata(),
+    warnings: [
+      ...(Array.isArray(response.warnings) ? response.warnings : []),
+      "Demo cognition is simulated and not raw market data.",
+    ],
+  };
 }

@@ -4,6 +4,9 @@
  */
 
 const path = require("path");
+const {
+  normalizeRuntimeEnvironment
+} = require("./runtimePolicy");
 
 function boolFromEnv(value, fallback = false) {
   if (value === undefined) return fallback;
@@ -17,8 +20,10 @@ function intFromEnv(value, fallback) {
 
 function loadEnvironmentConfig(env = process.env) {
   const nodeEnv = env.NODE_ENV || "development";
+  const runtime = normalizeRuntimeEnvironment(env);
   const config = {
     nodeEnv,
+    runtimeEnvironment: runtime.runtimeEnvironment,
     port: intFromEnv(env.PORT, 3001),
     autoSim: boolFromEnv(env.MARKET_AI_AUTO_SIM, false),
     mode: env.MARKET_AI_MODE || (nodeEnv === "production" ? "production" : "development"),
@@ -29,8 +34,12 @@ function loadEnvironmentConfig(env = process.env) {
     warnings: []
   };
 
-  if (!["development", "test", "production"].includes(config.nodeEnv)) {
+  if (!["development", "test", "production", "staging"].includes(config.nodeEnv)) {
     config.warnings.push("NODE_ENV is nonstandard; using safe runtime defaults.");
+  }
+
+  if (!runtime.valid) {
+    config.warnings.push("Runtime mode is missing or malformed; simulation is blocked.");
   }
 
   if (!["debug", "info", "warn", "error", "silent"].includes(config.logLevel)) {

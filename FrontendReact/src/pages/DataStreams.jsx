@@ -37,7 +37,7 @@ function displayFallbackStatus(providerStatus, providerDiagnostics) {
     return "SIMULATION";
   }
 
-  return providerDiagnostics.fallback?.status || "AVAILABLE";
+  return providerDiagnostics.fallback?.status || "UNAVAILABLE";
 }
 
 function formatCapabilities(capabilities = {}) {
@@ -77,10 +77,15 @@ function DataStreams() {
   }, []);
 
   const providerStreams = streams.map((stream) => {
+    const providerAvailable =
+      providerStatus.available !== false
+      && providerStatus.sourceType !== "DATA_UNAVAILABLE"
+      && providerStatus.providerHealth !== "OFFLINE";
+
     if (stream.name === "Equities") {
       return {
         ...stream,
-        status: providerStatus.capabilities?.equities ? "CONNECTED" : "OFFLINE",
+        status: providerAvailable && providerStatus.capabilities?.equities ? "CONNECTED" : "OFFLINE",
         health: providerStatus.providerHealth,
         lastUpdate: providerStatus.lastUpdate
           ? new Date(providerStatus.lastUpdate).toLocaleTimeString()
@@ -91,15 +96,15 @@ function DataStreams() {
     if (stream.name === "Options") {
       return {
         ...stream,
-        status: providerStatus.capabilities?.options ? "CONNECTED" : "STANDBY",
-        health: providerStatus.capabilities?.options ? providerStatus.providerHealth : "PENDING",
+        status: providerAvailable && providerStatus.capabilities?.options ? "CONNECTED" : "STANDBY",
+        health: providerAvailable && providerStatus.capabilities?.options ? providerStatus.providerHealth : "PENDING",
       };
     }
 
     if (stream.name === "Charts") {
       return {
         ...stream,
-        status: providerStatus.capabilities?.historicalCandles ? "CONNECTED" : "OFFLINE",
+        status: providerAvailable && providerStatus.capabilities?.historicalCandles ? "CONNECTED" : "OFFLINE",
         health: providerStatus.providerHealth,
       };
     }
@@ -107,15 +112,17 @@ function DataStreams() {
     if (stream.name === "News") {
       return {
         ...stream,
-        status: providerStatus.capabilities?.news ? "CONNECTED" : "STANDBY",
-        health: providerStatus.capabilities?.news ? providerStatus.providerHealth : "PENDING",
+        status: providerAvailable && providerStatus.capabilities?.news ? "CONNECTED" : "STANDBY",
+        health: providerAvailable && providerStatus.capabilities?.news ? providerStatus.providerHealth : "PENDING",
       };
     }
 
     if (stream.name === "Signals" || stream.name === "Watchlists") {
       return {
         ...stream,
-        status: providerStatus.activeProvider === "SIMULATION" ? "SIMULATION" : "CONNECTED",
+        status: providerAvailable
+          ? providerStatus.activeProvider === "SIMULATION" ? "SIMULATION" : "CONNECTED"
+          : "DATA_UNAVAILABLE",
         health: providerStatus.providerHealth,
       };
     }

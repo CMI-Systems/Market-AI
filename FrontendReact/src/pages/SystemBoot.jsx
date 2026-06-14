@@ -46,15 +46,21 @@ function displayFallbackStatus(providerStatus, providerDiagnostics) {
     return "SIMULATION";
   }
 
-  return providerDiagnostics.fallback?.status || "AVAILABLE";
+  return providerDiagnostics.fallback?.status || "UNAVAILABLE";
 }
 
 function isBackendOnline(overview, health, providerStatus) {
   return Boolean(
-    overview?.backend ||
-      overview?.runtimeHealth?.status ||
-      health?.status ||
-      providerStatus.providerHealth !== "OFFLINE"
+    overview?.available !== false &&
+      health?.available !== false &&
+      providerStatus?.available !== false &&
+      providerStatus?.sourceType !== "DATA_UNAVAILABLE" &&
+      (
+        overview?.backend ||
+        overview?.runtimeHealth?.status ||
+        health?.status ||
+        providerStatus.providerHealth !== "OFFLINE"
+      )
   );
 }
 
@@ -122,15 +128,22 @@ function SystemBoot() {
     return () => clearInterval(interval);
   }, []);
 
+  const backendOnline = isBackendOnline(overview, health, providerStatus);
+  const liveProviderActive = isLiveProviderActive(providerStatus);
+  const providerHealthy = providerStatus.providerHealth === "HEALTHY";
+  const providerAvailable =
+    providerStatus.available !== false
+    && providerStatus.sourceType !== "DATA_UNAVAILABLE"
+    && providerStatus.providerHealth !== "OFFLINE";
   const betaStatusItems = [
-    { label: "Core Cognition", status: overview?.backend ? "ONLINE" : "ONLINE" },
+    { label: "Core Cognition", status: backendOnline ? "ONLINE" : "OFFLINE" },
     {
       label: "Provider Adapter",
-      status: providerDiagnostics.providerHealth === "OFFLINE" ? "OFFLINE" : "ONLINE",
+      status: providerAvailable ? "ONLINE" : "OFFLINE",
     },
-    { label: "Watchlists", status: "ONLINE" },
-    { label: "Signals", status: "ONLINE" },
-    { label: "Alerts", status: "ONLINE" },
+    { label: "Watchlists", status: providerAvailable ? "ONLINE" : "DATA UNAVAILABLE" },
+    { label: "Signals", status: providerAvailable ? "ONLINE" : "DATA UNAVAILABLE" },
+    { label: "Alerts", status: backendOnline ? "ONLINE" : "DATA UNAVAILABLE" },
     { label: "Replay Center", status: "ONLINE" },
     { label: "Failover", status: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
     { label: "Webull", status: providerDiagnostics.webull?.enabled ? "ONLINE" : "INTEGRATION PENDING" },
@@ -140,20 +153,17 @@ function SystemBoot() {
     { label: "Data Layer", status: "READY" },
     {
       label: "Provider Layer",
-      status: providerDiagnostics.providerHealth === "OFFLINE" ? "PENDING" : "READY",
+      status: providerAvailable ? "READY" : "PENDING",
     },
-    { label: "Signals", status: "READY" },
-    { label: "Alerts", status: "READY" },
+    { label: "Signals", status: providerAvailable ? "READY" : "PENDING" },
+    { label: "Alerts", status: backendOnline ? "READY" : "PENDING" },
     { label: "Replay", status: "READY" },
     { label: "Failover", status: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
   ];
   const fallbackIsActive =
     providerStatus.activeProvider === "SIMULATION" || providerStatus.activeProvider === "FALLBACK";
   const providerWarnings = fallbackIsActive ? providerDiagnostics.warnings || [] : [];
-  const backendOnline = isBackendOnline(overview, health, providerStatus);
-  const liveProviderActive = isLiveProviderActive(providerStatus);
-  const providerHealthy = providerStatus.providerHealth === "HEALTHY";
-  const fallbackAvailable = (providerDiagnostics.fallback?.status || "AVAILABLE") === "AVAILABLE";
+  const fallbackAvailable = (providerDiagnostics.fallback?.status || "UNAVAILABLE") === "AVAILABLE";
   const betaReadinessScore = getBetaReadinessScore({
     backendOnline,
     liveProviderActive,

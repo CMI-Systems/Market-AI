@@ -4,6 +4,7 @@ import { analyzeRelativeStrength } from './relativeStrengthEngine.js';
 import { analyzeStructure } from './structureEngine.js';
 import { analyzeTrend } from './trendEngine.js';
 import { analyzeVolatility } from './volatilityEngine.js';
+import { mergeProvenance } from './provenanceValidator.js';
 
 const TACTICAL_STATE = {
   BULLISH_EXPANSION: 'BULLISH_EXPANSION',
@@ -125,15 +126,15 @@ function determineTacticalState(engines) {
 
 function getSafeDefaults() {
   return {
-    trend: { trend: 'NEUTRAL', score: 35, evidence: ['Trend defaulted to neutral.'] },
-    momentum: { momentum: 'SLOWING', score: 35, evidence: ['Momentum defaulted to slowing.'] },
-    structure: { structure: 'RANGE', score: 35, evidence: ['Structure defaulted to range.'] },
-    liquidity: { liquidity: 'MODERATE', score: 35, evidence: ['Liquidity defaulted to moderate.'] },
-    volatility: { volatility: 'CONTROLLED', score: 35, evidence: ['Volatility defaulted to controlled.'] },
+    trend: { trend: 'INSUFFICIENT_DATA', score: 0, evidence: ['Trend unavailable because verified candles are missing.'] },
+    momentum: { momentum: 'INSUFFICIENT_DATA', score: 0, evidence: ['Momentum unavailable because verified candles are missing.'] },
+    structure: { structure: 'INSUFFICIENT_DATA', score: 0, evidence: ['Structure unavailable because verified candles are missing.'] },
+    liquidity: { liquidity: 'INSUFFICIENT_DATA', score: 0, evidence: ['Liquidity unavailable because verified volume data is missing.'] },
+    volatility: { volatility: 'INSUFFICIENT_DATA', score: 0, evidence: ['Volatility unavailable because verified candles are missing.'] },
     relativeStrength: {
-      relativeStrength: 'MARKET_PERFORMING',
-      score: 50,
-      evidence: ['Relative strength defaulted to market-performing.'],
+      relativeStrength: 'INSUFFICIENT_DATA',
+      score: 0,
+      evidence: ['Relative strength unavailable because benchmark or sector context is missing.'],
     },
   };
 }
@@ -152,24 +153,71 @@ export function analyzeTacticalState(input = {}) {
     warnings.push('Input was invalid, so Tactical Brain returned safe defaults.');
   }
 
+  const provenance = mergeProvenance(
+    [
+      safeInput.quote,
+      safeInput.marketContext,
+      ...candles.slice(-5),
+    ],
+    { requireAll: false },
+  );
+
   if (!candles.length) {
-    warnings.push('Candles are empty, so Tactical Brain returned a neutral transition state.');
+    warnings.push('Verified candles are empty or unavailable; Tactical Brain returned an insufficient-data state.');
     const engines = defaults;
     return {
       symbol,
-      tacticalState: TACTICAL_STATE.NEUTRAL_TRANSITION,
-      confidence: 45,
-      confidenceLabel: getConfidenceLabel(45),
+      tacticalState: 'INSUFFICIENT_DATA',
+      confidence: 0,
+      confidenceLabel: getConfidenceLabel(0),
       trend: engines.trend.trend,
       momentum: engines.momentum.momentum,
       structure: engines.structure.structure,
       liquidity: engines.liquidity.liquidity,
       volatility: engines.volatility.volatility,
       relativeStrength: engines.relativeStrength.relativeStrength,
+      available: false,
+      sourceType: 'INSUFFICIENT_DATA',
+      simulated: false,
+      generated: false,
+      provenance,
       engines,
       evidence: flattenEvidence(engines),
-      warnings,
+      warnings: [...new Set([...warnings, ...provenance.warnings, ...provenance.blockingReasons])],
       timestamp,
+    };
+  }
+
+  if (!provenance.valid || provenance.status === 'BLOCKED' || provenance.status === 'DATA_UNAVAILABLE') {
+    warnings.push('Tactical Brain blocked analysis because input provenance is unavailable or untrusted.');
+    const engines = defaults;
+    return {
+      symbol,
+      tacticalState: provenance.status === 'BLOCKED' ? 'BLOCKED' : 'INSUFFICIENT_DATA',
+      confidence: 0,
+      confidenceLabel: getConfidenceLabel(0),
+      trend: engines.trend.trend,
+      momentum: engines.momentum.momentum,
+      structure: engines.structure.structure,
+      liquidity: engines.liquidity.liquidity,
+      volatility: engines.volatility.volatility,
+      relativeStrength: engines.relativeStrength.relativeStrength,
+      available: false,
+      sourceType: provenance.sourceType,
+      provider: provenance.provider,
+      simulated: provenance.simulated,
+      generated: provenance.generated,
+      timestamp: provenance.timestamp || timestamp,
+      dataAge: provenance.dataAge,
+      sessionState: provenance.sessionState,
+      marketOpen: provenance.marketOpen,
+      dataState: provenance.dataState,
+      rawDataCertified: false,
+      trainingEligible: false,
+      provenance,
+      engines,
+      evidence: flattenEvidence(engines),
+      warnings: [...new Set([...warnings, ...provenance.warnings, ...provenance.blockingReasons])],
     };
   }
 
@@ -215,9 +263,21 @@ export function analyzeTacticalState(input = {}) {
     liquidity: engines.liquidity.liquidity,
     volatility: engines.volatility.volatility,
     relativeStrength: engines.relativeStrength.relativeStrength,
+    available: true,
+    sourceType: provenance.sourceType,
+    provider: provenance.provider,
+    simulated: provenance.simulated,
+    generated: provenance.generated,
+    dataAge: provenance.dataAge,
+    sessionState: provenance.sessionState,
+    marketOpen: provenance.marketOpen,
+    dataState: provenance.dataState,
+    rawDataCertified: false,
+    trainingEligible: false,
+    provenance,
     engines,
     evidence: flattenEvidence(engines),
-    warnings,
+    warnings: [...new Set([...warnings, ...provenance.warnings])],
     timestamp,
   };
 }

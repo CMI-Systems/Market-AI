@@ -133,16 +133,22 @@ function Signals() {
           setQuote({
             ...fallbackQuote,
             name: latestQuote.name || fallbackQuote.name,
-            price: Number.isFinite(Number(latestQuote.price))
+            price: latestQuote.available === false
+              ? null
+              : Number.isFinite(Number(latestQuote.price))
               ? Number(latestQuote.price)
               : fallbackQuote.price,
-            changePercent: Number.isFinite(Number(latestQuote.changePercent))
+            changePercent: latestQuote.available === false
+              ? null
+              : Number.isFinite(Number(latestQuote.changePercent))
               ? Number(latestQuote.changePercent)
               : fallbackQuote.changePercent,
-            volume: latestQuote.volume || fallbackQuote.volume,
+            volume: latestQuote.available === false ? null : latestQuote.volume || fallbackQuote.volume,
             provider: latestQuote.provider || activeProviderData.activeProvider,
             providerStatus: latestQuote.providerStatus || activeProviderData.providerHealth,
-            updatedAt: latestQuote.updatedAt || fallbackQuote.updatedAt
+            updatedAt: latestQuote.updatedAt || fallbackQuote.updatedAt,
+            available: latestQuote.available !== false,
+            sourceType: latestQuote.sourceType || fallbackQuote.sourceType,
           });
         }
 
@@ -152,10 +158,12 @@ function Signals() {
             candleData.some((candle) => candle.provider === "SIMULATION")
           );
         } else {
+          setCandles([]);
           setUsingFallbackCandles(true);
         }
       } catch {
         if (!active) return;
+        setCandles([]);
         setUsingFallbackCandles(true);
         setProviderStatus((current) => current || getOfflineMarketProviderStatus());
       } finally {
@@ -187,10 +195,14 @@ function Signals() {
   );
   const latestCandle = candles[candles.length - 1];
   const lastMarker = markers[0] || {};
-  const activeSignal = providerSignal?.signal || quote.signal || "NEUTRAL";
+  const dataUnavailable = !candles.length || quote?.available === false || quote?.sourceType === "DATA_UNAVAILABLE";
+  const activeSignal = dataUnavailable ? "DATA_UNAVAILABLE" : providerSignal?.signal || quote.signal || "NEUTRAL";
   const activeConfidence = providerSignal?.confidence ?? quote.confidence ?? 0;
-  const activeRisk = providerSignal?.risk || quote.risk || "MONITORING";
+  const activeRisk = dataUnavailable ? "UNKNOWN" : providerSignal?.risk || quote.risk || "MONITORING";
   const activeReason =
+    dataUnavailable
+      ? "Provider candles unavailable. No fallback simulation candles are being displayed."
+      :
     providerSignal?.reason ||
     lastMarker.reason ||
     "Signal adapter is monitoring current market structure.";
@@ -198,10 +210,10 @@ function Signals() {
   const latestPrice = latestCandle?.close || quote.price || 0;
   const changePercent = calculateChangePercent(candles, quote.changePercent || 0);
   const trend =
-    latestCandle?.close > candles[0]?.open ? "RISING" : "FADING";
+    dataUnavailable ? "DATA_UNAVAILABLE" : latestCandle?.close > candles[0]?.open ? "RISING" : "FADING";
   const volatility =
-    priceRange.high - priceRange.low > latestPrice * 0.025 ? "ELEVATED" : "NORMAL";
-  const liquidity = latestCandle?.volume > 0 ? "ACTIVE" : "OBSERVING";
+    dataUnavailable ? "DATA_UNAVAILABLE" : priceRange.high - priceRange.low > latestPrice * 0.025 ? "ELEVATED" : "NORMAL";
+  const liquidity = dataUnavailable ? "DATA_UNAVAILABLE" : latestCandle?.volume > 0 ? "ACTIVE" : "OBSERVING";
   const maxVolume = priceRange.maxVolume || 1;
   const rangeHigh = Number.isFinite(priceRange.high) ? priceRange.high : latestPrice + 1;
   const rangeLow = Number.isFinite(priceRange.low) ? priceRange.low : latestPrice - 1;
@@ -305,7 +317,7 @@ function Signals() {
           {isLoading && <div className="chart-state-bar">Loading provider candles...</div>}
           {usingFallbackCandles && (
             <div className="chart-state-bar chart-state-warning">
-              Provider candles unavailable. Using fallback simulation candles.
+              Provider candles unavailable. No fallback simulation candles are being displayed.
             </div>
           )}
 
@@ -340,8 +352,11 @@ function Signals() {
 
             <div
               className="mock-candle-chart"
-              style={{ gridTemplateColumns: `repeat(${candles.length}, minmax(12px, 1fr))` }}
+              style={{ gridTemplateColumns: `repeat(${Math.max(candles.length, 1)}, minmax(12px, 1fr))` }}
             >
+              {!candles.length && (
+                <div className="chart-state-bar">DATA UNAVAILABLE</div>
+              )}
               {candles.map((candle) => {
                 const candleHigh = Number(candle.high) || latestPrice;
                 const candleLow = Number(candle.low) || latestPrice;
@@ -391,7 +406,7 @@ function Signals() {
 
           <div
             className="volume-strip"
-            style={{ gridTemplateColumns: `repeat(${candles.length}, minmax(12px, 1fr))` }}
+            style={{ gridTemplateColumns: `repeat(${Math.max(candles.length, 1)}, minmax(12px, 1fr))` }}
           >
             {candles.map((candle) => {
               const isUp = Number(candle.close) >= Number(candle.open);

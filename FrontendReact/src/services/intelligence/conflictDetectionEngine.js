@@ -33,6 +33,7 @@ export function analyzeConflicts(input = {}) {
   const warnings = [];
   const tactical = input?.tactical;
   const behavioral = input?.behavioral;
+  const provenance = input?.provenance;
   let score = 90;
 
   // Conflict detection compares directional conclusions across intelligence layers.
@@ -68,6 +69,12 @@ export function analyzeConflicts(input = {}) {
     score -= 18;
     warnings.push('Speculative behavior is present during high volatility.');
     evidence.push('High-volatility tactical context conflicts with speculative behavioral expansion.');
+  }
+
+  if (provenance?.status === 'BLOCKED' || provenance?.riskLevel === 'CRITICAL') {
+    score -= 55;
+    warnings.push('Critical provenance conflict is present.');
+    evidence.push(`Provenance conflict blocks trust: ${(provenance.blockingReasons || []).join('; ') || 'untrusted source metadata'}.`);
   }
 
   const finalScore = clampScore(score);

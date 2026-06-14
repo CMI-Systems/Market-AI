@@ -4,6 +4,7 @@ import { analyzeFailsafeState } from './failsafeBrain.js';
 import { analyzeNarrative } from './narrativeEngine.js';
 import { analyzeRegime } from './regimeEngine.js';
 import { analyzeTacticalState } from './tacticalBrain.js';
+import { mergeProvenance } from './provenanceValidator.js';
 
 function clampScore(score) {
   return Math.max(0, Math.min(100, Math.round(score)));
@@ -21,20 +22,51 @@ function safeSymbol(input) {
     : 'MARKET';
 }
 
+function isUnavailableValue(value) {
+  if (!value || typeof value !== 'object') return value === null || value === undefined;
+  const sourceType = String(value.sourceType || '').toUpperCase();
+  return Boolean(
+    value.available === false
+    || value.simulated === true
+    || value.generated === true
+    || [
+      'DATA_UNAVAILABLE',
+      'BACKEND_UNAVAILABLE',
+      'PROVIDER_OFFLINE',
+      'UNKNOWN_SOURCE',
+      'INVALID_TIMESTAMP',
+      'SIMULATED',
+      'GENERATED',
+      'BLOCKED',
+      'INSUFFICIENT_DATA',
+    ].includes(sourceType)
+  );
+}
+
+function hasUsableArray(values) {
+  return Array.isArray(values)
+    && values.length > 0
+    && values.some((item) => !isUnavailableValue(item));
+}
+
+function hasUsableObject(value) {
+  return Boolean(value && typeof value === 'object' && !isUnavailableValue(value) && Object.keys(value).length);
+}
+
 function hasUsableInput(input) {
   return Boolean(
-    Array.isArray(input?.candles)
-    || input?.quote
-    || input?.marketContext
-    || input?.benchmarkCandles
-    || input?.sectorContext
-    || input?.marketPulse
-    || input?.marketIntelligence
-    || input?.globalScan
-    || input?.newsletterData
-    || input?.crossAssetData
-    || input?.dataStreams
-    || input?.history
+    hasUsableArray(input?.candles)
+    || hasUsableObject(input?.quote)
+    || hasUsableObject(input?.marketContext)
+    || hasUsableArray(input?.benchmarkCandles)
+    || hasUsableObject(input?.sectorContext)
+    || hasUsableObject(input?.marketPulse)
+    || hasUsableObject(input?.marketIntelligence)
+    || hasUsableObject(input?.globalScan)
+    || hasUsableObject(input?.newsletterData)
+    || hasUsableObject(input?.crossAssetData)
+    || hasUsableArray(input?.dataStreams)
+    || hasUsableArray(input?.history)
   );
 }
 
@@ -95,10 +127,30 @@ export function analyzeAiccIntelligence(input = {}) {
     warnings.push('Orchestrator input was empty or malformed; service fallbacks were used.');
   }
 
+  const inputProvenance = mergeProvenance(
+    [
+      safeInput.quote,
+      safeInput.marketContext,
+      safeInput.marketPulse,
+      safeInput.marketIntelligence,
+      safeInput.globalScan,
+      safeInput.newsletterData,
+      safeInput.crossAssetData,
+      ...(Array.isArray(safeInput.candles) ? safeInput.candles.slice(-5) : []),
+      ...(Array.isArray(safeInput.dataStreams) ? safeInput.dataStreams : []),
+    ],
+    { requireAll: false, timestampRequired: false },
+  );
+  const provenanceBlocked = inputProvenance.status === 'BLOCKED' || inputProvenance.status === 'DATA_UNAVAILABLE';
+
+  if (provenanceBlocked) {
+    warnings.push('Orchestrator blocked full intelligence flow because raw input provenance is unavailable or untrusted.');
+  }
+
   const tactical = runStep(
     'Tactical Brain',
     analyzeTacticalState,
-    fallbackMode
+    fallbackMode || provenanceBlocked
       ? { symbol }
       : {
           symbol,
@@ -114,7 +166,7 @@ export function analyzeAiccIntelligence(input = {}) {
   const behavioral = runStep(
     'Behavioral Brain',
     analyzeBehavioralState,
-    fallbackMode
+    fallbackMode || provenanceBlocked
       ? { symbol }
       : {
           symbol,
@@ -130,7 +182,7 @@ export function analyzeAiccIntelligence(input = {}) {
   const failsafe = runStep(
     'Failsafe Brain',
     analyzeFailsafeState,
-    fallbackMode
+    fallbackMode || provenanceBlocked
       ? { symbol }
       : {
           symbol,
@@ -141,6 +193,7 @@ export function analyzeAiccIntelligence(input = {}) {
           globalScan: safeInput.globalScan,
           newsletterData: safeInput.newsletterData,
           history: safeInput.history,
+          provenance: inputProvenance,
         },
     warnings,
   );
@@ -148,7 +201,7 @@ export function analyzeAiccIntelligence(input = {}) {
   const consensus = runStep(
     'Consensus Engine',
     analyzeConsensus,
-    fallbackMode
+    fallbackMode || provenanceBlocked
       ? { symbol }
       : {
           symbol,
@@ -162,7 +215,7 @@ export function analyzeAiccIntelligence(input = {}) {
   const regime = runStep(
     'Regime Engine',
     analyzeRegime,
-    fallbackMode
+    fallbackMode || provenanceBlocked
       ? { symbol }
       : {
           symbol,
@@ -179,7 +232,7 @@ export function analyzeAiccIntelligence(input = {}) {
   const narrative = runStep(
     'Narrative Engine',
     analyzeNarrative,
-    fallbackMode
+    fallbackMode || provenanceBlocked
       ? { symbol }
       : {
           symbol,
@@ -214,6 +267,7 @@ export function analyzeAiccIntelligence(input = {}) {
     consensus,
     regime,
     narrative,
+    provenance: inputProvenance,
     summary: {
       tacticalState: tactical?.tacticalState,
       behavioralState: behavioral?.behavioralState,

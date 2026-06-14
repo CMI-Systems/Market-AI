@@ -1,3 +1,5 @@
+import { mergeProvenance } from './provenanceValidator.js';
+
 function toNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
@@ -23,8 +25,32 @@ function isHealthyStatus(status) {
 }
 
 function isBadStatus(status) {
-  return ['OFFLINE', 'ERROR', 'FAILED', 'DEGRADED', 'STALE', 'DISCONNECTED', 'UNAVAILABLE'].includes(
+  return [
+    'OFFLINE',
+    'ERROR',
+    'FAILED',
+    'DEGRADED',
+    'STALE',
+    'DISCONNECTED',
+    'UNAVAILABLE',
+    'PROVIDER_OFFLINE',
+    'BACKEND_UNAVAILABLE',
+    'DATA_UNAVAILABLE',
+    'UNKNOWN_SOURCE',
+    'INVALID_TIMESTAMP',
+    'PARTIAL_DATA',
+  ].includes(
     String(status || '').toUpperCase(),
+  );
+}
+
+function isUnavailableStream(stream) {
+  const sourceType = String(stream?.sourceType || '').toUpperCase();
+  return (
+    stream?.available === false
+    || stream?.simulated === true
+    || stream?.generated === true
+    || isBadStatus(sourceType)
   );
 }
 
@@ -32,6 +58,13 @@ export function analyzeDataIntegrity(input = {}) {
   const evidence = [];
   const warnings = [];
   const streams = normalizeStreams(input?.dataStreams);
+  const provenance = input?.provenance || mergeProvenance([
+    ...streams,
+    input?.marketIntelligence,
+    input?.globalScan,
+    input?.tactical,
+    input?.behavioral,
+  ], { requireAll: false, timestampRequired: false });
   let score = 70;
 
   // Data integrity focuses on feed availability, health, staleness, and explicit stream warnings.
@@ -41,7 +74,9 @@ export function analyzeDataIntegrity(input = {}) {
     score -= 35;
   } else {
     const healthyCount = streams.filter((stream) => isHealthyStatus(stream.status ?? stream.health ?? stream.state)).length;
-    const badCount = streams.filter((stream) => isBadStatus(stream.status ?? stream.health ?? stream.state)).length;
+    const badCount = streams.filter((stream) =>
+      isBadStatus(stream.status ?? stream.health ?? stream.state) || isUnavailableStream(stream)
+    ).length;
     const warningCount = streams.reduce((count, stream) => {
       if (Array.isArray(stream.warnings)) return count + stream.warnings.length;
       return stream.warning ? count + 1 : count;
@@ -66,6 +101,24 @@ export function analyzeDataIntegrity(input = {}) {
   if (qualityScore !== null) {
     score = (score + qualityScore) / 2;
     evidence.push(`External data quality score is ${qualityScore}.`);
+  }
+
+  if (provenance.status === 'BLOCKED') {
+    score -= provenance.riskLevel === 'CRITICAL' ? 60 : 45;
+    warnings.push('Critical provenance issue blocks raw-data trust.');
+    evidence.push(`Provenance blocked: ${provenance.blockingReasons.join('; ') || 'untrusted source metadata'}.`);
+  } else if (provenance.status === 'DATA_UNAVAILABLE') {
+    score -= 35;
+    warnings.push('Required provenance indicates data unavailable.');
+    evidence.push('Provenance reports unavailable market data.');
+  } else if (provenance.status === 'DEGRADED') {
+    score -= 18;
+    warnings.push('Provenance is degraded and requires limited trust.');
+    evidence.push(`Provenance is degraded with source type ${provenance.sourceType}.`);
+  }
+
+  if (provenance.rawDataCertified === false) {
+    evidence.push('Raw-data certification remains false pending O.6.');
   }
 
   const finalScore = clampScore(score);

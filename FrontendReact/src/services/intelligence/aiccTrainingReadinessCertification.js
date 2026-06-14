@@ -58,6 +58,7 @@ export function certifyTrainingReadiness(input = {}) {
   const queueBuilder = safeObject(safeInput.queueBuilder);
   const datasetValidation = safeObject(safeInput.datasetValidation);
   const shadowReadiness = safeObject(safeInput.shadowReadiness);
+  const rawDataCertified = safeInput.rawDataCertified === true;
 
   const certificationReasons = [];
   const rejectionReasons = [];
@@ -77,6 +78,7 @@ export function certifyTrainingReadiness(input = {}) {
   if (!hasObjectContent(queueBuilder)) warnings.push("Missing queue builder.");
   if (!hasObjectContent(datasetValidation)) warnings.push("Missing validation.");
   if (!hasObjectContent(shadowReadiness)) warnings.push("Missing shadow readiness.");
+  if (!rawDataCertified) warnings.push("RAW_DATA_CERTIFICATION_REQUIRED");
 
   if (infrastructureReady) {
     certificationReasons.push("Dataset capture available.");
@@ -122,6 +124,7 @@ export function certifyTrainingReadiness(input = {}) {
   }
 
   const trainingReady =
+    rawDataCertified &&
     queueCertification.certified === true &&
     queueBuilder.queueReady === true &&
     datasetValidation.valid === true &&
@@ -136,8 +139,11 @@ export function certifyTrainingReadiness(input = {}) {
     datasetReady,
     validationReady,
     queueReady,
+    rawDataCertified,
     certificationReasons,
-    rejectionReasons,
+    rejectionReasons: rawDataCertified
+      ? rejectionReasons
+      : [...rejectionReasons, "Raw data certification is required before training readiness."],
     warnings: [...new Set(warnings)],
   };
 }

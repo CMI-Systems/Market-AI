@@ -1,11 +1,97 @@
 import { getDemoResponse } from "./demoCognition";
+import {
+  createUnavailableMetadata,
+  getFrontendDemoPolicy,
+} from "./frontendRuntimePolicy";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
-const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true";
+
+function createUnavailableResponse(endpoint, reason = "BACKEND_UNAVAILABLE") {
+  const base = {
+    ...createUnavailableMetadata(reason),
+    endpoint,
+    timestamp: null,
+    warnings: [
+      "Verified backend cognition is unavailable. Demo cognition was not substituted.",
+    ],
+  };
+
+  if (endpoint.includes("/overview")) {
+    return {
+      ...base,
+      backend: null,
+      mode: "DATA_UNAVAILABLE",
+      provider: "BACKEND_UNAVAILABLE",
+      marketOpen: null,
+      runtimeHealth: {
+        status: "BACKEND_UNAVAILABLE",
+        summary: "AICC cognition backend is unavailable.",
+      },
+      strategicEnvironment: {
+        regime: "UNKNOWN",
+        risk: "DATA_UNAVAILABLE",
+      },
+      confidence: {
+        score: null,
+        level: "DATA_UNAVAILABLE",
+      },
+      consensus: {
+        state: "DATA_UNAVAILABLE",
+        strength: "UNKNOWN",
+      },
+      stabilityForecast: {
+        state: "UNKNOWN",
+        horizon: "DATA_UNAVAILABLE",
+      },
+      escalation: {
+        status: "DATA_UNAVAILABLE",
+        level: "UNKNOWN",
+      },
+    };
+  }
+
+  if (endpoint.includes("/brain-status")) {
+    const brainUnavailable = {
+      status: "DATA_UNAVAILABLE",
+      confidence: null,
+      sourceType: "DATA_UNAVAILABLE",
+    };
+
+    return {
+      ...base,
+      tacticalBrain: brainUnavailable,
+      behavioralBrain: brainUnavailable,
+      failsafeBrain: brainUnavailable,
+    };
+  }
+
+  if (endpoint.includes("/confidence")) {
+    return {
+      ...base,
+      score: null,
+      level: "DATA_UNAVAILABLE",
+      consensusStrength: "UNKNOWN",
+      warningCount: 1,
+    };
+  }
+
+  return {
+    ...base,
+    status: "DATA_UNAVAILABLE",
+    message: "Verified cognition data is unavailable.",
+    data: [],
+  };
+}
 
 async function fetchJson(endpoint) {
-  if (DEMO_MODE) {
+  const demoPolicy = getFrontendDemoPolicy();
+
+  if (demoPolicy.demoAllowed) {
     return getDemoResponse(endpoint);
+  }
+
+  if (demoPolicy.demoBlocked) {
+    return createUnavailableResponse(endpoint, "DEMO_NOT_ALLOWED");
   }
 
   try {
@@ -17,7 +103,7 @@ async function fetchJson(endpoint) {
 
     return await response.json();
   } catch (error) {
-    return getDemoResponse(endpoint);
+    return createUnavailableResponse(endpoint, "BACKEND_UNAVAILABLE");
   }
 }
 

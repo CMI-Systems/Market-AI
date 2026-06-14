@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAiccReplay } from "../services/aiccApi";
+import {
+  createJournalEntry,
+  deleteJournalEntry as deletePersistedJournalEntry,
+  getJournalEntries,
+  updateJournalEntry as updatePersistedJournalEntry,
+} from "../services/journalPersistenceService";
 import "../styles/ClosedBetaPages.css";
 import "../styles/TradingJournal.css";
 
@@ -25,9 +31,31 @@ const tradeAssessment = [
   { label: "Weakest Element", value: "Exit Patience" },
 ];
 
+function mapPersistedJournalEntry(row) {
+  return {
+    id: row.id,
+    symbol: row.symbol || "AAPL",
+    direction: row.direction || "LONG",
+    result: row.result || "WIN",
+    tradeThesis: row.trade_thesis || "",
+    executionReview: row.execution_review || "",
+    behavioralReflection: row.behavioral_reflection || "",
+    behavioralTags: Array.isArray(row.behavioral_tags) ? row.behavioral_tags : [],
+  };
+}
+
 function TradingJournal() {
   const navigate = useNavigate();
   const [replay, setReplay] = useState([]);
+  const [persistedJournalEntries, setPersistedJournalEntries] = useState([]);
+  const [selectedJournalId, setSelectedJournalId] = useState(null);
+  const [journalPersistenceStatus, setJournalPersistenceStatus] = useState({
+    loading: false,
+    saving: false,
+    deleting: false,
+    message: "Journal persistence is available in staging only.",
+    error: "",
+  });
   const [journalEntry, setJournalEntry] = useState({
     symbol: "AAPL",
     direction: "LONG",
@@ -37,6 +65,35 @@ function TradingJournal() {
     behavioralReflection: "Stayed calm through the first pullback and avoided adding size after entry.",
     behavioralTags: ["Patient", "Disciplined", "Risk-Aware"],
   });
+
+  const loadPersistedJournalEntries = useCallback(async () => {
+    setJournalPersistenceStatus((current) => ({
+      ...current,
+      loading: true,
+      error: "",
+      message: "Loading journal entries.",
+    }));
+
+    const result = await getJournalEntries();
+
+    if (result.error) {
+      setJournalPersistenceStatus((current) => ({
+        ...current,
+        loading: false,
+        message: "Journal persistence unavailable.",
+        error: result.error.message,
+      }));
+      return;
+    }
+
+    setPersistedJournalEntries(result.data || []);
+    setJournalPersistenceStatus((current) => ({
+      ...current,
+      loading: false,
+      message: result.data?.length ? "Journal entries loaded." : "No saved journal entries yet.",
+      error: "",
+    }));
+  }, []);
 
   useEffect(() => {
     async function loadJournalSignals() {
@@ -50,6 +107,10 @@ function TradingJournal() {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    loadPersistedJournalEntries();
+  }, [loadPersistedJournalEntries]);
 
   const signalHistory = replay.filter((event) => event.type === "SIGNAL").slice(0, 6);
   const updateJournalEntry = (field, value) => {
@@ -76,6 +137,109 @@ function TradingJournal() {
         journalEntry,
       },
     });
+  };
+  const saveJournalEntry = async () => {
+    setJournalPersistenceStatus((current) => ({
+      ...current,
+      saving: true,
+      error: "",
+      message: selectedJournalId ? "Updating journal entry." : "Saving journal entry.",
+    }));
+
+    const payload = {
+      ...journalEntry,
+      tradeAssessment,
+    };
+    const result = selectedJournalId
+      ? await updatePersistedJournalEntry(selectedJournalId, payload)
+      : await createJournalEntry(payload);
+
+    if (result.error) {
+      setJournalPersistenceStatus((current) => ({
+        ...current,
+        saving: false,
+        message: "Journal entry was not saved.",
+        error: result.error.message,
+      }));
+      return;
+    }
+
+    if (result.data?.id) {
+      setSelectedJournalId(result.data.id);
+      setJournalEntry(mapPersistedJournalEntry(result.data));
+    }
+
+    setJournalPersistenceStatus((current) => ({
+      ...current,
+      saving: false,
+      message: selectedJournalId ? "Journal entry updated." : "Journal entry saved.",
+      error: "",
+    }));
+    loadPersistedJournalEntries();
+  };
+  const loadJournalEntry = (row) => {
+    setSelectedJournalId(row.id);
+    setJournalEntry(mapPersistedJournalEntry(row));
+    setJournalPersistenceStatus((current) => ({
+      ...current,
+      message: "Saved journal entry loaded.",
+      error: "",
+    }));
+  };
+  const startNewJournalEntry = () => {
+    setSelectedJournalId(null);
+    setJournalEntry({
+      symbol: "AAPL",
+      direction: "LONG",
+      result: "WIN",
+      tradeThesis: "",
+      executionReview: "",
+      behavioralReflection: "",
+      behavioralTags: [],
+    });
+    setJournalPersistenceStatus((current) => ({
+      ...current,
+      message: "New journal entry ready.",
+      error: "",
+    }));
+  };
+  const deleteSelectedJournalEntry = async () => {
+    if (!selectedJournalId) {
+      setJournalPersistenceStatus((current) => ({
+        ...current,
+        message: "No saved journal entry selected.",
+        error: "",
+      }));
+      return;
+    }
+
+    setJournalPersistenceStatus((current) => ({
+      ...current,
+      deleting: true,
+      error: "",
+      message: "Deleting journal entry.",
+    }));
+
+    const result = await deletePersistedJournalEntry(selectedJournalId);
+
+    if (result.error) {
+      setJournalPersistenceStatus((current) => ({
+        ...current,
+        deleting: false,
+        message: "Journal entry was not deleted.",
+        error: result.error.message,
+      }));
+      return;
+    }
+
+    startNewJournalEntry();
+    setJournalPersistenceStatus((current) => ({
+      ...current,
+      deleting: false,
+      message: "Journal entry deleted.",
+      error: "",
+    }));
+    loadPersistedJournalEntries();
   };
 
   return (
@@ -233,6 +397,60 @@ function TradingJournal() {
       <section className="closed-beta-panel journal-replay-placeholder">
         <div className="journal-section-title">
           <span>07</span>
+          <h2>Journal Persistence</h2>
+        </div>
+        <p>Staging-only persistence for operator journal entries.</p>
+        <div className="journal-action-row">
+          <button type="button" onClick={saveJournalEntry} disabled={journalPersistenceStatus.saving}>
+            {selectedJournalId ? "Update Journal Entry" : "Save Journal Entry"}
+          </button>
+          <button type="button" onClick={startNewJournalEntry}>
+            New Entry
+          </button>
+          <button
+            type="button"
+            onClick={deleteSelectedJournalEntry}
+            disabled={!selectedJournalId || journalPersistenceStatus.deleting}
+          >
+            Delete Entry
+          </button>
+          <button type="button" onClick={loadPersistedJournalEntries} disabled={journalPersistenceStatus.loading}>
+            Refresh Entries
+          </button>
+        </div>
+        <div className="journal-persistence-status">
+          <span>Save Status</span>
+          <strong>{journalPersistenceStatus.message}</strong>
+          {journalPersistenceStatus.loading && <p>Load status: loading saved entries.</p>}
+          {journalPersistenceStatus.saving && <p>Save status: saving current entry.</p>}
+          {journalPersistenceStatus.deleting && <p>Delete status: deleting selected entry.</p>}
+          {journalPersistenceStatus.error && <p>{journalPersistenceStatus.error}</p>}
+        </div>
+        <div className="closed-beta-list">
+          {persistedJournalEntries.length === 0 ? (
+            <article>
+              <span>Empty Journal State</span>
+              <strong>No saved journal entries loaded.</strong>
+              <p>Saved staging entries will appear here after journal persistence is available.</p>
+            </article>
+          ) : (
+            persistedJournalEntries.map((entry) => (
+              <article key={entry.id}>
+                <span>{entry.symbol || "UNKNOWN"}</span>
+                <strong>{entry.direction || "FLAT"} / {entry.result || "FLAT"}</strong>
+                <p>{entry.trade_thesis || "No thesis supplied."}</p>
+                <button type="button" onClick={() => loadJournalEntry(entry)}>
+                  Load Entry
+                </button>
+              </article>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section className="closed-beta-panel journal-replay-placeholder">
+        <div className="journal-section-title">
+          <span>08</span>
           <h2>Open Replay Review</h2>
         </div>
         <p>Send this placeholder journal context to Replay Center for review.</p>

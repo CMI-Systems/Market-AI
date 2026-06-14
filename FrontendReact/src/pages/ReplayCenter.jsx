@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { createAiccDatasetRecord } from "../services/intelligence/aiccDatasetCapture";
 import { validateAiccDatasetRecord } from "../services/intelligence/aiccDatasetQualityValidator";
@@ -8,6 +8,16 @@ import { analyzeBehavioralPipeline } from "../services/intelligence/behavioralPi
 import { evaluateBehavioralTrainingCandidate } from "../services/intelligence/behavioralTrainingQueue";
 import { createBehavioralDatasetRecord } from "../services/intelligence/replayBehavioralDatasetBridge";
 import { analyzeReplayIntelligence } from "../services/intelligence/replayIntelligenceEngine";
+import { getDatasetGovernanceSummary } from "../services/datasetGovernanceService";
+import { getDatasetRepositorySummary } from "../services/datasetRepositoryService";
+import { getHistoricalValidationSummary } from "../services/historicalDatasetValidationService";
+import { getOperatorHistorySummary } from "../services/operatorHistoryService";
+import {
+  createReplaySession,
+  deleteReplaySession as deletePersistedReplaySession,
+  getReplaySessions,
+  updateReplaySession as updatePersistedReplaySession,
+} from "../services/replayPersistenceService";
 import "../styles/ReplayCenter.css";
 
 const sessionVerdict = [
@@ -127,6 +137,219 @@ function ReplayCenter() {
   const location = useLocation();
   const journalEntry = location.state?.journalEntry || null;
   const [selectedTradeId, setSelectedTradeId] = useState(sampleTrades[0].id);
+  const [persistedReplaySessions, setPersistedReplaySessions] = useState([]);
+  const [selectedReplaySessionId, setSelectedReplaySessionId] = useState(null);
+  const [replayPersistenceStatus, setReplayPersistenceStatus] = useState({
+    loading: false,
+    saving: false,
+    deleting: false,
+    message: "Replay persistence is available in staging only.",
+    error: "",
+  });
+  const [datasetRepositorySnapshot, setDatasetRepositorySnapshot] = useState({
+    loading: false,
+    error: "",
+    summary: {
+      totalDatasets: 0,
+      validDatasets: 0,
+      shadowReadyDatasets: 0,
+      highQualityDatasets: 0,
+      moderateQualityDatasets: 0,
+      lowQualityDatasets: 0,
+      symbols: [],
+      latestUpdatedAt: null,
+    },
+  });
+  const [historicalValidationSnapshot, setHistoricalValidationSnapshot] = useState({
+    loading: false,
+    error: "",
+    summary: {
+      totalDatasets: 0,
+      revalidatedDatasets: 0,
+      consistentDatasets: 0,
+      inconsistentDatasets: 0,
+      consistencyRate: 0,
+      highQualityDatasets: 0,
+      shadowReadyDatasets: 0,
+      historicalValidationStatus: "EMPTY",
+    },
+  });
+  const [operatorHistorySnapshot, setOperatorHistorySnapshot] = useState({
+    loading: false,
+    error: "",
+    summary: {
+      totalHistoryItems: 0,
+      journalEntries: 0,
+      replaySessions: 0,
+      datasetRecords: 0,
+      datasetValidations: 0,
+      shadowReadinessRecords: 0,
+      latestActivityAt: null,
+      historyStatus: "EMPTY",
+    },
+  });
+  const [datasetGovernanceSnapshot, setDatasetGovernanceSnapshot] = useState({
+    loading: false,
+    error: "",
+    summary: {
+      totalDatasets: 0,
+      compliantDatasets: 0,
+      reviewRequiredDatasets: 0,
+      restrictedDatasets: 0,
+      incompleteDatasets: 0,
+      activeDatasets: 0,
+      archiveCandidates: 0,
+      holdDatasets: 0,
+      futureTrainingEligibleDatasets: 0,
+      trainingBlockedDatasets: 0,
+      rawDataCertified: false,
+      trainingEnabled: false,
+      policyVersion: "N8-v1",
+      governanceStatus: "EMPTY",
+      warnings: [],
+    },
+  });
+
+  const loadPersistedReplaySessions = useCallback(async () => {
+    setReplayPersistenceStatus((current) => ({
+      ...current,
+      loading: true,
+      error: "",
+      message: "Loading replay sessions.",
+    }));
+
+    const result = await getReplaySessions();
+
+    if (result.error) {
+      setReplayPersistenceStatus((current) => ({
+        ...current,
+        loading: false,
+        message: "Replay persistence unavailable.",
+        error: result.error.message,
+      }));
+      return;
+    }
+
+    setPersistedReplaySessions(result.data || []);
+    setReplayPersistenceStatus((current) => ({
+      ...current,
+      loading: false,
+      message: result.data?.length ? "Replay sessions loaded." : "No saved replay sessions yet.",
+      error: "",
+    }));
+  }, []);
+
+  const loadDatasetRepositorySnapshot = useCallback(async () => {
+    setDatasetRepositorySnapshot((current) => ({
+      ...current,
+      loading: true,
+      error: "",
+    }));
+
+    const result = await getDatasetRepositorySummary();
+
+    setDatasetRepositorySnapshot({
+      loading: false,
+      error: result.error?.message || "",
+      summary: result.summary || {
+        totalDatasets: 0,
+        validDatasets: 0,
+        shadowReadyDatasets: 0,
+        highQualityDatasets: 0,
+        moderateQualityDatasets: 0,
+        lowQualityDatasets: 0,
+        symbols: [],
+        latestUpdatedAt: null,
+      },
+    });
+  }, []);
+
+  const loadHistoricalValidationSnapshot = useCallback(async () => {
+    setHistoricalValidationSnapshot((current) => ({
+      ...current,
+      loading: true,
+      error: "",
+    }));
+
+    const result = await getHistoricalValidationSummary();
+
+    setHistoricalValidationSnapshot({
+      loading: false,
+      error: result.warnings?.[0] || "",
+      summary: {
+        totalDatasets: result.totalDatasets || 0,
+        revalidatedDatasets: result.revalidatedDatasets || 0,
+        consistentDatasets: result.consistentDatasets || 0,
+        inconsistentDatasets: result.inconsistentDatasets || 0,
+        consistencyRate: result.consistencyRate || 0,
+        highQualityDatasets: result.highQualityDatasets || 0,
+        shadowReadyDatasets: result.shadowReadyDatasets || 0,
+        historicalValidationStatus: result.historicalValidationStatus || "EMPTY",
+      },
+    });
+  }, []);
+
+  const loadOperatorHistorySnapshot = useCallback(async () => {
+    setOperatorHistorySnapshot((current) => ({
+      ...current,
+      loading: true,
+      error: "",
+    }));
+
+    const result = await getOperatorHistorySummary();
+
+    setOperatorHistorySnapshot({
+      loading: false,
+      error: result.warnings?.[0] || "",
+      summary: {
+        totalHistoryItems: result.summary?.totalHistoryItems || 0,
+        journalEntries: result.summary?.journalEntries || 0,
+        replaySessions: result.summary?.replaySessions || 0,
+        datasetRecords: result.summary?.datasetRecords || 0,
+        datasetValidations: result.summary?.datasetValidations || 0,
+        shadowReadinessRecords: result.summary?.shadowReadinessRecords || 0,
+        latestActivityAt: result.summary?.latestActivityAt || null,
+        historyStatus: result.summary?.historyStatus || "EMPTY",
+      },
+    });
+  }, []);
+
+  const loadDatasetGovernanceSnapshot = useCallback(async () => {
+    setDatasetGovernanceSnapshot((current) => ({
+      ...current,
+      loading: true,
+      error: "",
+    }));
+
+    const result = await getDatasetGovernanceSummary({
+      rawDataCertified: false,
+      trainingEnabled: false,
+      retentionDays: 365,
+      policyVersion: "N8-v1",
+    });
+
+    setDatasetGovernanceSnapshot({
+      loading: false,
+      error: result.warnings?.[0] || "",
+      summary: {
+        totalDatasets: result.totalDatasets || 0,
+        compliantDatasets: result.compliantDatasets || 0,
+        reviewRequiredDatasets: result.reviewRequiredDatasets || 0,
+        restrictedDatasets: result.restrictedDatasets || 0,
+        incompleteDatasets: result.incompleteDatasets || 0,
+        activeDatasets: result.activeDatasets || 0,
+        archiveCandidates: result.archiveCandidates || 0,
+        holdDatasets: result.holdDatasets || 0,
+        futureTrainingEligibleDatasets: result.futureTrainingEligibleDatasets || 0,
+        trainingBlockedDatasets: result.trainingBlockedDatasets || 0,
+        rawDataCertified: result.rawDataCertified === true,
+        trainingEnabled: result.trainingEnabled === true,
+        policyVersion: result.policyVersion || "N8-v1",
+        governanceStatus: result.governanceStatus || "EMPTY",
+        warnings: result.warnings || [],
+      },
+    });
+  }, []);
 
   const replayIntelligence = useMemo(
     () => analyzeReplayIntelligence(journalEntry || {}),
@@ -219,6 +442,138 @@ function ReplayCenter() {
     () => sampleTrades.find((trade) => trade.id === selectedTradeId) || sampleTrades[0],
     [selectedTradeId]
   );
+
+  useEffect(() => {
+    loadPersistedReplaySessions();
+  }, [loadPersistedReplaySessions]);
+
+  useEffect(() => {
+    loadDatasetRepositorySnapshot();
+  }, [loadDatasetRepositorySnapshot]);
+
+  useEffect(() => {
+    loadHistoricalValidationSnapshot();
+  }, [loadHistoricalValidationSnapshot]);
+
+  useEffect(() => {
+    loadOperatorHistorySnapshot();
+  }, [loadOperatorHistorySnapshot]);
+
+  useEffect(() => {
+    loadDatasetGovernanceSnapshot();
+  }, [loadDatasetGovernanceSnapshot]);
+
+  const buildReplaySessionPayload = () => ({
+    sessionContext: {
+      source: "REPLAY_CENTER",
+      journalEntry: journalEntry
+        ? {
+            symbol: journalEntry.symbol,
+            direction: journalEntry.direction,
+            result: journalEntry.result,
+          }
+        : null,
+      selectedTradeId,
+      selectedTrade,
+      sessionVerdict,
+      operatorDebrief,
+    },
+    replayIntelligence,
+    status: "REPLAY_REVIEWED",
+  });
+
+  const saveReplaySession = async () => {
+    setReplayPersistenceStatus((current) => ({
+      ...current,
+      saving: true,
+      error: "",
+      message: selectedReplaySessionId ? "Updating replay session." : "Saving replay session.",
+    }));
+
+    const payload = buildReplaySessionPayload();
+    const result = selectedReplaySessionId
+      ? await updatePersistedReplaySession(selectedReplaySessionId, payload)
+      : await createReplaySession(payload);
+
+    if (result.error) {
+      setReplayPersistenceStatus((current) => ({
+        ...current,
+        saving: false,
+        message: "Replay session was not saved.",
+        error: result.error.message,
+      }));
+      return;
+    }
+
+    if (result.data?.id) {
+      setSelectedReplaySessionId(result.data.id);
+    }
+
+    setReplayPersistenceStatus((current) => ({
+      ...current,
+      saving: false,
+      message: selectedReplaySessionId ? "Replay session updated." : "Replay session saved.",
+      error: "",
+    }));
+    loadPersistedReplaySessions();
+  };
+
+  const loadReplaySession = (session) => {
+    setSelectedReplaySessionId(session.id);
+    setReplayPersistenceStatus((current) => ({
+      ...current,
+      message: "Saved replay session selected.",
+      error: "",
+    }));
+  };
+
+  const startNewReplaySession = () => {
+    setSelectedReplaySessionId(null);
+    setReplayPersistenceStatus((current) => ({
+      ...current,
+      message: "New replay session ready.",
+      error: "",
+    }));
+  };
+
+  const deleteSelectedReplaySession = async () => {
+    if (!selectedReplaySessionId) {
+      setReplayPersistenceStatus((current) => ({
+        ...current,
+        message: "No saved replay session selected.",
+        error: "",
+      }));
+      return;
+    }
+
+    setReplayPersistenceStatus((current) => ({
+      ...current,
+      deleting: true,
+      error: "",
+      message: "Deleting replay session.",
+    }));
+
+    const result = await deletePersistedReplaySession(selectedReplaySessionId);
+
+    if (result.error) {
+      setReplayPersistenceStatus((current) => ({
+        ...current,
+        deleting: false,
+        message: "Replay session was not deleted.",
+        error: result.error.message,
+      }));
+      return;
+    }
+
+    startNewReplaySession();
+    setReplayPersistenceStatus((current) => ({
+      ...current,
+      deleting: false,
+      message: "Replay session deleted.",
+      error: "",
+    }));
+    loadPersistedReplaySessions();
+  };
 
   return (
     <div className="replay-center-page">
@@ -394,6 +749,80 @@ function ReplayCenter() {
       <section className="replay-section">
         <div className="replay-section-title">
           <span>07</span>
+          <h2>REPLAY PERSISTENCE</h2>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Save Status</span>
+            <strong>{replayPersistenceStatus.message}</strong>
+            {replayPersistenceStatus.error && <p>{replayPersistenceStatus.error}</p>}
+          </div>
+          <div className="replay-debrief-card">
+            <span>Load Status</span>
+            <strong>{replayPersistenceStatus.loading ? "LOADING" : "READY"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Selected Replay Session</span>
+            <strong>{selectedReplaySessionId || "NONE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Saved Sessions</span>
+            <strong>{persistedReplaySessions.length}</strong>
+          </div>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Replay Actions</span>
+            <button type="button" onClick={saveReplaySession} disabled={replayPersistenceStatus.saving}>
+              {selectedReplaySessionId ? "Update Replay Session" : "Save Replay Session"}
+            </button>
+            <button type="button" onClick={startNewReplaySession}>
+              New Session
+            </button>
+            <button
+              type="button"
+              onClick={deleteSelectedReplaySession}
+              disabled={!selectedReplaySessionId || replayPersistenceStatus.deleting}
+            >
+              Delete Session
+            </button>
+            <button type="button" onClick={loadPersistedReplaySessions} disabled={replayPersistenceStatus.loading}>
+              Refresh Sessions
+            </button>
+          </div>
+        </div>
+
+        <div className="replay-mistake-table">
+          {persistedReplaySessions.length === 0 ? (
+            <div className="replay-mistake-row">
+              <div><span>Empty Replay History</span><strong>No saved replay sessions loaded.</strong></div>
+              <div><span>Status</span><strong>STAGING ONLY</strong></div>
+              <div><span>Persistence Scope</span><strong>replay_sessions</strong></div>
+              <div><span>Training</span><strong>OFF</strong></div>
+            </div>
+          ) : (
+            persistedReplaySessions.map((session) => (
+              <div className="replay-mistake-row" key={session.id}>
+                <div><span>Replay Session</span><strong>{session.id}</strong></div>
+                <div><span>Status</span><strong>{session.status || "REPLAY_REVIEWED"}</strong></div>
+                <div><span>Created</span><strong>{session.created_at || "UNKNOWN"}</strong></div>
+                <div>
+                  <span>Action</span>
+                  <button type="button" onClick={() => loadReplaySession(session)}>
+                    Load Session
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section className="replay-section">
+        <div className="replay-section-title">
+          <span>08</span>
           <h2>MISTAKE INTELLIGENCE</h2>
         </div>
 
@@ -411,7 +840,7 @@ function ReplayCenter() {
 
       <section className="replay-section replay-operator-debrief">
         <div className="replay-section-title">
-          <span>08</span>
+          <span>09</span>
           <h2>BEHAVIORAL DATASET STATUS</h2>
         </div>
 
@@ -453,7 +882,7 @@ function ReplayCenter() {
 
       <section className="replay-section replay-operator-debrief">
         <div className="replay-section-title">
-          <span>09</span>
+          <span>10</span>
           <h2>TRAINING QUEUE STATUS</h2>
         </div>
 
@@ -504,7 +933,7 @@ function ReplayCenter() {
 
       <section className="replay-section replay-operator-debrief">
         <div className="replay-section-title">
-          <span>10</span>
+          <span>11</span>
           <h2>BEHAVIORAL PIPELINE STATUS</h2>
         </div>
 
@@ -544,7 +973,7 @@ function ReplayCenter() {
 
       <section className="replay-section replay-improvement-section">
         <div className="replay-section-title">
-          <span>11</span>
+          <span>12</span>
           <h2>AICC DATASET CAPTURE STATUS</h2>
         </div>
 
@@ -602,7 +1031,7 @@ function ReplayCenter() {
 
       <section className="replay-section replay-improvement-section">
         <div className="replay-section-title">
-          <span>12</span>
+          <span>13</span>
           <h2>SHADOW TRAINING READINESS</h2>
         </div>
 
@@ -670,7 +1099,234 @@ function ReplayCenter() {
 
       <section className="replay-section replay-improvement-section">
         <div className="replay-section-title">
-          <span>13</span>
+          <span>14</span>
+          <h2>DATASET REPOSITORY SNAPSHOT</h2>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Total Datasets</span>
+            <strong>{datasetRepositorySnapshot.summary.totalDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Valid Datasets</span>
+            <strong>{datasetRepositorySnapshot.summary.validDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Shadow Ready Datasets</span>
+            <strong>{datasetRepositorySnapshot.summary.shadowReadyDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>High Quality</span>
+            <strong>{datasetRepositorySnapshot.summary.highQualityDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Moderate Quality</span>
+            <strong>{datasetRepositorySnapshot.summary.moderateQualityDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Low Quality</span>
+            <strong>{datasetRepositorySnapshot.summary.lowQualityDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Symbols</span>
+            <strong>{datasetRepositorySnapshot.summary.symbols.join(", ") || "NONE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Latest Updated</span>
+            <strong>{datasetRepositorySnapshot.summary.latestUpdatedAt || "NONE"}</strong>
+          </div>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Repository Status</span>
+            <strong>{datasetRepositorySnapshot.loading ? "LOADING" : "READY"}</strong>
+            {datasetRepositorySnapshot.error && <p>{datasetRepositorySnapshot.error}</p>}
+          </div>
+          <div className="replay-debrief-card">
+            <span>Persistence Scope</span>
+            <strong>aicc_dataset_records / dataset_validations / shadow_readiness</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="replay-section replay-improvement-section">
+        <div className="replay-section-title">
+          <span>15</span>
+          <h2>HISTORICAL DATASET VALIDATION</h2>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Total Datasets</span>
+            <strong>{historicalValidationSnapshot.summary.totalDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Revalidated Datasets</span>
+            <strong>{historicalValidationSnapshot.summary.revalidatedDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Consistent Datasets</span>
+            <strong>{historicalValidationSnapshot.summary.consistentDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Inconsistent Datasets</span>
+            <strong>{historicalValidationSnapshot.summary.inconsistentDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Consistency Rate</span>
+            <strong>{historicalValidationSnapshot.summary.consistencyRate}%</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>High Quality</span>
+            <strong>{historicalValidationSnapshot.summary.highQualityDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Shadow Ready</span>
+            <strong>{historicalValidationSnapshot.summary.shadowReadyDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Status</span>
+            <strong>
+              {historicalValidationSnapshot.loading
+                ? "LOADING"
+                : historicalValidationSnapshot.summary.historicalValidationStatus}
+            </strong>
+            {historicalValidationSnapshot.error && <p>{historicalValidationSnapshot.error}</p>}
+          </div>
+        </div>
+      </section>
+
+      <section className="replay-section replay-improvement-section">
+        <div className="replay-section-title">
+          <span>16</span>
+          <h2>OPERATOR HISTORY SNAPSHOT</h2>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Total History Items</span>
+            <strong>{operatorHistorySnapshot.summary.totalHistoryItems}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Journal Entries</span>
+            <strong>{operatorHistorySnapshot.summary.journalEntries}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Replay Sessions</span>
+            <strong>{operatorHistorySnapshot.summary.replaySessions}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Dataset Records</span>
+            <strong>{operatorHistorySnapshot.summary.datasetRecords}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Dataset Validations</span>
+            <strong>{operatorHistorySnapshot.summary.datasetValidations}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Shadow Readiness Records</span>
+            <strong>{operatorHistorySnapshot.summary.shadowReadinessRecords}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Latest Activity</span>
+            <strong>{operatorHistorySnapshot.summary.latestActivityAt || "NONE"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>History Status</span>
+            <strong>{operatorHistorySnapshot.loading ? "LOADING" : operatorHistorySnapshot.summary.historyStatus}</strong>
+            {operatorHistorySnapshot.error && <p>{operatorHistorySnapshot.error}</p>}
+          </div>
+        </div>
+      </section>
+
+      <section className="replay-section replay-improvement-section">
+        <div className="replay-section-title">
+          <span>17</span>
+          <h2>DATASET GOVERNANCE STATUS</h2>
+        </div>
+
+        <div className="replay-debrief-grid">
+          <div className="replay-debrief-card">
+            <span>Governance Status</span>
+            <strong>
+              {datasetGovernanceSnapshot.loading
+                ? "LOADING"
+                : datasetGovernanceSnapshot.summary.governanceStatus}
+            </strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Total Datasets</span>
+            <strong>{datasetGovernanceSnapshot.summary.totalDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Compliant</span>
+            <strong>{datasetGovernanceSnapshot.summary.compliantDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Review Required</span>
+            <strong>{datasetGovernanceSnapshot.summary.reviewRequiredDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Restricted</span>
+            <strong>{datasetGovernanceSnapshot.summary.restrictedDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Incomplete</span>
+            <strong>{datasetGovernanceSnapshot.summary.incompleteDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Active</span>
+            <strong>{datasetGovernanceSnapshot.summary.activeDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Archive Candidates</span>
+            <strong>{datasetGovernanceSnapshot.summary.archiveCandidates}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Hold</span>
+            <strong>{datasetGovernanceSnapshot.summary.holdDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Future Training Eligible</span>
+            <strong>{datasetGovernanceSnapshot.summary.futureTrainingEligibleDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Training Blocked</span>
+            <strong>{datasetGovernanceSnapshot.summary.trainingBlockedDatasets}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Raw Data Certified</span>
+            <strong>{datasetGovernanceSnapshot.summary.rawDataCertified ? "YES" : "NO"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Training Enabled</span>
+            <strong>{datasetGovernanceSnapshot.summary.trainingEnabled ? "YES" : "NO"}</strong>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Policy Version</span>
+            <strong>{datasetGovernanceSnapshot.summary.policyVersion}</strong>
+          </div>
+        </div>
+
+        {datasetGovernanceSnapshot.summary.warnings.length > 0 && (
+          <div className="replay-debrief-grid">
+            <div className="replay-debrief-card">
+              <span>Warnings</span>
+              <ul>
+                {datasetGovernanceSnapshot.summary.warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="replay-section replay-improvement-section">
+        <div className="replay-section-title">
+          <span>18</span>
           <h2>MISSION FOR NEXT SESSION</h2>
         </div>
 

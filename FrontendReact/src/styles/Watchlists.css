@@ -160,6 +160,13 @@
   text-transform: uppercase;
 }
 
+.watchlist-chart-panel {
+  width: min(100%, 1440px);
+  max-width: 1440px;
+  min-width: 0;
+  margin: 0 auto 20px;
+}
+
 .watchlist-table {
   width: min(100%, 1440px);
   max-width: 1440px;

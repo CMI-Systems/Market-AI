@@ -34,6 +34,7 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/" element={protect(<CommandCenter />)} />
+      <Route path="/command-center" element={protect(<CommandCenter />)} />
 
       <Route path="/system-boot" element={protect(<SystemBoot />)} />
       <Route path="/global-scan" element={protect(<GlobalScan />)} />

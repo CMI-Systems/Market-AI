@@ -12,6 +12,8 @@ import { getDatasetGovernanceSummary } from "../services/datasetGovernanceServic
 import { getDatasetRepositorySummary } from "../services/datasetRepositoryService";
 import { getHistoricalValidationSummary } from "../services/historicalDatasetValidationService";
 import { getOperatorHistorySummary } from "../services/operatorHistoryService";
+import MarketPriceChart from "../components/charts/MarketPriceChart";
+import { CHART_TIMEFRAMES, getValidatedChartData } from "../services/chartDataService";
 import {
   createReplaySession,
   deleteReplaySession as deletePersistedReplaySession,
@@ -208,6 +210,15 @@ function ReplayCenter() {
       governanceStatus: "EMPTY",
       warnings: [],
     },
+  });
+  const [replayChartTimeframe, setReplayChartTimeframe] = useState("5Min");
+  const [replayChartData, setReplayChartData] = useState({
+    candles: [],
+    quote: null,
+    validation: null,
+    provenance: null,
+    loading: true,
+    error: "",
   });
 
   const loadPersistedReplaySessions = useCallback(async () => {
@@ -442,6 +453,40 @@ function ReplayCenter() {
     () => sampleTrades.find((trade) => trade.id === selectedTradeId) || sampleTrades[0],
     [selectedTradeId]
   );
+
+  useEffect(() => {
+    let mounted = true;
+
+    setReplayChartData({
+      candles: [],
+      quote: null,
+      validation: null,
+      provenance: null,
+      loading: true,
+      error: "",
+    });
+
+    async function loadReplayChart() {
+      const result = await getValidatedChartData(selectedTrade.symbol, replayChartTimeframe, { limit: 80 });
+
+      if (!mounted) return;
+
+      setReplayChartData({
+        candles: result.candles || [],
+        quote: result.quote || null,
+        validation: result.validation || null,
+        provenance: result.provenance || null,
+        loading: false,
+        error: result.error || "",
+      });
+    }
+
+    loadReplayChart();
+
+    return () => {
+      mounted = false;
+    };
+  }, [replayChartTimeframe, selectedTrade.symbol]);
 
   useEffect(() => {
     loadPersistedReplaySessions();
@@ -744,6 +789,46 @@ function ReplayCenter() {
             </div>
           </div>
         </aside>
+      </section>
+
+      <section className="replay-section replay-chart-section">
+        <div className="replay-section-title">
+          <span>06A</span>
+          <h2>REPLAY CHART CONTEXT</h2>
+        </div>
+
+        <MarketPriceChart
+          title="Replay Market Context"
+          symbol={selectedTrade.symbol}
+          timeframe={replayChartTimeframe}
+          candles={replayChartData.candles}
+          quote={replayChartData.quote}
+          validation={replayChartData.validation}
+          provenance={replayChartData.provenance}
+          loading={replayChartData.loading}
+          error={replayChartData.error}
+          availableSymbols={sampleTrades.map((trade) => trade.symbol)}
+          availableTimeframes={CHART_TIMEFRAMES}
+          onSymbolChange={(symbol) => {
+            const matchingTrade = sampleTrades.find((trade) => trade.symbol === symbol);
+            if (matchingTrade) setSelectedTradeId(matchingTrade.id);
+          }}
+          onTimeframeChange={setReplayChartTimeframe}
+          height={420}
+        />
+
+        <div className="replay-debrief-grid replay-chart-note-grid">
+          <div className="replay-debrief-card">
+            <span>Marker Status</span>
+            <strong>PARTIAL</strong>
+            <p>Entry and exit markers require persisted replay timestamps and validated operator trade prices.</p>
+          </div>
+          <div className="replay-debrief-card">
+            <span>Replay Source</span>
+            <strong>{selectedTrade.symbol}</strong>
+            <p>Historical provider candles are shown only when they pass chart validation.</p>
+          </div>
+        </div>
       </section>
 
       <section className="replay-section">

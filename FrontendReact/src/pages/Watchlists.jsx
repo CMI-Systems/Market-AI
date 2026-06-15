@@ -8,6 +8,8 @@ import {
   getProviderDiagnostics,
   getProviderSignals,
 } from "../services/marketProviderApi";
+import MarketPriceChart from "../components/charts/MarketPriceChart";
+import { CHART_TIMEFRAMES, getValidatedChartData } from "../services/chartDataService";
 import "../styles/Watchlists.css";
 
 const WATCHLIST_STORAGE_KEY = "market-ai-watchlist-symbols";
@@ -120,6 +122,10 @@ function formatChange(value) {
   return `${Number(value) >= 0 ? "+" : ""}${Number(value).toFixed(2)}%`;
 }
 
+function formatConfidence(value) {
+  return Number.isFinite(Number(value)) ? `${Math.round(Number(value))}%` : "--";
+}
+
 function formatUpdatedAt(value) {
   if (!value) return "--";
   const date = new Date(value);
@@ -140,6 +146,15 @@ function Watchlists() {
   const [providerDiagnostics, setProviderDiagnostics] = useState(getOfflineProviderDiagnostics());
   const [watchlistRows, setWatchlistRows] = useState(() => DEFAULT_SYMBOLS.map(getFallbackRow));
   const [selectedSymbol, setSelectedSymbol] = useState(DEFAULT_SYMBOLS[0]);
+  const [selectedTimeframe, setSelectedTimeframe] = useState("5Min");
+  const [selectedChartData, setSelectedChartData] = useState({
+    candles: [],
+    quote: null,
+    validation: null,
+    provenance: null,
+    loading: true,
+    error: "",
+  });
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -206,6 +221,52 @@ function Watchlists() {
     };
   }, [symbols]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    setSelectedChartData({
+      candles: [],
+      quote: null,
+      validation: null,
+      provenance: null,
+      loading: true,
+      error: "",
+    });
+
+    async function loadSelectedChart() {
+      if (!selectedSymbol) {
+        setSelectedChartData({
+          candles: [],
+          quote: null,
+          validation: null,
+          provenance: null,
+          loading: false,
+          error: "SYMBOL_REQUIRED",
+        });
+        return;
+      }
+
+      const result = await getValidatedChartData(selectedSymbol, selectedTimeframe, { limit: 80 });
+
+      if (!mounted) return;
+
+      setSelectedChartData({
+        candles: result.candles || [],
+        quote: result.quote || null,
+        validation: result.validation || null,
+        provenance: result.provenance || null,
+        loading: false,
+        error: result.error || "",
+      });
+    }
+
+    loadSelectedChart();
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedSymbol, selectedTimeframe]);
+
   const signalOptions = useMemo(
     () => ["All Signals", ...new Set(watchlistRows.map((item) => item.signal || "NEUTRAL"))],
     [watchlistRows]
@@ -253,9 +314,9 @@ function Watchlists() {
 
         return confidenceValues.length
           ? Math.round(confidenceValues.reduce((total, value) => total + value, 0) / confidenceValues.length)
-          : 0;
+          : null;
       })()
-    : 0;
+    : null;
   const highestRisk = watchlistRows.some((item) => item.risk === "HIGH")
     ? "HIGH"
     : watchlistRows.some((item) => item.risk === "MODERATE")
@@ -304,7 +365,7 @@ function Watchlists() {
 
         <div className="watchlist-summary-card">
           <span>Average Confidence</span>
-          <strong>{averageConfidence}%</strong>
+          <strong>{formatConfidence(averageConfidence)}</strong>
         </div>
 
         <div className="watchlist-summary-card">
@@ -415,7 +476,7 @@ function Watchlists() {
           </div>
           <div>
             <span>Confidence</span>
-            <strong>{selectedRow.confidence ?? 50}%</strong>
+            <strong>{formatConfidence(selectedRow.confidence)}</strong>
           </div>
           <div>
             <span>Risk</span>
@@ -427,6 +488,25 @@ function Watchlists() {
           </div>
         </section>
       ) : null}
+
+      <section className="watchlist-chart-panel">
+        <MarketPriceChart
+          title="Selected Watchlist Chart"
+          symbol={selectedSymbol}
+          timeframe={selectedTimeframe}
+          candles={selectedChartData.candles}
+          quote={selectedChartData.quote}
+          validation={selectedChartData.validation}
+          provenance={selectedChartData.provenance}
+          loading={selectedChartData.loading}
+          error={selectedChartData.error}
+          availableSymbols={symbols}
+          availableTimeframes={CHART_TIMEFRAMES}
+          onSymbolChange={setSelectedSymbol}
+          onTimeframeChange={setSelectedTimeframe}
+          height={420}
+        />
+      </section>
 
       <section className="watchlist-table">
         <div className="watchlist-row watchlist-heading">
@@ -467,7 +547,7 @@ function Watchlists() {
             <span>
               <b className="watchlist-signal-badge">{item.signal || "NEUTRAL"}</b>
             </span>
-            <span>{item.confidence ?? 50}%</span>
+            <span>{formatConfidence(item.confidence)}</span>
             <span>
               <b className={`watchlist-risk-badge risk-${String(item.risk || "MODERATE").toLowerCase()}`}>
                 {item.risk || "MODERATE"}

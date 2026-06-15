@@ -1,26 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
+import { getChartSymbols } from "../services/marketDataService";
 import {
-  getChartSymbols,
-  getHistoricalCandles,
-  getMarketQuote,
-  getSignalMarkers
-} from "../services/marketDataService";
-import {
-  getMarketCandles,
   getMarketProviderStatus,
-  getMarketQuotes,
   getOfflineMarketProviderStatus,
   getProviderSignals
 } from "../services/marketProviderApi";
+import MarketPriceChart from "../components/charts/MarketPriceChart";
+import { CHART_TIMEFRAMES, getValidatedChartData } from "../services/chartDataService";
 import "../styles/Signals.css";
 
-const TIMEFRAMES = ["1Min", "5Min", "15Min", "1H", "1D"];
+const TIMEFRAMES = CHART_TIMEFRAMES;
 const TIMEFRAME_LIMITS = {
   "1Min": 80,
   "5Min": 80,
   "15Min": 80,
-  "1H": 80,
-  "1D": 90
+  "1Hour": 80,
+  "1Day": 90
 };
 
 function displayState(value) {
@@ -47,80 +42,45 @@ function formatPrice(value) {
   return numeric.toFixed(2);
 }
 
-function formatVolume(value) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return "UNAVAILABLE";
-  if (numeric >= 1000000) return `${(numeric / 1000000).toFixed(1)}M`;
-  if (numeric >= 1000) return `${(numeric / 1000).toFixed(1)}K`;
-  return String(Math.round(numeric));
-}
-
-function formatAxisLabel(candle, timeframe) {
-  if (!candle?.timestamp) return candle?.time || "";
-
-  const date = new Date(candle.timestamp);
-  if (Number.isNaN(date.getTime())) return candle.time || "";
-
-  if (timeframe === "1D") {
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      timeZone: "America/New_York"
-    });
-  }
-
-  return candle.time || date.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "America/New_York"
-  });
-}
-
 function Signals() {
   const chartSymbols = getChartSymbols();
   const [selectedSymbol, setSelectedSymbol] = useState(chartSymbols[0] || "NVDA");
   const [selectedTimeframe, setSelectedTimeframe] = useState("5Min");
-  const fallbackQuote = useMemo(
-    () => getMarketQuote(selectedSymbol) || getMarketQuote("NVDA"),
-    [selectedSymbol]
-  );
-  const fallbackCandles = useMemo(
-    () => getHistoricalCandles(selectedSymbol),
-    [selectedSymbol]
-  );
-  const [quote, setQuote] = useState(fallbackQuote);
-  const [candles, setCandles] = useState(fallbackCandles);
+  const [chartData, setChartData] = useState({
+    candles: [],
+    quote: null,
+    validation: null,
+    provenance: null,
+    loading: true,
+    error: "",
+  });
   const [providerStatus, setProviderStatus] = useState(getOfflineMarketProviderStatus());
   const [providerSignal, setProviderSignal] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [usingFallbackCandles, setUsingFallbackCandles] = useState(false);
-  const [selectedCandle, setSelectedCandle] = useState(null);
   const selectedLimit = TIMEFRAME_LIMITS[selectedTimeframe] || 80;
 
   useEffect(() => {
     let active = true;
 
-    setQuote(fallbackQuote);
-    setCandles(fallbackCandles);
     setProviderSignal(null);
-    setSelectedCandle(null);
-    setUsingFallbackCandles(false);
+    setChartData({
+      candles: [],
+      quote: null,
+      validation: null,
+      provenance: null,
+      loading: true,
+      error: "",
+    });
 
     async function loadMarketChartData() {
-      setIsLoading(true);
-
       try {
-        const [providerData, quoteData, candleData, signalData] = await Promise.all([
+        const [providerData, validatedChartData, signalData] = await Promise.all([
           getMarketProviderStatus(),
-          getMarketQuotes([selectedSymbol]),
-          getMarketCandles(selectedSymbol, selectedTimeframe, selectedLimit),
+          getValidatedChartData(selectedSymbol, selectedTimeframe, { limit: selectedLimit }),
           getProviderSignals([selectedSymbol])
         ]);
 
         if (!active) return;
 
-        const latestQuote = quoteData[0];
         const latestSignal = signalData[0];
         const activeProviderData = providerData || getOfflineMarketProviderStatus();
 
@@ -128,46 +88,25 @@ function Signals() {
         if (latestSignal) {
           setProviderSignal(latestSignal);
         }
-
-        if (latestQuote) {
-          setQuote({
-            ...fallbackQuote,
-            name: latestQuote.name || fallbackQuote.name,
-            price: latestQuote.available === false
-              ? null
-              : Number.isFinite(Number(latestQuote.price))
-              ? Number(latestQuote.price)
-              : fallbackQuote.price,
-            changePercent: latestQuote.available === false
-              ? null
-              : Number.isFinite(Number(latestQuote.changePercent))
-              ? Number(latestQuote.changePercent)
-              : fallbackQuote.changePercent,
-            volume: latestQuote.available === false ? null : latestQuote.volume || fallbackQuote.volume,
-            provider: latestQuote.provider || activeProviderData.activeProvider,
-            providerStatus: latestQuote.providerStatus || activeProviderData.providerHealth,
-            updatedAt: latestQuote.updatedAt || fallbackQuote.updatedAt,
-            available: latestQuote.available !== false,
-            sourceType: latestQuote.sourceType || fallbackQuote.sourceType,
-          });
-        }
-
-        if (candleData?.length) {
-          setCandles(candleData);
-          setUsingFallbackCandles(
-            candleData.some((candle) => candle.provider === "SIMULATION")
-          );
-        } else {
-          setCandles([]);
-          setUsingFallbackCandles(true);
-        }
+        setChartData({
+          candles: validatedChartData.candles || [],
+          quote: validatedChartData.quote || null,
+          validation: validatedChartData.validation || null,
+          provenance: validatedChartData.provenance || null,
+          loading: false,
+          error: validatedChartData.error || "",
+        });
       } catch {
         if (!active) return;
-        setCandles([]);
-        setUsingFallbackCandles(true);
         setProviderStatus((current) => current || getOfflineMarketProviderStatus());
-      } finally {
-        if (active) setIsLoading(false);
+        setChartData({
+          candles: [],
+          quote: null,
+          validation: null,
+          provenance: null,
+          loading: false,
+          error: "BACKEND_UNAVAILABLE",
+        });
       }
     }
 
@@ -179,53 +118,50 @@ function Signals() {
       active = false;
       clearInterval(interval);
     };
-  }, [fallbackCandles, fallbackQuote, selectedLimit, selectedSymbol, selectedTimeframe]);
+  }, [selectedLimit, selectedSymbol, selectedTimeframe]);
 
-  const markers = useMemo(
-    () => getSignalMarkers(selectedSymbol),
-    [selectedSymbol]
-  );
-  const priceRange = candles.reduce(
-    (range, candle) => ({
-      high: Math.max(range.high, Number(candle.high) || 0),
-      low: Math.min(range.low, Number(candle.low) || 0),
-      maxVolume: Math.max(range.maxVolume, Number(candle.volume) || 0)
-    }),
-    { high: Number.NEGATIVE_INFINITY, low: Number.POSITIVE_INFINITY, maxVolume: 0 }
-  );
+  const candles = chartData.candles || [];
+  const quote = chartData.quote || null;
   const latestCandle = candles[candles.length - 1];
-  const lastMarker = markers[0] || {};
-  const dataUnavailable = !candles.length || quote?.available === false || quote?.sourceType === "DATA_UNAVAILABLE";
-  const activeSignal = dataUnavailable ? "DATA_UNAVAILABLE" : providerSignal?.signal || quote.signal || "NEUTRAL";
-  const activeConfidence = providerSignal?.confidence ?? quote.confidence ?? 0;
-  const activeRisk = dataUnavailable ? "UNKNOWN" : providerSignal?.risk || quote.risk || "MONITORING";
+  const dataUnavailable = !candles.length || quote?.available === false || chartData.validation?.usable === false;
+  const activeSignal = dataUnavailable ? "DATA_UNAVAILABLE" : providerSignal?.signal || quote?.signal || "NEUTRAL";
+  const activeConfidence = providerSignal?.confidence ?? quote?.confidence ?? 0;
+  const activeRisk = dataUnavailable ? "UNKNOWN" : providerSignal?.risk || quote?.risk || "MONITORING";
   const activeReason =
     dataUnavailable
       ? "Provider candles unavailable. No fallback simulation candles are being displayed."
       :
     providerSignal?.reason ||
-    lastMarker.reason ||
     "Signal adapter is monitoring current market structure.";
-  const activeProvider = providerSignal?.provider || quote.provider || providerStatus.activeProvider;
-  const latestPrice = latestCandle?.close || quote.price || 0;
-  const changePercent = calculateChangePercent(candles, quote.changePercent || 0);
+  const activeProvider = providerSignal?.provider || quote?.provider || providerStatus.activeProvider;
+  const latestPrice = latestCandle?.close ?? quote?.price ?? null;
+  const changePercent = calculateChangePercent(candles, quote?.changePercent || 0);
   const trend =
     dataUnavailable ? "DATA_UNAVAILABLE" : latestCandle?.close > candles[0]?.open ? "RISING" : "FADING";
   const volatility =
-    dataUnavailable ? "DATA_UNAVAILABLE" : priceRange.high - priceRange.low > latestPrice * 0.025 ? "ELEVATED" : "NORMAL";
+    dataUnavailable
+      ? "DATA_UNAVAILABLE"
+      : Math.max(...candles.map((candle) => candle.high)) -
+          Math.min(...candles.map((candle) => candle.low)) >
+          Number(latestPrice) * 0.025
+        ? "ELEVATED"
+        : "NORMAL";
   const liquidity = dataUnavailable ? "DATA_UNAVAILABLE" : latestCandle?.volume > 0 ? "ACTIVE" : "OBSERVING";
-  const maxVolume = priceRange.maxVolume || 1;
-  const rangeHigh = Number.isFinite(priceRange.high) ? priceRange.high : latestPrice + 1;
-  const rangeLow = Number.isFinite(priceRange.low) ? priceRange.low : latestPrice - 1;
-  const priceSpan = rangeHigh - rangeLow || 1;
-  const priceLabels = Array.from({ length: 5 }, (_, index) =>
-    rangeHigh - (priceSpan * index) / 4
-  );
-  const latestPriceTop = ((rangeHigh - latestPrice) / priceSpan) * 100;
-  const selectedOrLatestCandle = selectedCandle || latestCandle;
-  const xAxisCandles = candles.filter(
-    (_, index) => index === 0 || index === candles.length - 1 || index % 10 === 0
-  );
+  const displayedChange = dataUnavailable || !Number.isFinite(Number(changePercent))
+    ? "--"
+    : `${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(2)}%`;
+  const displayedConfidence = dataUnavailable || !Number.isFinite(Number(activeConfidence))
+    ? "--"
+    : `${Math.round(Number(activeConfidence))}%`;
+  const markerCandidates = useMemo(() => {
+    if (!providerSignal?.timestamp || !Number.isFinite(Number(providerSignal?.price))) return [];
+    return [{
+      type: providerSignal.signal || "SIGNAL",
+      timestamp: providerSignal.timestamp,
+      price: providerSignal.price,
+      label: providerSignal.signal || "Signal",
+    }];
+  }, [providerSignal]);
 
   return (
     <div className="signals-page">
@@ -242,17 +178,17 @@ function Signals() {
 
         <div className="signals-summary-card">
           <span>Last Price</span>
-          <strong>${formatPrice(latestPrice)}</strong>
+          <strong>{latestPrice ? `$${formatPrice(latestPrice)}` : "--"}</strong>
         </div>
 
         <div className="signals-summary-card">
           <span>Change %</span>
-          <strong>{changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%</strong>
+          <strong>{displayedChange}</strong>
         </div>
 
         <div className="signals-summary-card">
           <span>Confidence</span>
-          <strong>{activeConfidence}%</strong>
+          <strong>{displayedConfidence}</strong>
         </div>
 
         <div className="signals-summary-card">
@@ -277,190 +213,43 @@ function Signals() {
       </section>
 
       <section className="chart-workspace">
-        <div className="chart-main-panel">
-          <div className="chart-toolbar">
-            <label htmlFor="symbol-select">Symbol</label>
-            <select
-              id="symbol-select"
-              value={selectedSymbol}
-              onChange={(event) => setSelectedSymbol(event.target.value)}
-            >
-              {chartSymbols.map((symbol) => (
-                <option key={symbol}>{symbol}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="chart-header-panel">
-            <div>
-              <span>Symbol</span>
-              <strong>{selectedSymbol}</strong>
-            </div>
-            <div>
-              <span>Timeframe</span>
-              <strong>{selectedTimeframe}</strong>
-            </div>
-            <div>
-              <span>Provider</span>
-              <strong>{displayProvider(activeProvider)}</strong>
-            </div>
-            <div>
-              <span>Last Price</span>
-              <strong>${formatPrice(latestPrice)}</strong>
-            </div>
-            <div>
-              <span>Change</span>
-              <strong>{changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%</strong>
-            </div>
-          </div>
-
-          {isLoading && <div className="chart-state-bar">Loading provider candles...</div>}
-          {usingFallbackCandles && (
-            <div className="chart-state-bar chart-state-warning">
-              Provider candles unavailable. No fallback simulation candles are being displayed.
-            </div>
-          )}
-
-          <div className="timeframe-selector" aria-label="Chart timeframe">
-            {TIMEFRAMES.map((timeframe) => (
-              <button
-                className={selectedTimeframe === timeframe ? "timeframe-active" : ""}
-                key={timeframe}
-                onClick={() => setSelectedTimeframe(timeframe)}
-                type="button"
-              >
-                {timeframe}
-              </button>
-            ))}
-          </div>
-
-          <div className="chart-visual-shell">
-            <div className="chart-grid-lines">
-              {priceLabels.map((price, index) => (
-                <div key={price} style={{ top: `${index * 25}%` }}>
-                  <span>${formatPrice(price)}</span>
-                </div>
-              ))}
-            </div>
-
-            <div
-              className="latest-price-line"
-              style={{ top: `${Math.max(0, Math.min(100, latestPriceTop))}%` }}
-            >
-              <span>${formatPrice(latestPrice)}</span>
-            </div>
-
-            <div
-              className="mock-candle-chart"
-              style={{ gridTemplateColumns: `repeat(${Math.max(candles.length, 1)}, minmax(12px, 1fr))` }}
-            >
-              {!candles.length && (
-                <div className="chart-state-bar">DATA UNAVAILABLE</div>
-              )}
-              {candles.map((candle) => {
-                const candleHigh = Number(candle.high) || latestPrice;
-                const candleLow = Number(candle.low) || latestPrice;
-                const candleOpen = Number(candle.open) || latestPrice;
-                const candleClose = Number(candle.close) || latestPrice;
-                const candleTop = ((rangeHigh - candleHigh) / priceSpan) * 100;
-                const candleHeight = Math.max(
-                  4,
-                  ((candleHigh - candleLow) / priceSpan) * 100
-                );
-                const bodyTop = ((rangeHigh - Math.max(candleOpen, candleClose)) / priceSpan) * 100;
-                const bodyHeight = Math.max(
-                  3,
-                  (Math.abs(candleClose - candleOpen) / priceSpan) * 100
-                );
-                const isUp = candleClose >= candleOpen;
-
-                return (
-                  <button
-                    className="candle-row"
-                    key={candle.timestamp || candle.time}
-                    onFocus={() => setSelectedCandle(candle)}
-                    onMouseEnter={() => setSelectedCandle(candle)}
-                    type="button"
-                  >
-                    <span
-                      className="candle-wick"
-                      style={{ top: `${candleTop}%`, height: `${candleHeight}%` }}
-                    ></span>
-                    <span
-                      className={`candle-body ${isUp ? "candle-up" : "candle-down"}`}
-                      style={{ top: `${bodyTop}%`, height: `${bodyHeight}%` }}
-                    ></span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="chart-x-axis">
-              {xAxisCandles.map((candle) => (
-                <span key={candle.timestamp || candle.time}>
-                  {formatAxisLabel(candle, selectedTimeframe)}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div
-            className="volume-strip"
-            style={{ gridTemplateColumns: `repeat(${Math.max(candles.length, 1)}, minmax(12px, 1fr))` }}
-          >
-            {candles.map((candle) => {
-              const isUp = Number(candle.close) >= Number(candle.open);
-
-              return (
-                <div key={candle.timestamp || candle.time}>
-                  <i
-                    className={isUp ? "volume-up" : "volume-down"}
-                    style={{ height: `${((Number(candle.volume) || 0) / maxVolume) * 100}%` }}
-                  ></i>
-                </div>
-              );
-            })}
-          </div>
-
-          {selectedOrLatestCandle && (
-            <div className="selected-candle-detail">
-              <div>
-                <span>Selected Candle</span>
-                <strong>{selectedOrLatestCandle.time}</strong>
-              </div>
-              <div>
-                <span>Open</span>
-                <strong>${formatPrice(selectedOrLatestCandle.open)}</strong>
-              </div>
-              <div>
-                <span>High</span>
-                <strong>${formatPrice(selectedOrLatestCandle.high)}</strong>
-              </div>
-              <div>
-                <span>Low</span>
-                <strong>${formatPrice(selectedOrLatestCandle.low)}</strong>
-              </div>
-              <div>
-                <span>Close</span>
-                <strong>${formatPrice(selectedOrLatestCandle.close)}</strong>
-              </div>
-              <div>
-                <span>Volume</span>
-                <strong>{formatVolume(selectedOrLatestCandle.volume)}</strong>
-              </div>
-            </div>
-          )}
+        <div className="chart-main-panel chart-main-panel-host">
+          <MarketPriceChart
+            title="Signals Market Chart"
+            symbol={selectedSymbol}
+            timeframe={selectedTimeframe}
+            candles={candles}
+            quote={quote}
+            validation={chartData.validation}
+            provenance={chartData.provenance}
+            loading={chartData.loading}
+            error={chartData.error}
+            markers={markerCandidates}
+            availableSymbols={chartSymbols}
+            availableTimeframes={TIMEFRAMES}
+            onSymbolChange={setSelectedSymbol}
+            onTimeframeChange={setSelectedTimeframe}
+            height={460}
+          />
         </div>
 
         <aside className="signal-marker-panel">
-          <h2>Signal Markers</h2>
-          {markers.map((marker) => (
-            <div key={`${marker.time}-${marker.type}`}>
-              <span>{marker.time}</span>
-              <strong>{marker.type}</strong>
-              <p>{marker.confidence}% - {marker.reason}</p>
+          <h2>Validated Markers</h2>
+          {markerCandidates.length ? (
+            markerCandidates.map((marker) => (
+              <div key={`${marker.timestamp}-${marker.type}`}>
+                <span>{marker.timestamp}</span>
+                <strong>{marker.type}</strong>
+                <p>Provider signal marker. Price ${formatPrice(marker.price)}.</p>
+              </div>
+            ))
+          ) : (
+            <div>
+              <span>Marker Status</span>
+              <strong>UNAVAILABLE</strong>
+              <p>Provider signal markers require timestamp and price; static marker fixtures are not displayed.</p>
             </div>
-          ))}
+          )}
         </aside>
 
         <aside className="market-structure-panel">
@@ -491,7 +280,7 @@ function Signals() {
           </div>
           <div>
             <span>Confidence</span>
-            <strong>{activeConfidence}%</strong>
+            <strong>{displayedConfidence}</strong>
           </div>
           <p>{activeReason}</p>
         </aside>

@@ -47,6 +47,48 @@ function deriveOperatorEmail(operator) {
   return email || null;
 }
 
+function safeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function safeNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function firstDefined(...values) {
+  return values.find((value) => value !== undefined && value !== null);
+}
+
+function buildMarketDataValidation(marketDataValidation, marketContext) {
+  const validation = safeObject(marketDataValidation);
+  const provenance = safeObject(validation.provenance);
+
+  return {
+    status: safeString(validation.status || validation.validationStatus, "UNKNOWN"),
+    qualityScore: safeNumber(validation.qualityScore, 0),
+    qualityLabel: safeString(validation.qualityLabel, "BLOCKED"),
+    errors: safeArray(validation.errors || validation.validationErrors),
+    warnings: safeArray(validation.warnings || validation.validationWarnings),
+    sourceType: safeString(
+      validation.sourceType || provenance.sourceType || marketContext.sourceType || marketContext.dataState,
+      "UNKNOWN"
+    ),
+    provider: safeString(validation.provider || provenance.provider || marketContext.provider, "UNKNOWN"),
+    timestamp: safeString(
+      validation.timestamp || provenance.timestamp || marketContext.timestamp || marketContext.updatedAt,
+      ""
+    ),
+    dataAge: firstDefined(validation.dataAge, provenance.dataAge, marketContext.dataAge, null),
+    sessionState: safeString(
+      validation.sessionState || provenance.sessionState || marketContext.sessionState,
+      "UNKNOWN_SESSION"
+    ),
+    rawDataCertified: false,
+    trainingEligible: false,
+  };
+}
+
 function buildWarnings({
   operator,
   symbol,
@@ -54,6 +96,7 @@ function buildWarnings({
   behavioral,
   failsafe,
   replayIntelligence,
+  marketDataValidation,
 }) {
   const warnings = [];
 
@@ -81,6 +124,13 @@ function buildWarnings({
     warnings.push("Replay context missing; operator context may be incomplete.");
   }
 
+  const validationStatus = safeString(marketDataValidation.status, "UNKNOWN").toUpperCase();
+  if (["BLOCKED", "UNAVAILABLE", "INVALID_TIMESTAMP", "INVALID_OHLC", "UNKNOWN_SOURCE"].includes(validationStatus)) {
+    warnings.push(`Market data validation status is ${validationStatus}; dataset requires review.`);
+  }
+
+  warnings.push(...safeArray(marketDataValidation.warnings));
+
   return warnings;
 }
 
@@ -100,6 +150,10 @@ export function createAiccDatasetRecord(input = {}) {
   const trainingQueueStatus = safeObject(safeInput.trainingQueueStatus);
   const pipelineStatus = safeObject(safeInput.pipelineStatus);
   const marketContext = safeObject(safeInput.marketContext);
+  const marketDataValidation = buildMarketDataValidation(
+    safeInput.marketDataValidation || marketContext.marketDataValidation,
+    marketContext
+  );
 
   const operatorId = deriveOperatorId(operator);
   const operatorEmail = deriveOperatorEmail(operator);
@@ -150,6 +204,7 @@ export function createAiccDatasetRecord(input = {}) {
     intelligenceSnapshot,
     operatorContext,
     marketContext,
+    marketDataValidation,
     learningTargets,
     metadata: {
       source: "AICC_CLOSED_BETA",
@@ -159,6 +214,9 @@ export function createAiccDatasetRecord(input = {}) {
       trainingActivated: false,
       rawDataCertified: false,
       trainingEligible: false,
+      marketDataValidationStatus: marketDataValidation.status,
+      marketDataQualityScore: marketDataValidation.qualityScore,
+      marketDataQualityLabel: marketDataValidation.qualityLabel,
     },
     warnings: buildWarnings({
       operator,
@@ -167,6 +225,7 @@ export function createAiccDatasetRecord(input = {}) {
       behavioral,
       failsafe,
       replayIntelligence,
+      marketDataValidation,
     }),
   };
 }

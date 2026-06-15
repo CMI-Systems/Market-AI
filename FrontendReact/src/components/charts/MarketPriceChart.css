@@ -1,0 +1,212 @@
+.market-price-chart {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 18px;
+  border: 1px solid rgba(83, 211, 218, 0.18);
+  border-radius: 8px;
+  background: rgba(5, 15, 32, 0.92);
+  color: #e8fbff;
+}
+
+.market-price-chart-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.market-price-chart-header span,
+.market-chart-controls span,
+.market-chart-metadata dt {
+  display: block;
+  color: #8fa6b8;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.market-price-chart-header h3 {
+  margin: 6px 0 0;
+  color: #dff7ff;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.market-price-chart-header p,
+.market-chart-text-summary {
+  margin: 6px 0 0;
+  color: #b7c7e6;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.market-chart-status {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border: 1px solid rgba(83, 211, 218, 0.18);
+  border-radius: 999px;
+  color: #bfefff;
+  background: rgba(83, 211, 218, 0.08);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.market-chart-status.status-live {
+  border-color: rgba(57, 255, 136, 0.36);
+  color: #39ff88;
+  background: rgba(57, 255, 136, 0.08);
+}
+
+.market-chart-status.status-delayed,
+.market-chart-status.status-cached,
+.market-chart-status.status-partial {
+  border-color: rgba(255, 207, 90, 0.34);
+  color: #ffcf5a;
+  background: rgba(255, 207, 90, 0.08);
+}
+
+.market-chart-status.status-stale,
+.market-chart-status.status-closed,
+.market-chart-status.status-offline,
+.market-chart-status.status-unavailable {
+  border-color: rgba(255, 100, 125, 0.34);
+  color: #ff8da0;
+  background: rgba(255, 100, 125, 0.08);
+}
+
+.market-chart-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.market-chart-controls label {
+  display: grid;
+  gap: 6px;
+}
+
+.market-chart-controls select,
+.market-chart-controls button {
+  min-height: 38px;
+  border: 1px solid rgba(83, 211, 218, 0.18);
+  border-radius: 8px;
+  background: rgba(2, 8, 23, 0.78);
+  color: #e8fbff;
+  font: inherit;
+  font-size: 0.76rem;
+}
+
+.market-chart-controls select {
+  min-width: 112px;
+  padding: 8px 10px;
+}
+
+.market-chart-controls button {
+  padding: 8px 11px;
+  cursor: pointer;
+}
+
+.market-chart-controls button[aria-pressed="true"] {
+  border-color: rgba(57, 255, 136, 0.34);
+  color: #39ff88;
+}
+
+.market-chart-metadata {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.market-chart-metadata div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(83, 211, 218, 0.12);
+  border-radius: 8px;
+  background: rgba(2, 8, 23, 0.64);
+}
+
+.market-chart-metadata dd {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+  color: #dff7ff;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.market-chart-canvas-shell {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(83, 211, 218, 0.14);
+  border-radius: 8px;
+  background: #050f20;
+}
+
+.market-chart-canvas {
+  width: 100%;
+}
+
+.market-chart-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(5, 15, 32, 0.86);
+}
+
+.market-chart-overlay strong {
+  color: #ffcf5a;
+  font-size: 0.86rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.market-chart-overlay span {
+  color: #b7c7e6;
+  font-size: 0.82rem;
+}
+
+.market-chart-text-summary {
+  margin-top: 12px;
+}
+
+@media (max-width: 1100px) {
+  .market-chart-metadata {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .market-price-chart {
+    padding: 14px;
+  }
+
+  .market-price-chart-header {
+    display: grid;
+  }
+
+  .market-chart-controls {
+    align-items: stretch;
+  }
+
+  .market-chart-controls label,
+  .market-chart-controls select,
+  .market-chart-controls button {
+    width: 100%;
+  }
+
+  .market-chart-metadata {
+    grid-template-columns: 1fr;
+  }
+}

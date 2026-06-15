@@ -41,6 +41,10 @@ function displayStreamMode(systemStatus, activeProvider, fallbackMode) {
     return "DATA UNAVAILABLE";
   }
 
+  if (systemStatus.rawDataAvailable !== true) {
+    return displayState(systemStatus.dataState || fallbackMode || "DATA_UNAVAILABLE");
+  }
+
   return activeProvider ? "LIVE PROVIDER" : displayState(fallbackMode);
 }
 
@@ -51,7 +55,7 @@ function isLiveProviderActive(providerStatus) {
 function displayResolvedProvider(systemStatus, providerStatus) {
   if (systemStatus.streamMode === "LIVE_ALPACA") return "ALPACA";
   if (systemStatus.simulationActive) return "SIMULATION";
-  if (providerStatus.available === false || providerStatus.sourceType === "DATA_UNAVAILABLE") {
+  if (providerStatus.rawDataAvailable !== true || providerStatus.sourceType === "DATA_UNAVAILABLE") {
     return "DATA UNAVAILABLE";
   }
   return displayActiveProvider(`${providerStatus.activeProvider}_ACTIVE`);

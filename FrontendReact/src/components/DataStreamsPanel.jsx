@@ -30,13 +30,17 @@ function displayStreamMode(systemStatus, activeProvider, fallbackMode) {
     return "DATA UNAVAILABLE";
   }
 
+  if (systemStatus.rawDataAvailable !== true) {
+    return displayState(systemStatus.dataState || fallbackMode || "DATA_UNAVAILABLE");
+  }
+
   return activeProvider ? "LIVE PROVIDER" : displayState(fallbackMode);
 }
 
 function displayResolvedProvider(systemStatus, providerStatus) {
   if (systemStatus.streamMode === "LIVE_ALPACA") return "ALPACA";
   if (systemStatus.simulationActive) return "SIMULATION";
-  if (providerStatus.available === false || providerStatus.sourceType === "DATA_UNAVAILABLE") {
+  if (providerStatus.rawDataAvailable !== true || providerStatus.sourceType === "DATA_UNAVAILABLE") {
     return "DATA UNAVAILABLE";
   }
   return displayState(providerStatus.activeProvider);
@@ -80,7 +84,7 @@ function DataStreamsPanel() {
       <div className="brain-metrics">
         <div>
           <span>Equities</span>
-          <strong>{providerStatus.available !== false && providerStatus.capabilities?.equities ? "ONLINE" : "OFFLINE"}</strong>
+          <strong>{providerStatus.rawDataAvailable === true && providerStatus.capabilities?.equities ? "ONLINE" : "OFFLINE"}</strong>
         </div>
 
         <div>

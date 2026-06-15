@@ -78,9 +78,8 @@ function DataStreams() {
 
   const providerStreams = streams.map((stream) => {
     const providerAvailable =
-      providerStatus.available !== false
-      && providerStatus.sourceType !== "DATA_UNAVAILABLE"
-      && providerStatus.providerHealth !== "OFFLINE";
+      providerStatus.rawDataAvailable === true
+      && providerStatus.providerHealth === "HEALTHY";
 
     if (stream.name === "Equities") {
       return {

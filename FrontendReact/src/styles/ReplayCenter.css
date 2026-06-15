@@ -185,6 +185,14 @@
   gap: 18px;
 }
 
+.replay-chart-section {
+  min-width: 0;
+}
+
+.replay-chart-note-grid {
+  margin-top: 16px;
+}
+
 .replay-timeline {
   display: grid;
   gap: 10px;

@@ -28,12 +28,13 @@ function rejectBlockedSimulation(req, res) {
 }
 
 function normalizeVolume(value) {
+  if (value === null || value === undefined) return null;
   if (typeof value === "number") return value;
 
   const text = String(value || "0").trim().toUpperCase();
   const numeric = Number.parseFloat(text);
 
-  if (!Number.isFinite(numeric)) return 0;
+  if (!Number.isFinite(numeric)) return null;
   if (text.endsWith("M")) return Math.round(numeric * 1000000);
   if (text.endsWith("K")) return Math.round(numeric * 1000);
 
@@ -95,8 +96,8 @@ router.get("/provider-quote-compare", async (req, res) => {
     primaryProvider: providerStatus.primaryProvider,
     alpaca: {
       status: alpacaStatus,
-      price: Number(activeQuote.price || 0),
-      changePercent: Number(activeQuote.changePercent || 0),
+      price: activeQuote.available === false ? null : Number(activeQuote.price),
+      changePercent: activeQuote.available === false ? null : Number(activeQuote.changePercent),
       volume: normalizeVolume(activeQuote.volume),
       timestamp: activeQuote.updatedAt || activeQuote.timestamp || null,
       sessionState: activeQuote.sessionState,
@@ -105,8 +106,8 @@ router.get("/provider-quote-compare", async (req, res) => {
     },
     webull: {
       status: webullQuote.status,
-      price: Number(webullQuote.price || 0),
-      changePercent: Number(webullQuote.changePercent || 0),
+      price: webullQuote.rawAvailable === false ? null : Number(webullQuote.price),
+      changePercent: webullQuote.rawAvailable === false ? null : Number(webullQuote.changePercent),
       volume: normalizeVolume(webullQuote.volume),
       timestamp: webullQuote.timestamp,
       message: webullQuote.message

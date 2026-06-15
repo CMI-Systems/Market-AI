@@ -12,8 +12,8 @@ function normalizeEnvironment(value) {
 function getWebullCapabilities() {
   return {
     equities: true,
-    quotes: true,
-    historicalCandles: true,
+    quotes: false,
+    historicalCandles: false,
     options: false,
     futures: false,
     news: false
@@ -27,7 +27,7 @@ function getWebullConfigStatus(env = process.env) {
   let status = "MISSING_CREDENTIALS";
 
   if (configured && enabled) {
-    status = "READY";
+    status = "NOT_IMPLEMENTED";
   } else if (configured && !enabled) {
     status = "PENDING";
   } else if (!configured && boolFromEnv(env.WEBULL_ENABLED)) {
@@ -71,7 +71,6 @@ function getWebullHealth(env = process.env) {
 
 async function getWebullQuote(symbol, env = process.env) {
   const normalizedSymbol = String(symbol || "SPY").trim().toUpperCase() || "SPY";
-  const timestamp = new Date().toISOString();
   const config = getWebullConfigStatus(env);
 
   if (!config.configured) {
@@ -79,10 +78,14 @@ async function getWebullQuote(symbol, env = process.env) {
       symbol: normalizedSymbol,
       provider: "WEBULL",
       status: "ERROR",
-      price: 0,
-      changePercent: 0,
-      volume: 0,
-      timestamp,
+      price: null,
+      changePercent: null,
+      volume: null,
+      timestamp: null,
+      sourceType: "DATA_UNAVAILABLE",
+      available: false,
+      simulated: false,
+      generated: false,
       rawAvailable: false,
       message: "Webull credentials are not configured."
     };
@@ -92,10 +95,14 @@ async function getWebullQuote(symbol, env = process.env) {
     symbol: normalizedSymbol,
     provider: "WEBULL",
     status: "NOT_IMPLEMENTED",
-    price: 0,
-    changePercent: 0,
-    volume: 0,
-    timestamp,
+    price: null,
+    changePercent: null,
+    volume: null,
+    timestamp: null,
+    sourceType: "DATA_UNAVAILABLE",
+    available: false,
+    simulated: false,
+    generated: false,
     rawAvailable: false,
     message: "Webull quote adapter pending implementation."
   };

@@ -6,6 +6,24 @@ const QUALITY_LABELS = {
   HIGH: "HIGH",
 };
 
+const BLOCKED_MARKET_DATA_STATUSES = new Set([
+  "BLOCKED",
+  "UNAVAILABLE",
+  "DATA_UNAVAILABLE",
+  "PROVIDER_UNAVAILABLE",
+  "PROVIDER_OFFLINE",
+  "UNKNOWN_SOURCE",
+  "INVALID_TIMESTAMP",
+  "INVALID_NUMERIC_DATA",
+  "INVALID_OHLC",
+  "SYMBOL_MISMATCH",
+  "OUT_OF_ORDER",
+  "DUPLICATE",
+  "SIMULATED",
+  "GENERATED",
+  "UNSUITABLE",
+]);
+
 function safeObject(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
@@ -27,6 +45,23 @@ function getQualityLabel(score) {
   if (score >= 70) return QUALITY_LABELS.HIGH;
   if (score >= 40) return QUALITY_LABELS.MODERATE;
   return QUALITY_LABELS.LOW;
+}
+
+function getMarketDataValidationStatus(record) {
+  const marketDataValidation = safeObject(record.marketDataValidation);
+  if (!hasObjectContent(marketDataValidation)) return "MISSING_MARKET_DATA_VALIDATION";
+  return safeString(
+    marketDataValidation.status || marketDataValidation.validationStatus || marketDataValidation.qualityLabel
+  ).toUpperCase() || "UNKNOWN";
+}
+
+function isMarketDataValidationBlocked(record) {
+  const status = getMarketDataValidationStatus(record);
+  if (status === "MISSING_MARKET_DATA_VALIDATION") return true;
+  if (BLOCKED_MARKET_DATA_STATUSES.has(status)) return true;
+
+  const marketDataValidation = safeObject(record.marketDataValidation);
+  return marketDataValidation.rawDataCertified === true || marketDataValidation.trainingEligible === true;
 }
 
 function addResult(condition, passedMessage, failedMessage, warnings, warningMessage) {
@@ -82,6 +117,8 @@ export function validateAiccDatasetRecord(record = {}) {
   const hasMarketContext = hasObjectContent(safeRecord.marketContext);
   const trainingActivated = metadata.trainingActivated === true;
   const provenanceBlocked = provenance.status === "BLOCKED" || provenance.status === "DATA_UNAVAILABLE";
+  const marketDataValidationStatus = getMarketDataValidationStatus(safeRecord);
+  const marketDataValidationBlocked = isMarketDataValidationBlocked(safeRecord);
 
   const checks = [
     {
@@ -184,10 +221,16 @@ export function validateAiccDatasetRecord(record = {}) {
     missingFields.push("marketContext.provenance");
   }
 
+  if (marketDataValidationBlocked) {
+    warnings.push(`Dataset market-data validation is ${marketDataValidationStatus}.`);
+    rejectionReasons.push("Dataset market data is not suitable for raw-data certification.");
+    missingFields.push("marketDataValidation");
+  }
+
   warnings.push(...provenance.warnings);
   rejectionReasons.push(...provenance.blockingReasons);
 
-  const valid = qualityScore >= 70 && !provenanceBlocked && trainingActivated === false;
+  const valid = qualityScore >= 70 && !provenanceBlocked && !marketDataValidationBlocked && trainingActivated === false;
   const acceptedForShadowTraining =
     qualityScore >= 80 &&
     hasOperatorIdentity &&
@@ -197,6 +240,7 @@ export function validateAiccDatasetRecord(record = {}) {
     hasReplayOperatorContext &&
     trainingActivated === false &&
     !provenanceBlocked &&
+    !marketDataValidationBlocked &&
     provenance.rawDataCertified === false &&
     provenance.trainingEligible === false;
 

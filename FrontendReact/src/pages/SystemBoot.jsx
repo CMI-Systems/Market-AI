@@ -35,7 +35,20 @@ function displayProvider(value) {
   return value === "SIMULATION" || value === "FALLBACK" ? "SIMULATION" : displayState(value);
 }
 
-function displayProviderMode(activeProvider) {
+function displayProviderMode(activeProvider, providerStatus = {}) {
+  if (
+    !activeProvider ||
+    activeProvider === "PROVIDER_UNAVAILABLE" ||
+    activeProvider === "BACKEND_UNAVAILABLE" ||
+    activeProvider === "DATA_UNAVAILABLE"
+  ) {
+    return "DATA UNAVAILABLE";
+  }
+
+  if (providerStatus.rawDataAvailable !== true) {
+    return displayState(providerStatus.dataState || "DATA_UNAVAILABLE");
+  }
+
   return activeProvider === "SIMULATION" || activeProvider === "FALLBACK"
     ? "SIMULATION"
     : "LIVE PROVIDER";
@@ -132,9 +145,8 @@ function SystemBoot() {
   const liveProviderActive = isLiveProviderActive(providerStatus);
   const providerHealthy = providerStatus.providerHealth === "HEALTHY";
   const providerAvailable =
-    providerStatus.available !== false
-    && providerStatus.sourceType !== "DATA_UNAVAILABLE"
-    && providerStatus.providerHealth !== "OFFLINE";
+    providerStatus.rawDataAvailable === true
+    && providerStatus.providerHealth === "HEALTHY";
   const betaStatusItems = [
     { label: "Core Cognition", status: backendOnline ? "ONLINE" : "OFFLINE" },
     {
@@ -218,7 +230,7 @@ function SystemBoot() {
 
         <div>
           <span>Mode</span>
-          <strong>{displayProviderMode(providerStatus.activeProvider)}</strong>
+          <strong>{displayProviderMode(providerStatus.activeProvider, providerStatus)}</strong>
         </div>
 
         <div>

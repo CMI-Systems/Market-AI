@@ -174,7 +174,6 @@ function buildAiccSystemStatus(options = {}) {
 
   const backendOnline = true;
   const activeProvider = providerStatus.activeProvider;
-  const providerActive = activeProvider === "ALPACA" || activeProvider === "WEBULL";
   const marketOpen = Boolean(
     typeof overview.marketOpen === "boolean"
       ? overview.marketOpen
@@ -191,6 +190,7 @@ function buildAiccSystemStatus(options = {}) {
     options: providerOptions
   });
   const liveDataActive = streamState.streamMode === "LIVE_ALPACA";
+  const providerActive = streamState.rawDataAvailable === true && streamState.providerAvailable === true;
   const brainsActive = liveDataActive || Boolean(streamStatus.active);
   const backendConfidence = normalizePercent(confidence.score || overview.confidence?.score);
   const score = backendConfidence && backendConfidence > 0
@@ -220,8 +220,8 @@ function buildAiccSystemStatus(options = {}) {
     ? "STANDBY"
     : liveDataActive
       ? "ANALYZING"
-      : "OBSERVING";
-  const behavioral = backendOnline && brainStatus.behavioralBrain
+      : "STANDBY";
+  const behavioral = backendOnline && liveDataActive && brainStatus.behavioralBrain
     ? "OBSERVING"
     : "STANDBY";
   const failsafe = backendOnline && (runtimeHealthy || liveDataActive)
@@ -240,6 +240,7 @@ function buildAiccSystemStatus(options = {}) {
     simulationAllowed: simulationPolicy.simulationAllowed,
     runtimeEnvironment: simulationPolicy.runtimeEnvironment,
     providerAvailable: streamState.providerAvailable,
+    available: streamState.rawDataAvailable === true,
     rawDataAvailable: streamState.rawDataAvailable,
     dataState: streamState.dataState,
     dataAge: streamState.dataAge,
@@ -271,12 +272,16 @@ function buildAiccSystemStatus(options = {}) {
       failsafe
     },
     feeds: {
-      equities: providerStatus.capabilities.equities ? "ONLINE" : "OFFLINE",
+      equities: streamState.rawDataAvailable === true && providerStatus.capabilities.equities
+        ? "ONLINE"
+        : streamState.dataState || "DATA_UNAVAILABLE",
       options: providerStatus.capabilities.options ? "ONLINE" : "PENDING",
       futures: providerStatus.capabilities.futures ? "ONLINE" : "UNAVAILABLE",
-      symbol: hasValue(overview.symbol)
+      symbol: streamState.rawDataAvailable === true && hasValue(overview.symbol)
         ? overview.symbol
-        : streamStatus.symbol || "SPY",
+        : streamState.rawDataAvailable === true && streamStatus.symbol
+          ? streamStatus.symbol
+          : "UNAVAILABLE",
       feedState: streamState.dataState === "MARKET_CLOSED"
         ? "MARKET_CLOSED"
         : providerStatus.providerHealth === "HEALTHY" || streamStatus.active ? "ACTIVE" : "DEGRADED",

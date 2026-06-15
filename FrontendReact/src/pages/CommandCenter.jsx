@@ -19,12 +19,12 @@ import {
 } from "../services/intelligenceTranslator";
 import { analyzeAiccIntelligence } from "../services/intelligence/aiccIntelligenceOrchestrator";
 import {
-  getMarketCandles,
-  getMarketQuotes,
   getProviderDiagnostics,
   getOfflineProviderDiagnostics,
   getProviderSignals,
 } from "../services/marketProviderApi";
+import MarketPriceChart from "../components/charts/MarketPriceChart";
+import { CHART_TIMEFRAMES, getValidatedChartData } from "../services/chartDataService";
 import { Link } from "react-router-dom";
 import "../styles/CommandCenter.css";
 
@@ -38,7 +38,7 @@ import CrisisManagementPanel from "../components/CrisisManagementPanel";
 import ExpansionPanel from "../components/ExpansionPanel";
 
 const PROVIDER_SIGNAL_SYMBOLS = ["SPY", "QQQ", "NVDA", "AAPL", "MSFT", "TSLA"];
-const OVERVIEW_TIMEFRAMES = ["1Min", "5Min", "15Min", "1H", "1D"];
+const OVERVIEW_TIMEFRAMES = CHART_TIMEFRAMES;
 const AICC_BETA_VERSION = "AICC Closed Beta v0.1";
 const AICC_BETA_DISCLAIMER =
   "For research and intelligence purposes only. Not financial advice.";
@@ -85,6 +85,18 @@ function CommandCenter() {
   const [selectedSecondaryTimeframe, setSelectedSecondaryTimeframe] = useState("5Min");
   const [secondaryCandles, setSecondaryCandles] = useState([]);
   const [secondaryQuote, setSecondaryQuote] = useState(null);
+  const [overviewChartState, setOverviewChartState] = useState({
+    loading: true,
+    error: "",
+    validation: null,
+    provenance: null,
+  });
+  const [secondaryChartState, setSecondaryChartState] = useState({
+    loading: true,
+    error: "",
+    validation: null,
+    provenance: null,
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -133,15 +145,23 @@ function CommandCenter() {
     let mounted = true;
 
     async function loadMarketOverview() {
-      const [quotes, candles] = await Promise.all([
-        getMarketQuotes([selectedOverviewSymbol]),
-        getMarketCandles(selectedOverviewSymbol, selectedOverviewTimeframe, 48),
-      ]);
+      setOverviewChartState((current) => ({ ...current, loading: true, error: "" }));
+      setOverviewCandles([]);
+      setOverviewQuote(null);
+      const result = await getValidatedChartData(selectedOverviewSymbol, selectedOverviewTimeframe, {
+        limit: 80,
+      });
 
       if (!mounted) return;
 
-      if (quotes[0]) setOverviewQuote(quotes[0]);
-      if (candles.length) setOverviewCandles(candles);
+      setOverviewCandles(result.candles || []);
+      setOverviewQuote(result.quote || null);
+      setOverviewChartState({
+        loading: false,
+        error: result.error || "",
+        validation: result.validation || null,
+        provenance: result.provenance || null,
+      });
     }
 
     loadMarketOverview();
@@ -158,15 +178,23 @@ function CommandCenter() {
     let mounted = true;
 
     async function loadSecondaryMarketOverview() {
-      const [quotes, candles] = await Promise.all([
-        getMarketQuotes([selectedSecondarySymbol]),
-        getMarketCandles(selectedSecondarySymbol, selectedSecondaryTimeframe, 48),
-      ]);
+      setSecondaryChartState((current) => ({ ...current, loading: true, error: "" }));
+      setSecondaryCandles([]);
+      setSecondaryQuote(null);
+      const result = await getValidatedChartData(selectedSecondarySymbol, selectedSecondaryTimeframe, {
+        limit: 80,
+      });
 
       if (!mounted) return;
 
-      if (quotes[0]) setSecondaryQuote(quotes[0]);
-      if (candles.length) setSecondaryCandles(candles);
+      setSecondaryCandles(result.candles || []);
+      setSecondaryQuote(result.quote || null);
+      setSecondaryChartState({
+        loading: false,
+        error: result.error || "",
+        validation: result.validation || null,
+        provenance: result.provenance || null,
+      });
     }
 
     loadSecondaryMarketOverview();
@@ -1053,33 +1081,24 @@ function CommandCenter() {
     providerRiskDominates
       ? "HIGH"
       : escalationLevel === "NONE" ? "LOW" : escalationLevel;
-  const getMarketChartData = (candles, quote) => {
+  const getOverviewChangePercent = (candles, quote) => {
     const latestCandle = candles[candles.length - 1] || null;
-    const lastPrice = quote?.price || latestCandle?.close || 0;
-    const changePercent =
-      quote?.changePercent ??
-      (candles.length > 1 && candles[0]?.open && latestCandle
-        ? ((latestCandle.close - candles[0].open) / candles[0].open) * 100
-        : 0);
-    const chartCandles = candles.slice(-36);
-    const high = Math.max(...chartCandles.map((candle) => candle.high || 0), 1);
-    const low = Math.min(...chartCandles.map((candle) => candle.low || high), high);
-    const range = Math.max(high - low, 1);
-    const maxVolumeValue = Math.max(...chartCandles.map((candle) => candle.volume || 0), 1);
+    const firstCandle = candles[0] || null;
 
-    return {
-      chartCandles,
-      changePercent,
-      high,
-      lastPrice,
-      low,
-      maxVolume: maxVolumeValue,
-      range,
-    };
+    if (Number.isFinite(Number(quote?.changePercent))) return Number(quote.changePercent);
+    if (
+      firstCandle &&
+      latestCandle &&
+      Number.isFinite(Number(firstCandle.open)) &&
+      Number(firstCandle.open) > 0 &&
+      Number.isFinite(Number(latestCandle.close))
+    ) {
+      return ((Number(latestCandle.close) - Number(firstCandle.open)) / Number(firstCandle.open)) * 100;
+    }
+
+    return null;
   };
-  const primaryChartData = getMarketChartData(overviewCandles, overviewQuote);
-  const secondaryChartData = getMarketChartData(secondaryCandles, secondaryQuote);
-  const overviewChangePercent = primaryChartData.changePercent;
+  const overviewChangePercent = getOverviewChangePercent(overviewCandles, overviewQuote);
   const rawMarketInputsAvailable =
     providerDataAvailable
     && overviewQuote?.available !== false
@@ -1113,7 +1132,7 @@ function CommandCenter() {
         ? Math.round((highConfidenceProviderSignals.length / providerSignals.length) * 100)
         : Math.round(normalizedConfidenceScore * 100),
     },
-    volumeRatio: primaryChartData.maxVolume > 0 ? 1 : 0.75,
+    volumeRatio: overviewCandles.some((candle) => Number(candle.volume) > 0) ? 1 : 0.75,
     volatility: liquidityPressure?.volatility === "ELEVATED" ? 65 : 35,
     riskScore: threatLevelScore,
     trendScore: Number(overviewChangePercent) >= 0 ? 65 : 42,
@@ -1163,7 +1182,7 @@ function CommandCenter() {
     marketContext: rawMarketInputsAvailable ? activeEnvironment : null,
     benchmarkCandles: rawMarketInputsAvailable ? secondaryCandles : [],
     sectorContext: rawMarketInputsAvailable ? {
-      performancePct: Number(overviewChangePercent) || 0,
+      performancePct: Number.isFinite(Number(overviewChangePercent)) ? Number(overviewChangePercent) : 0,
     } : null,
     marketPulse: rawMarketInputsAvailable ? aiccMarketPulse : null,
     marketIntelligence: rawMarketInputsAvailable ? aiccMarketIntelligence : null,
@@ -1225,85 +1244,6 @@ function CommandCenter() {
       ? "Risk-On"
       : "Neutral";
   const aiccMarketStatusLine = `${aiccConsensusState} consensus is operating inside a ${aiccRegimeState} regime. ${aiccShortNarrative}`;
-  const renderMarketChartCard = ({
-    title,
-    symbol,
-    selectedTimeframe,
-    chartData,
-    onSymbolChange,
-    onTimeframeChange,
-  }) => (
-    <div className="overview-chart-card">
-      <div className="overview-chart-header">
-        <div>
-          <span>{title}</span>
-          <strong>{symbol}</strong>
-          <p>
-            {chartData.lastPrice ? `$${Number(chartData.lastPrice).toFixed(2)}` : "--"} |{" "}
-            <em className={Number(chartData.changePercent) >= 0 ? "positive-change" : "negative-change"}>
-              {Number(chartData.changePercent) >= 0 ? "+" : ""}
-              {Number(chartData.changePercent || 0).toFixed(2)}%
-            </em>
-          </p>
-        </div>
-
-        <div className="overview-chart-controls">
-          <select value={symbol} onChange={(event) => onSymbolChange(event.target.value)}>
-            {PROVIDER_SIGNAL_SYMBOLS.map((availableSymbol) => (
-              <option key={availableSymbol}>{availableSymbol}</option>
-            ))}
-          </select>
-
-          <div className="overview-timeframe-tabs">
-            {OVERVIEW_TIMEFRAMES.map((timeframe) => (
-              <button
-                className={selectedTimeframe === timeframe ? "active" : ""}
-                key={timeframe}
-                type="button"
-                onClick={() => onTimeframeChange(timeframe)}
-              >
-                {timeframe}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="overview-candle-chart">
-        {chartData.chartCandles.length ? (
-          chartData.chartCandles.map((candle, index) => {
-            const open = Number(candle.open || 0);
-            const close = Number(candle.close || 0);
-            const high = Number(candle.high || Math.max(open, close));
-            const low = Number(candle.low || Math.min(open, close));
-            const top = ((chartData.high - high) / chartData.range) * 100;
-            const bottom = ((low - chartData.low) / chartData.range) * 100;
-            const bodyTop = ((chartData.high - Math.max(open, close)) / chartData.range) * 100;
-            const bodyHeight = Math.max((Math.abs(open - close) / chartData.range) * 100, 3);
-            const volumeHeight = Math.max(((candle.volume || 0) / chartData.maxVolume) * 100, 8);
-
-            return (
-              <div className="overview-candle-column" key={`${title}-${candle.timestamp || candle.time}-${index}`}>
-                <div className="overview-candle-area">
-                  <i
-                    className="overview-candle-wick"
-                    style={{ top: `${top}%`, bottom: `${bottom}%` }}
-                  ></i>
-                  <b
-                    className={close >= open ? "candle-up" : "candle-down"}
-                    style={{ top: `${bodyTop}%`, height: `${bodyHeight}%` }}
-                  ></b>
-                </div>
-                <span style={{ height: `${volumeHeight}%` }}></span>
-              </div>
-            );
-          })
-        ) : (
-          <div className="overview-chart-empty">Provider candles unavailable.</div>
-        )}
-      </div>
-    </div>
-  );
   const watchlistPreviewRows = PROVIDER_SIGNAL_SYMBOLS.map((symbol) => {
     const signal = providerSignals.find((item) => item.symbol === symbol);
 
@@ -1654,23 +1594,39 @@ function CommandCenter() {
         <section className="command-section command-overview-section">
           <h2>Charts</h2>
           <div className="command-chart-grid">
-            {renderMarketChartCard({
-              title: "Primary Market Chart",
-              symbol: selectedOverviewSymbol,
-              selectedTimeframe: selectedOverviewTimeframe,
-              chartData: primaryChartData,
-              onSymbolChange: setSelectedOverviewSymbol,
-              onTimeframeChange: setSelectedOverviewTimeframe,
-            })}
+            <MarketPriceChart
+              title="Primary Market Chart"
+              symbol={selectedOverviewSymbol}
+              timeframe={selectedOverviewTimeframe}
+              candles={overviewCandles}
+              quote={overviewQuote}
+              validation={overviewChartState.validation}
+              provenance={overviewChartState.provenance}
+              loading={overviewChartState.loading}
+              error={overviewChartState.error}
+              availableSymbols={PROVIDER_SIGNAL_SYMBOLS}
+              availableTimeframes={OVERVIEW_TIMEFRAMES}
+              onSymbolChange={setSelectedOverviewSymbol}
+              onTimeframeChange={setSelectedOverviewTimeframe}
+              height={430}
+            />
 
-            {renderMarketChartCard({
-              title: "Secondary Market Chart",
-              symbol: selectedSecondarySymbol,
-              selectedTimeframe: selectedSecondaryTimeframe,
-              chartData: secondaryChartData,
-              onSymbolChange: setSelectedSecondarySymbol,
-              onTimeframeChange: setSelectedSecondaryTimeframe,
-            })}
+            <MarketPriceChart
+              title="Secondary Market Chart"
+              symbol={selectedSecondarySymbol}
+              timeframe={selectedSecondaryTimeframe}
+              candles={secondaryCandles}
+              quote={secondaryQuote}
+              validation={secondaryChartState.validation}
+              provenance={secondaryChartState.provenance}
+              loading={secondaryChartState.loading}
+              error={secondaryChartState.error}
+              availableSymbols={PROVIDER_SIGNAL_SYMBOLS}
+              availableTimeframes={OVERVIEW_TIMEFRAMES}
+              onSymbolChange={setSelectedSecondarySymbol}
+              onTimeframeChange={setSelectedSecondaryTimeframe}
+              height={430}
+            />
           </div>
         </section>
 

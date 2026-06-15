@@ -8,6 +8,24 @@ const DEFAULT_OPTIONS = {
   policyVersion: "N8-v1",
 };
 
+const BLOCKED_MARKET_DATA_STATUSES = new Set([
+  "BLOCKED",
+  "UNAVAILABLE",
+  "DATA_UNAVAILABLE",
+  "PROVIDER_UNAVAILABLE",
+  "PROVIDER_OFFLINE",
+  "UNKNOWN_SOURCE",
+  "INVALID_TIMESTAMP",
+  "INVALID_NUMERIC_DATA",
+  "INVALID_OHLC",
+  "SYMBOL_MISMATCH",
+  "OUT_OF_ORDER",
+  "DUPLICATE",
+  "SIMULATED",
+  "GENERATED",
+  "UNSUITABLE",
+]);
+
 const EMPTY_SUMMARY = {
   totalDatasets: 0,
   compliantDatasets: 0,
@@ -81,16 +99,56 @@ function isKnownValue(value, unknownValue) {
   return Boolean(normalized && normalized !== unknownValue);
 }
 
+function getMarketDataValidation(dataset) {
+  return safeObject(firstDefined(
+    dataset.marketDataValidation,
+    dataset.market_data_validation,
+    safeObject(dataset.metadata).marketDataValidation
+  ));
+}
+
+function getMarketDataValidationStatus(dataset) {
+  const marketDataValidation = getMarketDataValidation(dataset);
+  if (!hasObjectContent(marketDataValidation)) return "MISSING_MARKET_DATA_VALIDATION";
+  return safeString(
+    marketDataValidation.status || marketDataValidation.validationStatus || marketDataValidation.qualityLabel,
+    "UNKNOWN"
+  ).toUpperCase();
+}
+
+function isMarketDataValidationBlocked(dataset) {
+  const marketDataValidation = getMarketDataValidation(dataset);
+  const status = getMarketDataValidationStatus(dataset);
+
+  return (
+    status === "MISSING_MARKET_DATA_VALIDATION" ||
+    BLOCKED_MARKET_DATA_STATUSES.has(status) ||
+    marketDataValidation.rawDataCertified === true ||
+    marketDataValidation.trainingEligible === true
+  );
+}
+
 function getLearningTargets(dataset) {
   return safeObject(firstDefined(dataset.learningTargets, dataset.learning_targets));
 }
 
 function getDatasetWarnings(repositoryItem, historicalValidationResult) {
+  const marketDataValidation = getMarketDataValidation(safeObject(repositoryItem?.dataset));
+  const marketDataValidationStatus = getMarketDataValidationStatus(safeObject(repositoryItem?.dataset));
+  const marketDataWarnings = [
+    marketDataValidationStatus === "MISSING_MARKET_DATA_VALIDATION" ? marketDataValidationStatus : null,
+    ...safeArray(marketDataValidation.warnings),
+    ...safeArray(marketDataValidation.validationWarnings),
+    ...safeArray(marketDataValidation.errors),
+    ...safeArray(marketDataValidation.validationErrors),
+  ];
+
   return [
     ...safeArray(repositoryItem?.dataset?.warnings),
     ...safeArray(repositoryItem?.validation?.warnings),
     ...safeArray(repositoryItem?.shadowReadiness?.warnings),
     ...safeArray(historicalValidationResult?.warnings),
+    ...marketDataWarnings.filter(Boolean).map((warning) => `Market data validation: ${warning}`),
   ].filter(Boolean);
 }
 
@@ -112,6 +170,7 @@ function getCompletenessStatus(dataset, ownershipStatus) {
     hasObjectContent(firstDefined(dataset.intelligenceSnapshot, dataset.intelligence_snapshot)),
     hasObjectContent(firstDefined(dataset.operatorContext, dataset.operator_context)),
     hasObjectContent(firstDefined(dataset.marketContext, dataset.market_context)),
+    hasObjectContent(getMarketDataValidation(dataset)),
     isKnownValue(tacticalTarget, "UNKNOWN_TACTICAL"),
     isKnownValue(behavioralTarget, "UNKNOWN_BEHAVIORAL"),
     isKnownValue(failsafeTarget, "UNKNOWN_FAILSAFE"),
@@ -153,7 +212,11 @@ function isOutsideRetentionWindow(dataset, retentionDays) {
 
 function isDatasetMarkedRestricted(dataset) {
   const metadata = safeObject(dataset.metadata);
-  return safeString(dataset.status).toUpperCase() === "RESTRICTED" || metadata.restricted === true;
+  return (
+    safeString(dataset.status).toUpperCase() === "RESTRICTED" ||
+    metadata.restricted === true ||
+    isMarketDataValidationBlocked(dataset)
+  );
 }
 
 function hasHistoricalChange(historicalValidationResult) {

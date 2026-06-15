@@ -42,20 +42,30 @@ function SystemSettings() {
 
   const betaStatusItems = [
     { label: "Core Cognition", status: systemStatus.backend === "OFFLINE" ? "OFFLINE" : "ONLINE" },
-    { label: "Provider Adapter", status: providerDiagnostics.providerHealth === "OFFLINE" ? "OFFLINE" : "ONLINE" },
-    { label: "Watchlists", status: "ONLINE" },
-    { label: "Signals", status: "ONLINE" },
-    { label: "Alerts", status: "ONLINE" },
+    {
+      label: "Provider Adapter",
+      status: providerDiagnostics.rawDataAvailable === true ? "ONLINE" : "DATA UNAVAILABLE",
+    },
+    {
+      label: "Watchlists",
+      status: providerDiagnostics.rawDataAvailable === true ? "ONLINE" : "DATA UNAVAILABLE",
+    },
+    {
+      label: "Signals",
+      status: providerDiagnostics.rawDataAvailable === true ? "ONLINE" : "DATA UNAVAILABLE",
+    },
+    { label: "Alerts", status: systemStatus.backend === "OFFLINE" ? "DATA UNAVAILABLE" : "ONLINE" },
     { label: "Replay Center", status: "ONLINE" },
     { label: "Failover", status: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
     { label: "Webull", status: displayWebullStatus(providerDiagnostics.webull) },
   ];
   const betaReadinessItems = [
+    { label: "Core Cognition", status: systemStatus.backend === "OFFLINE" ? "OFFLINE" : "ONLINE" },
     { label: "Architecture", status: "READY" },
-    { label: "Data Layer", status: "READY" },
-    { label: "Provider Layer", status: providerDiagnostics.providerHealth === "OFFLINE" ? "PENDING" : "READY" },
-    { label: "Signals", status: "READY" },
-    { label: "Alerts", status: "READY" },
+    { label: "Data Layer", status: providerDiagnostics.rawDataAvailable === true ? "READY" : "PENDING" },
+    { label: "Provider Layer", status: providerDiagnostics.rawDataAvailable === true ? "READY" : "PENDING" },
+    { label: "Signals", status: providerDiagnostics.rawDataAvailable === true ? "READY" : "PENDING" },
+    { label: "Alerts", status: systemStatus.backend === "OFFLINE" ? "PENDING" : "READY" },
     { label: "Replay", status: "READY" },
     { label: "Failover", status: providerDiagnostics.failoverReady ? "READY" : "PENDING" },
   ];

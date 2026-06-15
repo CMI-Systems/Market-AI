@@ -121,10 +121,12 @@ export function analyzeAiccIntelligence(input = {}) {
   const warnings = [];
   const symbol = safeSymbol(safeInput);
   const timestamp = new Date().toISOString();
-  const fallbackMode = !input || typeof input !== 'object' || !hasUsableInput(safeInput);
+  const fallbackMode = !input || typeof input !== 'object' || Object.keys(safeInput).length === 0;
 
   if (fallbackMode) {
     warnings.push('Orchestrator input was empty or malformed; service fallbacks were used.');
+  } else if (!hasUsableInput(safeInput)) {
+    warnings.push('Orchestrator input is present but does not contain trusted raw inputs.');
   }
 
   const inputProvenance = mergeProvenance(
@@ -150,7 +152,7 @@ export function analyzeAiccIntelligence(input = {}) {
   const tactical = runStep(
     'Tactical Brain',
     analyzeTacticalState,
-    fallbackMode || provenanceBlocked
+    fallbackMode
       ? { symbol }
       : {
           symbol,
@@ -166,7 +168,7 @@ export function analyzeAiccIntelligence(input = {}) {
   const behavioral = runStep(
     'Behavioral Brain',
     analyzeBehavioralState,
-    fallbackMode || provenanceBlocked
+    fallbackMode
       ? { symbol }
       : {
           symbol,
@@ -182,7 +184,7 @@ export function analyzeAiccIntelligence(input = {}) {
   const failsafe = runStep(
     'Failsafe Brain',
     analyzeFailsafeState,
-    fallbackMode || provenanceBlocked
+    fallbackMode
       ? { symbol }
       : {
           symbol,
@@ -201,7 +203,7 @@ export function analyzeAiccIntelligence(input = {}) {
   const consensus = runStep(
     'Consensus Engine',
     analyzeConsensus,
-    fallbackMode || provenanceBlocked
+    fallbackMode
       ? { symbol }
       : {
           symbol,
@@ -215,7 +217,7 @@ export function analyzeAiccIntelligence(input = {}) {
   const regime = runStep(
     'Regime Engine',
     analyzeRegime,
-    fallbackMode || provenanceBlocked
+    fallbackMode
       ? { symbol }
       : {
           symbol,
@@ -232,7 +234,7 @@ export function analyzeAiccIntelligence(input = {}) {
   const narrative = runStep(
     'Narrative Engine',
     analyzeNarrative,
-    fallbackMode || provenanceBlocked
+    fallbackMode
       ? { symbol }
       : {
           symbol,

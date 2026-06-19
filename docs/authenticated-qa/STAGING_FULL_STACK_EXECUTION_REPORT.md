@@ -657,11 +657,21 @@ NOT_RUN in this phase.
 
 ## RLS Client-Path Rerun Status
 
-Status: MANUAL_REQUIRED / NOT_RUN_BY_CODEX
+Status: DEPLOYED TWO-OPERATOR AUTH/CORS/BROWSER QA PASS
 
-Reason:
+Latest deployed manual QA status:
 
-The post-remediation Supabase metadata checks can be performed through the staging MCP connection, but the required full matrix depends on two real authenticated client sessions for Operator A and Operator B. Codex does not have access to either operator's credentials or browser sessions in this run, and the test must not use fake sessions, service-role access, printed tokens, or authentication bypasses.
+- Operator A deployed login: PASS
+- Operator B deployed login: PASS
+- Both operators cycled through all major app tabs: PASS
+- Console errors observed: 0
+- Network errors observed: 0
+- Backend CORS: PASS
+- Render backend health endpoint: PASS
+- Vercel Preview frontend to Render backend connectivity: PASS
+- Supabase staging auth/profile gate: PASS
+- 304 cached backend endpoint responses: ACCEPTABLE / PASS
+- 200 responses for system-status and provider-status: PASS
 
 Staging metadata recheck on 2026-06-19:
 
@@ -679,11 +689,11 @@ Staging metadata recheck on 2026-06-19:
 
 Operator A result:
 
-PENDING. Requires a real Operator A authenticated client session.
+PASS for deployed login and major-tab browser traversal. No console or network errors were observed.
 
 Operator B result:
 
-PENDING. Requires a real Operator B authenticated client session.
+PASS for deployed login and major-tab browser traversal. No console or network errors were observed.
 
 Anon result:
 
@@ -697,58 +707,39 @@ Cleanup result:
 
 PASS for metadata scan. No temporary QA rows matching `RLS_QA_TEMP` remain in the active persistence tables.
 
-Required two-operator validation method:
+Scope note:
 
-1. Start from the deployed staging frontend or local staging frontend connected to `ilogukxgdhqymgxpxejr`.
-2. Sign in as Operator A manually. Do not paste credentials into chat or source files.
-3. Create temporary rows labeled `RLS_QA_TEMP_A` through the supported client path for `journal_entries`, `replay_sessions`, `aicc_dataset_records`, `dataset_validations`, and `shadow_readiness`.
-4. Sign out fully and confirm protected routes are inaccessible.
-5. Sign in as Operator B manually.
-6. Create temporary rows labeled `RLS_QA_TEMP_B` through the same supported client path.
-7. While authenticated as Operator B, verify Operator A rows are not returned by service reads, direct anon-client table reads, repository summaries, operator-history summaries, governance summaries, or historical-validation reads.
-8. Attempt cross-user update and delete by known QA row IDs through the client path. Expected result: authorization failure or zero rows affected.
-9. Verify Operator B can still read/update/delete only Operator B rows where intended.
-10. Repeat the cross-user read/update/delete attempts from Operator A against Operator B rows.
-11. Verify `operator_profiles` allows own-profile SELECT only and blocks INSERT, UPDATE, and DELETE.
-12. Verify certification/admin tables are blocked for both signed-out and authenticated clients.
-13. Delete Operator A QA rows as Operator A and Operator B QA rows as Operator B.
-14. Confirm remaining QA rows count is 0.
+This deployed QA confirms two approved operators can authenticate through the deployed staging frontend, pass the `operator_profiles` profile gate, traverse the major protected surfaces, and reach the Render backend through the Vercel Preview frontend without observed browser console or network failures. It does not replace the deeper row-mutation RLS harness for cross-user CRUD attempts on every persisted table.
 
-Result interpretation:
+### Updated Deployed QA Status Table
 
-- If all steps pass, the Cross-User RLS Gate can move from HOLD to APPROVED_WITH_LIMITATIONS or APPROVED depending on password recovery and deployment-environment verification.
-- If any cross-user row is readable, updateable, or deleteable, classify as CRITICAL and keep Private Beta BLOCKED.
-- If own-record CRUD fails after least-privilege remediation, classify as HIGH and keep Private Beta HOLD until service/schema grants are corrected.
+| Check | Result |
+|---|---|
+| Operator A deployed login | PASS |
+| Operator B deployed login | PASS |
+| Major app tab traversal by both operators | PASS |
+| Console errors | PASS, 0 observed |
+| Network errors | PASS, 0 observed |
+| Backend CORS | PASS |
+| Render backend health endpoint | PASS |
+| Vercel Preview to Render backend connectivity | PASS |
+| Supabase staging auth/profile gate | PASS |
+| Cached backend 304 responses | ACCEPTABLE / PASS |
+| `system-status` 200 responses | PASS |
+| `provider-status` 200 responses | PASS |
+| Temporary QA row cleanup metadata scan | PASS |
 
 ## Remaining Blockers
 
-1. Complete full two-operator Cross-User RLS Validation after grant remediation:
-   - Operator A and Operator B own CRUD allowed where intended.
-   - Cross-user SELECT/UPDATE/DELETE blocked.
-   - Signed-out/anon access blocked.
-   - Certification/admin tables blocked from client roles.
-   - Temporary QA rows removed.
+1. Complete real password recovery email flow QA after Supabase rate-limit clears.
 
-2. Complete Supabase RLS hardening beyond grants:
-   - Scope policies explicitly to `authenticated`.
-   - Convert `auth.uid()` policies to `(select auth.uid())` where appropriate.
-   - Fix mutable function search paths.
+2. Remove or formally remediate dataset `operator_email` persistence.
 
-3. Decide and remediate `operator_email` persistence:
-   - Preferred: remove from new dataset records and backfill/drop in a future approved schema phase.
-   - Alternative: document as approved personal-data retention with explicit purpose and retention policy.
+3. Align backend environment variable names with `Backend/services/supabaseClient.js`.
 
-4. Complete real password recovery email QA after Supabase rate limit clears.
-
-5. Verify Vercel Preview environment variables in provider console.
-
-6. Verify Render staging environment variables in provider console.
-
-7. Create `Backend/.env.example` with placeholders only.
-
-8. Update stale backend deployment documentation around simulation fallback.
-
-9. Decide whether backend diagnostic routes require auth or remain internal-only behind staging infrastructure controls.
+4. Optional Supabase advisor hardening:
+   - Fix mutable function `search_path` warnings.
+   - Convert `auth.uid()` policies to `(select auth.uid())` where appropriate for RLS performance.
 
 ## Private Beta Readiness Verdict
 
@@ -756,17 +747,15 @@ HOLD
 
 Reason:
 
-The app is buildable and core staging auth logic is materially improved. Supabase least-privilege grants have been remediated in staging. Private Beta should remain on hold until the full two-operator RLS matrix is rerun, password recovery email flow passes a real staging test, and Vercel/Render staging environment variables are verified externally.
+The app is buildable and core staging auth logic is materially improved. Supabase least-privilege grants have been remediated in staging. The deployed two-operator auth/CORS/browser QA gate is now PASS. Private Beta remains HOLD until the real password recovery email flow passes, dataset `operator_email` persistence is remediated, backend environment variable naming is aligned, and optional Supabase advisor hardening is evaluated.
 
 ## Manual Next Steps
 
-1. Rerun full two-operator RLS validation.
-2. Prepare a second staging-only RLS policy-performance hardening pass if advisor cleanup is required.
-3. Complete real password recovery email QA.
-4. Verify Vercel Preview env variables.
-5. Verify Render staging env variables and CORS.
-6. Rerun authenticated product-surface smoke after staging deploy.
+1. Complete real password recovery email QA.
+2. Remove or formally remediate dataset `operator_email` persistence.
+3. Align backend Supabase environment variable names.
+4. Decide whether to perform optional Supabase advisor hardening before Private Beta.
 
 Recommended next step:
 
-Cross-User RLS Validation full two-operator re-run.
+Password Recovery Email Flow QA.

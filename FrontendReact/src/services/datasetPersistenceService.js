@@ -37,7 +37,6 @@ async function getCurrentOperator() {
   if (!configured || !supabase) {
     return {
       operatorId: null,
-      operatorEmail: null,
       error: new Error("Supabase is not configured."),
     };
   }
@@ -45,7 +44,6 @@ async function getCurrentOperator() {
   if (error) {
     return {
       operatorId: null,
-      operatorEmail: null,
       error,
     };
   }
@@ -55,14 +53,12 @@ async function getCurrentOperator() {
   if (!operatorId) {
     return {
       operatorId: null,
-      operatorEmail: null,
       error: new Error("Authenticated operator session is required."),
     };
   }
 
   return {
     operatorId,
-    operatorEmail: session?.user?.email || null,
     error: null,
   };
 }
@@ -71,7 +67,6 @@ async function assertDatasetPersistenceReady() {
   if (!isStagingEnvironment()) {
     return {
       operatorId: null,
-      operatorEmail: null,
       error: new Error("Dataset persistence is available only in the staging environment."),
     };
   }
@@ -79,7 +74,6 @@ async function assertDatasetPersistenceReady() {
   if (!isDatasetPersistenceEnabled()) {
     return {
       operatorId: null,
-      operatorEmail: null,
       error: new Error("Dataset persistence is disabled by environment configuration."),
     };
   }
@@ -87,7 +81,7 @@ async function assertDatasetPersistenceReady() {
   return getCurrentOperator();
 }
 
-function toDatasetRow(record, operatorId, operatorEmail) {
+function toDatasetRow(record, operatorId) {
   const metadata = {
     ...safeObject(record?.metadata),
     persisted: true,
@@ -97,7 +91,6 @@ function toDatasetRow(record, operatorId, operatorEmail) {
   return {
     id: safeString(record?.id),
     operator_id: operatorId,
-    operator_email: safeString(record?.operatorEmail || operatorEmail, null),
     symbol: safeString(record?.symbol, "UNKNOWN").toUpperCase(),
     journal_entry_id: record?.journalEntryId || record?.journal_entry_id || null,
     replay_session_id: record?.replaySessionId || record?.replay_session_id || null,
@@ -111,18 +104,18 @@ function toDatasetRow(record, operatorId, operatorEmail) {
   };
 }
 
-function toDatasetUpdate(record, operatorId, operatorEmail) {
-  const row = toDatasetRow(record, operatorId, operatorEmail);
+function toDatasetUpdate(record, operatorId) {
+  const row = toDatasetRow(record, operatorId);
   delete row.id;
   delete row.operator_id;
   return row;
 }
 
 export async function createDatasetRecord(record = {}) {
-  const { operatorId, operatorEmail, error: readinessError } = await assertDatasetPersistenceReady();
+  const { operatorId, error: readinessError } = await assertDatasetPersistenceReady();
   if (readinessError) return buildSafeError(readinessError.message);
 
-  const row = toDatasetRow(record, operatorId, operatorEmail);
+  const row = toDatasetRow(record, operatorId);
   if (!row.id) return buildSafeError("Dataset record id is required.");
 
   const { data, error } = await supabase
@@ -174,7 +167,7 @@ export async function getDatasetRecordById(id) {
 }
 
 export async function updateDatasetRecord(id, record = {}) {
-  const { operatorId, operatorEmail, error: readinessError } = await assertDatasetPersistenceReady();
+  const { operatorId, error: readinessError } = await assertDatasetPersistenceReady();
   if (readinessError) return buildSafeError(readinessError.message);
 
   const safeId = safeString(id);
@@ -182,7 +175,7 @@ export async function updateDatasetRecord(id, record = {}) {
 
   const { data, error } = await supabase
     .from(DATASET_TABLE)
-    .update(toDatasetUpdate(record, operatorId, operatorEmail))
+    .update(toDatasetUpdate(record, operatorId))
     .eq("id", safeId)
     .eq("operator_id", operatorId)
     .select("*")

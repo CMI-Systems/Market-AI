@@ -590,7 +590,6 @@ High:
 
 Moderate:
 
-- Dataset persistence writes `operator_email`.
 - Backend Supabase env names are inconsistent with the backend Supabase client.
 - Backend CORS defaults include a production frontend origin and require staging `FRONTEND_URL` to be configured correctly.
 - External Vercel/Render envs were not directly verified.
@@ -625,6 +624,19 @@ Low:
    - Created staging-only SQL remediation artifact.
    - Applied the non-destructive grant remediation to staging.
 
+6. `FrontendReact/src/services/datasetPersistenceService.js`
+   - Removed `operator_email` from dataset insert/update payloads.
+   - Dataset ownership remains enforced through authenticated `operator_id`.
+
+7. `FrontendReact/src/services/intelligence/aiccDatasetCapture.js`
+   - Removed `operatorEmail` from new captured AICC dataset records and deterministic dataset ID seeds.
+
+8. `FrontendReact/src/services/intelligence/aiccDatasetQualityValidator.js`
+   - Dataset operator identity now requires `operatorId`; email no longer counts as valid dataset identity.
+
+9. `FrontendReact/src/services/intelligence/aiccShadowTrainingEvaluator.js`
+   - Shadow-readiness operator identity now requires `operatorId`; email no longer counts as valid readiness identity.
+
 ## Validation Results
 
 Frontend targeted lint:
@@ -638,6 +650,27 @@ FAIL, due pre-existing unrelated lint errors.
 Frontend build:
 
 PASS, with large chunk warning.
+
+Dataset `operator_email` remediation validation:
+
+PASS
+
+Commands:
+
+- `npx.cmd eslint src/services/datasetPersistenceService.js src/services/intelligence/aiccDatasetCapture.js src/services/intelligence/aiccDatasetQualityValidator.js src/services/intelligence/aiccShadowTrainingEvaluator.js src/services/historicalDatasetValidationService.js`
+- `npm.cmd run build`
+
+Result:
+
+- Targeted lint passed.
+- Frontend build passed.
+- Existing large chunk warning remains.
+- No `operator_email` or `operatorEmail` reference remains in dataset write payloads.
+- One read-side compatibility reference remains in `FrontendReact/src/services/historicalDatasetValidationService.js` for legacy stored rows.
+- No backend files changed.
+- No SQL was applied.
+- No migration was created.
+- Existing nullable `aicc_dataset_records.operator_email` column remains for backward compatibility and future non-destructive cleanup planning.
 
 Backend syntax:
 
@@ -729,17 +762,97 @@ This deployed QA confirms two approved operators can authenticate through the de
 | `provider-status` 200 responses | PASS |
 | Temporary QA row cleanup metadata scan | PASS |
 
+## Password Recovery Email Flow QA
+
+Status: PARTIAL / REAL EMAIL LINK PENDING
+
+Environment:
+
+- Supabase project URL verified through MCP: `https://ilogukxgdhqymgxpxejr.supabase.co`
+- Staging frontend target: `https://market-ai-git-main-jesus-xprs-projects.vercel.app`
+- Required recovery route: `/update-password`
+
+Implementation status:
+
+- `/update-password` exists outside `ProtectedRoute`: PASS
+- `PASSWORD_RECOVERY` sessions set only a boolean recovery-pending marker: PASS
+- Recovery-pending sessions are redirected away from protected AICC routes: PASS
+- Direct `/update-password` without the recovery marker fails closed: PASS by code inspection
+- Password update uses `supabase.auth.updateUser({ password })`: PASS
+- Successful password update clears the recovery marker, signs out, and redirects to `/login`: PASS
+- Login password reset request now uses `supabase.auth.resetPasswordForEmail(email, { redirectTo })`: PASS
+- Reset redirect target is `${window.location.origin}/update-password`: PASS
+- No tokens, recovery links, session objects, passwords, or operator identifiers are logged by the inspected recovery code: PASS
+
+Code changes:
+
+- `FrontendReact/src/services/supabaseClient.js`
+  - Added `requestPasswordRecovery(email)`.
+  - Uses `redirectTo: ${window.location.origin}/update-password`.
+  - Does not store or log credentials, tokens, links, or session objects.
+
+- `FrontendReact/src/pages/Login.jsx`
+  - Added a password reset request control.
+  - Shows sanitized success/failure messages.
+  - Does not display the operator email in logs or reports.
+
+- `FrontendReact/src/styles/Auth.css`
+  - Added a non-error notice style for password recovery request feedback.
+
+Validation:
+
+- Targeted JS lint: PASS
+- Frontend build: PASS
+- Existing large chunk warning remains.
+- Real recovery email sent by Codex: NO
+- Real recovery link passed: PENDING
+
+Manual Supabase Auth configuration verification required:
+
+- Confirm Supabase Auth password recovery redirect points to `https://market-ai-git-main-jesus-xprs-projects.vercel.app/update-password`.
+- Confirm the redirect allow-list includes:
+  - `https://market-ai-git-main-jesus-xprs-projects.vercel.app`
+  - `https://market-ai-git-main-jesus-xprs-projects.vercel.app/*`
+  - `https://market-ai-git-main-jesus-xprs-projects.vercel.app/update-password`
+  - `https://market-ai-git-main-jesus-xprs-projects.vercel.app/update-password/*`
+
+Manual real-link QA steps:
+
+1. Open the deployed staging login page.
+2. Enter the Operator A account email manually in the login email field. Do not paste the email into chat or source files.
+3. Click `Reset Password`.
+4. Confirm the browser shows the sanitized request confirmation.
+5. Open the received recovery email manually.
+6. Click the recovery link without copying it into chat.
+7. Confirm the app opens `/update-password`.
+8. Confirm direct navigation to protected routes redirects back to `/update-password` while the recovery marker is pending.
+9. Enter and confirm a new staging test password.
+10. Submit the update.
+11. Confirm the recovery marker is cleared, the session signs out, and the app returns to `/login`.
+12. Log in normally with the new password.
+13. Confirm protected routes work and no console/network errors appear.
+14. Repeat for Operator B only if both operator recovery flows must be certified before Private Beta.
+
+Result interpretation:
+
+- If Operator A completes the flow successfully, password recovery can move to PASS for one-operator staging QA.
+- If both Operator A and Operator B complete the flow successfully, password recovery can move to PASS for full two-operator staging QA.
+- If the link opens Command Center directly or bypasses `/update-password`, classify as HIGH and keep Private Beta HOLD.
+- If any token, recovery link, password, email, or session object is logged or displayed unexpectedly, classify as CRITICAL and keep Private Beta BLOCKED.
+
 ## Remaining Blockers
 
 1. Complete real password recovery email flow QA after Supabase rate-limit clears.
 
-2. Remove or formally remediate dataset `operator_email` persistence.
+2. Align backend environment variable names with `Backend/services/supabaseClient.js`.
 
-3. Align backend environment variable names with `Backend/services/supabaseClient.js`.
-
-4. Optional Supabase advisor hardening:
+3. Optional Supabase advisor hardening:
    - Fix mutable function `search_path` warnings.
    - Convert `auth.uid()` policies to `(select auth.uid())` where appropriate for RLS performance.
+
+Resolved staging blocker:
+
+- Dataset `operator_email` persistence is COMPLETE for new frontend dataset writes. Future optional DB cleanup can remove the legacy nullable column after staging confirms no remaining dependency.
 
 ## Private Beta Readiness Verdict
 
@@ -747,14 +860,14 @@ HOLD
 
 Reason:
 
-The app is buildable and core staging auth logic is materially improved. Supabase least-privilege grants have been remediated in staging. The deployed two-operator auth/CORS/browser QA gate is now PASS. Private Beta remains HOLD until the real password recovery email flow passes, dataset `operator_email` persistence is remediated, backend environment variable naming is aligned, and optional Supabase advisor hardening is evaluated.
+The app is buildable and core staging auth logic is materially improved. Supabase least-privilege grants have been remediated in staging. The deployed two-operator auth/CORS/browser QA gate is now PASS. New frontend dataset writes no longer populate `operator_email`. Private Beta remains HOLD until the real password recovery email flow passes, backend environment variable naming is aligned, and optional Supabase advisor hardening is evaluated.
 
 ## Manual Next Steps
 
 1. Complete real password recovery email QA.
-2. Remove or formally remediate dataset `operator_email` persistence.
-3. Align backend Supabase environment variable names.
-4. Decide whether to perform optional Supabase advisor hardening before Private Beta.
+2. Align backend Supabase environment variable names.
+3. Decide whether to perform optional Supabase advisor hardening before Private Beta.
+4. Plan future non-destructive removal of the legacy nullable `operator_email` column after staging soak, if desired.
 
 Recommended next step:
 

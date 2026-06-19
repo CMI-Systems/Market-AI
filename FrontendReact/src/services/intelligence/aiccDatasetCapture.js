@@ -42,11 +42,6 @@ function deriveOperatorId(operator) {
   return id || null;
 }
 
-function deriveOperatorEmail(operator) {
-  const email = safeString(operator.email || operator.operatorEmail, "");
-  return email || null;
-}
-
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -156,7 +151,6 @@ export function createAiccDatasetRecord(input = {}) {
   );
 
   const operatorId = deriveOperatorId(operator);
-  const operatorEmail = deriveOperatorEmail(operator);
   const symbol = safeString(safeInput.symbol, "UNKNOWN");
   const timestamp = safeString(safeInput.timestamp, "1970-01-01T00:00:00.000Z");
 
@@ -189,7 +183,6 @@ export function createAiccDatasetRecord(input = {}) {
 
   const seed = {
     operatorId,
-    operatorEmail,
     symbol,
     timestamp,
     learningTargets,
@@ -198,7 +191,6 @@ export function createAiccDatasetRecord(input = {}) {
   return {
     id: safeString(safeInput.id, createDeterministicId(seed)),
     operatorId,
-    operatorEmail,
     symbol,
     timestamp,
     intelligenceSnapshot,

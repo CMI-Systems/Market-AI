@@ -100,7 +100,7 @@ export function validateAiccDatasetRecord(record = {}) {
   const rejectionReasons = [];
   const missingFields = [];
 
-  const hasOperatorIdentity = Boolean(safeString(safeRecord.operatorId) || safeString(safeRecord.operatorEmail));
+  const hasOperatorIdentity = Boolean(safeString(safeRecord.operatorId));
   const hasSymbol = isKnownString(safeRecord.symbol, "UNKNOWN");
   const hasTacticalTarget = isKnownString(learningTargets.tacticalTarget, "UNKNOWN_TACTICAL");
   const hasBehavioralTarget = isKnownString(learningTargets.behavioralTarget, "UNKNOWN_BEHAVIORAL");

@@ -4,6 +4,7 @@ import {
   getAuthSession,
   isSupabaseConfigured,
   isPasswordRecoveryPending,
+  requestPasswordRecovery,
   signInOperator,
 } from "../services/supabaseClient";
 import "../styles/Auth.css";
@@ -17,7 +18,9 @@ function Login() {
   const [session, setSession] = useState(null);
   const [isChecking, setIsChecking] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRecoverySubmitting, setIsRecoverySubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -41,6 +44,7 @@ function Login() {
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+    setNotice("");
     setIsSubmitting(true);
 
     const result = await signInOperator({ email, password });
@@ -53,6 +57,29 @@ function Login() {
     }
 
     navigate(from, { replace: true });
+  }
+
+  async function handlePasswordRecovery() {
+    setError("");
+    setNotice("");
+
+    if (!email.trim()) {
+      setError("Enter your operator account email before requesting password recovery.");
+      return;
+    }
+
+    setIsRecoverySubmitting(true);
+
+    const result = await requestPasswordRecovery(email.trim());
+
+    setIsRecoverySubmitting(false);
+
+    if (result.error) {
+      setError("Password recovery could not be started. Try again later or contact the beta administrator.");
+      return;
+    }
+
+    setNotice("If the operator account is approved, a password recovery email will be sent.");
   }
 
   if (isChecking) {
@@ -121,9 +148,18 @@ function Login() {
           </label>
 
           {error && <p className="auth-error">{error}</p>}
+          {notice && <p className="auth-notice-text">{notice}</p>}
 
           <button disabled={!isSupabaseConfigured || isSubmitting} type="submit">
             {isSubmitting ? "Verifying..." : "Enter AICC"}
+          </button>
+
+          <button
+            disabled={!isSupabaseConfigured || isSubmitting || isRecoverySubmitting}
+            onClick={handlePasswordRecovery}
+            type="button"
+          >
+            {isRecoverySubmitting ? "Requesting..." : "Reset Password"}
           </button>
         </form>
       </section>

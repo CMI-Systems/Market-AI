@@ -58,7 +58,7 @@ export function evaluateShadowTrainingReadiness(record = {}, validation = {}) {
 
   const validationPassed = safeValidation.valid === true;
   const acceptedForShadowTraining = safeValidation.acceptedForShadowTraining === true;
-  const hasOperatorIdentity = Boolean(safeString(safeRecord.operatorId) || safeString(safeRecord.operatorEmail));
+  const hasOperatorIdentity = Boolean(safeString(safeRecord.operatorId));
   const tacticalReady = isKnownTarget(learningTargets.tacticalTarget, "UNKNOWN_TACTICAL");
   const behavioralReady = isKnownTarget(learningTargets.behavioralTarget, "UNKNOWN_BEHAVIORAL");
   const failsafeReady = isKnownTarget(learningTargets.failsafeTarget, "UNKNOWN_FAILSAFE");

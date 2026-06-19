@@ -92,6 +92,25 @@ export async function signInOperator({ email, password }) {
   };
 }
 
+export async function requestPasswordRecovery(email) {
+  if (!supabase) {
+    return {
+      error: new Error("Supabase is not configured for this environment."),
+    };
+  }
+
+  const redirectTo =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/update-password`
+      : undefined;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo,
+  });
+
+  return { error };
+}
+
 export async function signOutOperator() {
   if (!supabase) {
     clearPasswordRecoveryPending();

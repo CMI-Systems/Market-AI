@@ -41,7 +41,7 @@
 
 .alert-summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
 }
@@ -186,6 +186,67 @@
 
 .alert-notice {
   border-color: rgba(83, 211, 218, 0.28);
+}
+
+.alert-high,
+.alert-blocked {
+  border-color: rgba(255, 151, 96, 0.46);
+}
+
+.alert-acknowledged {
+  opacity: 0.72;
+}
+
+.alert-warning-text {
+  color: #ffd166;
+}
+
+.alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.alert-actions button {
+  padding: 9px 12px;
+  border: 1px solid rgba(83, 211, 218, 0.2);
+  border-radius: 999px;
+  background: rgba(2, 8, 23, 0.78);
+  color: #e8fbff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.alert-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.alerts-empty-state {
+  grid-column: 1 / -1;
+  padding: 24px;
+  border: 1px dashed rgba(83, 211, 218, 0.28);
+  border-radius: 16px;
+  background: rgba(5, 15, 32, 0.72);
+}
+
+.alerts-empty-state strong,
+.alerts-empty-state span,
+.live-alert-feed small {
+  display: block;
+}
+
+.alerts-empty-state span,
+.live-alert-feed small {
+  margin-top: 8px;
+  color: #8fa6b8;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .live-alert-feed {

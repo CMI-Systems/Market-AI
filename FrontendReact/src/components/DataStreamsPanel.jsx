@@ -8,48 +8,31 @@ import {
   getOfflineMarketProviderStatus,
 } from "../services/marketProviderApi";
 
-function displayState(value) {
-  if (value === undefined || value === null || value === "") return "OFFLINE";
+function displayState(value, fallback = "UNAVAILABLE") {
+  if (value === undefined || value === null || value === "") return fallback;
   return String(value).replace(/_/g, " ");
 }
 
-function displayStreamMode(systemStatus, activeProvider, fallbackMode) {
-  if (systemStatus.streamMode === "LIVE_ALPACA") {
-    return "LIVE ALPACA";
+function displayTransportMode(systemStatus, providerStatus) {
+  if (systemStatus.backend === "OFFLINE" || systemStatus.sourceType === "BACKEND_UNAVAILABLE") {
+    return "BACKEND UNAVAILABLE";
   }
 
   if (systemStatus.simulationActive) {
-    return "SIMULATION ACTIVE";
+    return "SIMULATED DEV STREAM";
   }
 
-  if (activeProvider === "SIMULATION" || activeProvider === "FALLBACK") {
-    return "SIMULATION ACTIVE";
+  if (systemStatus.rawDataAvailable === true || providerStatus.rawDataAvailable === true) {
+    return "REST SNAPSHOT";
   }
 
-  if (activeProvider === "BACKEND_UNAVAILABLE" || fallbackMode === "OFFLINE") {
-    return "DATA UNAVAILABLE";
-  }
-
-  if (systemStatus.rawDataAvailable !== true) {
-    return displayState(systemStatus.dataState || fallbackMode || "DATA_UNAVAILABLE");
-  }
-
-  return activeProvider ? "LIVE PROVIDER" : displayState(fallbackMode);
+  return displayState(systemStatus.dataState || providerStatus.dataState || systemStatus.streamMode);
 }
 
 function displayResolvedProvider(systemStatus, providerStatus) {
-  if (systemStatus.streamMode === "LIVE_ALPACA") return "ALPACA";
-  if (systemStatus.simulationActive) return "SIMULATION";
-  if (providerStatus.rawDataAvailable !== true || providerStatus.sourceType === "DATA_UNAVAILABLE") {
-    return "DATA UNAVAILABLE";
-  }
-  return displayState(providerStatus.activeProvider);
-}
-
-function displayFallbackStatus(systemStatus, activeProvider) {
-  return systemStatus.simulationActive || activeProvider === "SIMULATION" || activeProvider === "FALLBACK"
-    ? "SIMULATION ACTIVE"
-    : "UNAVAILABLE";
+  if (systemStatus.rawDataAvailable === true && systemStatus.provider) return displayState(systemStatus.provider);
+  if (providerStatus.rawDataAvailable === true && providerStatus.activeProvider) return displayState(providerStatus.activeProvider);
+  return "DATA UNAVAILABLE";
 }
 
 function DataStreamsPanel() {
@@ -57,44 +40,69 @@ function DataStreamsPanel() {
   const [providerStatus, setProviderStatus] = useState(getOfflineMarketProviderStatus());
 
   useEffect(() => {
+    let cancelled = false;
+    let timerId = null;
+
     async function loadData() {
       const [status, marketProviderStatus] = await Promise.all([
         getAiccSystemStatus(),
         getMarketProviderStatus(),
       ]);
+
+      if (cancelled) return;
+
       setSystemStatus(status);
       setProviderStatus(marketProviderStatus);
+      timerId = window.setTimeout(loadData, 10000);
     }
 
     loadData();
 
-    const interval = setInterval(loadData, 10000);
-
-    return () => clearInterval(interval);
+    return () => {
+      cancelled = true;
+      if (timerId) window.clearTimeout(timerId);
+    };
   }, []);
+
+  const rawSnapshotAvailable = systemStatus.rawDataAvailable === true || providerStatus.rawDataAvailable === true;
 
   return (
     <div className="panel">
       <h2>Data Streams</h2>
       <p>
-        Active Provider {displayResolvedProvider(systemStatus, providerStatus)} | Mode{" "}
-        {displayStreamMode(systemStatus, providerStatus.activeProvider, systemStatus.mode)}
+        Provider {displayResolvedProvider(systemStatus, providerStatus)} | Transport{" "}
+        {displayTransportMode(systemStatus, providerStatus)}
       </p>
 
       <div className="brain-metrics">
         <div>
+          <span>Real Provider Stream</span>
+          <strong>NOT IMPLEMENTED</strong>
+        </div>
+
+        <div>
           <span>Equities</span>
-          <strong>{providerStatus.rawDataAvailable === true && providerStatus.capabilities?.equities ? "ONLINE" : "OFFLINE"}</strong>
+          <strong>{rawSnapshotAvailable && providerStatus.capabilities?.equities ? "SNAPSHOT" : displayState(systemStatus.dataState)}</strong>
         </div>
 
         <div>
-          <span>Options</span>
-          <strong>{providerStatus.capabilities?.options ? "ONLINE" : "PENDING"}</strong>
+          <span>Quotes</span>
+          <strong>{rawSnapshotAvailable && providerStatus.capabilities?.quotes ? "SNAPSHOT" : "DATA UNAVAILABLE"}</strong>
         </div>
 
         <div>
-          <span>Futures</span>
-          <strong>{providerStatus.capabilities?.futures ? "ONLINE" : "UNAVAILABLE"}</strong>
+          <span>Candles</span>
+          <strong>{rawSnapshotAvailable && providerStatus.capabilities?.historicalCandles ? "SNAPSHOT" : "DATA UNAVAILABLE"}</strong>
+        </div>
+
+        <div>
+          <span>Subscriptions</span>
+          <strong>NOT IMPLEMENTED</strong>
+        </div>
+
+        <div>
+          <span>Last Message</span>
+          <strong>{systemStatus.lastMessageAt ? displayState(systemStatus.lastMessageAt) : "NONE"}</strong>
         </div>
 
         <div>
@@ -103,68 +111,28 @@ function DataStreamsPanel() {
         </div>
 
         <div>
-          <span>Provider</span>
-          <strong>{displayResolvedProvider(systemStatus, providerStatus)}</strong>
-        </div>
-
-        <div>
-          <span>Primary Provider</span>
-          <strong>{displayState(providerStatus.primaryProvider)}</strong>
-        </div>
-
-        <div>
-          <span>Fallback</span>
-          <strong>{displayFallbackStatus(systemStatus, providerStatus.activeProvider)}</strong>
-        </div>
-
-        <div>
           <span>Provider Health</span>
           <strong>{displayState(providerStatus.providerHealth)}</strong>
         </div>
 
         <div>
-          <span>Market Status</span>
-          <strong>{displayState(providerStatus.marketStatus)}</strong>
-        </div>
-
-        <div>
-          <span>Symbol</span>
-          <strong>{systemStatus.available === false ? "UNAVAILABLE" : systemStatus.feeds?.symbol || "SPY"}</strong>
-        </div>
-
-        <div>
-          <span>Tactical</span>
-          <strong>{displayState(systemStatus.brains?.tactical)}</strong>
-        </div>
-
-        <div>
-          <span>Behavioral</span>
-          <strong>{displayState(systemStatus.brains?.behavioral)}</strong>
-        </div>
-
-        <div>
-          <span>Failsafe</span>
-          <strong>{displayState(systemStatus.brains?.failsafe)}</strong>
+          <span>Session</span>
+          <strong>{displayState(systemStatus.sessionState || providerStatus.sessionState)}</strong>
         </div>
 
         <div>
           <span>Feed State</span>
-          <strong>{displayState(systemStatus.feeds?.feedState)}</strong>
+          <strong>{displayState(systemStatus.feeds?.feedState || systemStatus.dataState)}</strong>
         </div>
 
         <div>
           <span>Runtime</span>
-          <strong>{displayState(systemStatus.runtime)}</strong>
+          <strong>{displayState(systemStatus.runtimeEnvironment || systemStatus.runtime)}</strong>
         </div>
 
         <div>
-          <span>Events</span>
-          <strong>{systemStatus.feeds?.events ?? 0}</strong>
-        </div>
-
-        <div>
-          <span>Memory</span>
-          <strong>{systemStatus.feeds?.memory ?? "DATA_UNAVAILABLE"}</strong>
+          <span>Simulation</span>
+          <strong>{systemStatus.simulationActive ? "SIMULATED" : systemStatus.simulationAllowed ? "DEV ENABLED" : "BLOCKED"}</strong>
         </div>
       </div>
     </div>

@@ -24,6 +24,18 @@ const riskRank = {
   HIGH: 3,
 };
 
+const BLOCKED_SOURCE_TYPES = new Set([
+  "SIMULATED",
+  "GENERATED",
+  "UNKNOWN_SOURCE",
+  "INVALID_TIMESTAMP",
+  "PROVIDER_OFFLINE",
+  "BACKEND_UNAVAILABLE",
+  "DATA_UNAVAILABLE",
+  "PROVIDER_UNAVAILABLE",
+  "BLOCKED",
+]);
+
 function displayState(value, fallback = "OFFLINE") {
   if (value === undefined || value === null || value === "") return fallback;
   return String(value).replace(/_/g, " ");
@@ -43,6 +55,55 @@ function displayFallbackStatus(providerStatus, providerDiagnostics) {
 
 function normalizeSymbol(symbol) {
   return String(symbol || "").trim().toUpperCase().replace(/[^A-Z0-9.-]/g, "");
+}
+
+function isValidSymbolInput(value) {
+  const raw = String(value || "").trim().toUpperCase();
+  const normalized = normalizeSymbol(raw);
+
+  return Boolean(raw) && raw === normalized && /^[A-Z0-9.-]{1,12}$/.test(normalized);
+}
+
+function isValidTimestamp(value) {
+  if (!value) return false;
+  return Number.isFinite(new Date(value).getTime());
+}
+
+function isUnsafeMarketRecord(record) {
+  if (!record) return true;
+  if (record.available === false) return true;
+  if (record.simulated === true || record.generated === true) return true;
+  if (BLOCKED_SOURCE_TYPES.has(record.sourceType || record.dataState)) return true;
+  if (record.provider && String(record.provider).toUpperCase() !== "ALPACA") return true;
+  return false;
+}
+
+function getUnavailableRow(symbol, previous, providerStatus, reason = "DATA_UNAVAILABLE", signal = null) {
+  return {
+    ...previous,
+    symbol,
+    price: null,
+    changePercent: null,
+    volume: "--",
+    consensus: "DATA_UNAVAILABLE",
+    signal: isUnsafeMarketRecord(signal) ? "DATA_UNAVAILABLE" : signal.signal || "DATA_UNAVAILABLE",
+    confidence: isUnsafeMarketRecord(signal) ? null : Number.isFinite(Number(signal.confidence)) ? Number(signal.confidence) : null,
+    risk: isUnsafeMarketRecord(signal) ? "UNKNOWN" : signal.risk || "UNKNOWN",
+    signalType: isUnsafeMarketRecord(signal) ? undefined : signal.signalType,
+    reason: reason,
+    provider: providerStatus.activeProvider || providerStatus.primaryProvider || "DATA_UNAVAILABLE",
+    providerStatus: providerStatus.providerHealth || "OFFLINE",
+    updatedAt: null,
+    available: false,
+    sourceType: reason,
+    dataAge: null,
+    sessionState: providerStatus.sessionState || "UNKNOWN_SESSION",
+    marketStatus: providerStatus.marketStatus || "DATA_UNAVAILABLE",
+    validationStatus: reason,
+    qualityLabel: "BLOCKED",
+    simulated: false,
+    generated: false,
+  };
 }
 
 function getStoredSymbols() {
@@ -67,11 +128,11 @@ function getFallbackRow(symbol) {
     symbol,
     name: fallback?.name || symbol,
     category: fallback?.category || "Custom Watchlist",
-    price: fallback?.price ?? null,
-    changePercent: fallback?.changePercent ?? null,
-    volume: fallback?.volume || "--",
+    price: null,
+    changePercent: null,
+    volume: "--",
     consensus: fallback?.consensus || "DATA_UNAVAILABLE",
-    confidence: fallback?.confidence ?? null,
+    confidence: null,
     signal: fallback?.signal || "DATA_UNAVAILABLE",
     risk: fallback?.risk || "UNKNOWN",
     provider: fallback?.provider || "--",
@@ -79,6 +140,11 @@ function getFallbackRow(symbol) {
     updatedAt: fallback?.updatedAt || null,
     available: fallback?.available === true,
     sourceType: fallback?.sourceType || "DATA_UNAVAILABLE",
+    dataAge: fallback?.dataAge ?? null,
+    sessionState: fallback?.sessionState || "UNKNOWN_SESSION",
+    marketStatus: fallback?.marketStatus || "DATA_UNAVAILABLE",
+    validationStatus: fallback?.validationStatus || "DATA_UNAVAILABLE",
+    qualityLabel: fallback?.qualityLabel || "BLOCKED",
     simulated: fallback?.simulated === true,
     generated: fallback?.generated === true,
   };
@@ -88,41 +154,71 @@ function mergeRow(symbol, previousRows, quoteBySymbol, signalBySymbol, providerS
   const previous = previousRows.find((row) => row.symbol === symbol) || getFallbackRow(symbol);
   const quote = quoteBySymbol.get(symbol);
   const signal = signalBySymbol.get(symbol);
-  const price = Number(signal?.price ?? quote?.price);
-  const changePercent = Number(signal?.changePercent ?? quote?.changePercent);
+  const quoteUnavailable = isUnsafeMarketRecord(quote);
+  const signalUnavailable = isUnsafeMarketRecord(signal);
+  const price = Number(quote?.price);
+  const changePercent = Number(quote?.changePercent);
   const confidence = Number(signal?.confidence);
-  const quoteUnavailable = quote?.available === false || quote?.sourceType === "DATA_UNAVAILABLE";
+  const timestamp = quote?.updatedAt || quote?.timestamp || signal?.updatedAt || null;
+
+  if (quoteUnavailable) {
+    return getUnavailableRow(
+      symbol,
+      previous,
+      providerStatus,
+      quote?.sourceType || quote?.dataState || providerStatus.dataState || "DATA_UNAVAILABLE",
+      signal
+    );
+  }
 
   return {
     ...previous,
     symbol,
     name: quote?.name || previous.name || symbol,
-    price: quoteUnavailable ? null : Number.isFinite(price) ? price : previous.price,
-    changePercent: quoteUnavailable ? null : Number.isFinite(changePercent) ? changePercent : previous.changePercent,
-    volume: quoteUnavailable ? "--" : signal?.volume || quote?.volume || previous.volume || "--",
+    price: Number.isFinite(price) ? price : null,
+    changePercent: Number.isFinite(changePercent) ? changePercent : null,
+    volume: quote?.volume || "--",
     consensus: previous.consensus || "DATA_UNAVAILABLE",
-    signal: signal?.signal || previous.signal || "DATA_UNAVAILABLE",
-    confidence: Number.isFinite(confidence) ? confidence : previous.confidence ?? null,
-    risk: signal?.risk || previous.risk || "UNKNOWN",
-    signalType: signal?.signalType || previous.signalType,
-    reason: signal?.reason || previous.reason,
-    provider: signal?.provider || quote?.provider || providerStatus.activeProvider || previous.provider || "--",
+    signal: signalUnavailable ? "DATA_UNAVAILABLE" : signal?.signal || "DATA_UNAVAILABLE",
+    confidence: signalUnavailable ? null : Number.isFinite(confidence) ? confidence : null,
+    risk: signalUnavailable ? "UNKNOWN" : signal?.risk || "UNKNOWN",
+    signalType: signalUnavailable ? undefined : signal?.signalType,
+    reason: signalUnavailable ? undefined : signal?.reason,
+    provider: quote?.provider || providerStatus.activeProvider || previous.provider || "--",
     providerStatus: quote?.providerStatus || providerStatus.providerHealth || previous.providerStatus || "--",
-    updatedAt: signal?.updatedAt || quote?.updatedAt || previous.updatedAt,
+    updatedAt: isValidTimestamp(timestamp) ? timestamp : null,
+    available: true,
+    sourceType: quote?.sourceType || "RAW_DELAYED",
+    dataAge: quote?.dataAge ?? null,
+    sessionState: quote?.sessionState || providerStatus.sessionState || "UNKNOWN_SESSION",
+    marketStatus: providerStatus.marketStatus || "UNKNOWN",
+    validationStatus: quote?.validationStatus || quote?.marketDataValidation?.status || "VALID",
+    qualityLabel: quote?.qualityLabel || quote?.marketDataValidation?.qualityLabel || "ACCEPTABLE",
+    simulated: false,
+    generated: false,
   };
 }
 
 function formatPrice(value) {
+  if (value === undefined || value === null || value === "") return "--";
   return Number.isFinite(Number(value)) ? `$${Number(value).toFixed(2)}` : "--";
 }
 
 function formatChange(value) {
+  if (value === undefined || value === null || value === "") return "--";
   if (!Number.isFinite(Number(value))) return "--";
 
   return `${Number(value) >= 0 ? "+" : ""}${Number(value).toFixed(2)}%`;
 }
 
+function getChangeClass(value) {
+  if (value === undefined || value === null || value === "") return "unavailable-change";
+  if (!Number.isFinite(Number(value))) return "unavailable-change";
+  return Number(value) >= 0 ? "positive-change" : "negative-change";
+}
+
 function formatConfidence(value) {
+  if (value === undefined || value === null || value === "") return "--";
   return Number.isFinite(Number(value)) ? `${Math.round(Number(value))}%` : "--";
 }
 
@@ -133,6 +229,16 @@ function formatUpdatedAt(value) {
   if (Number.isNaN(date.getTime())) return "--";
 
   return date.toLocaleString();
+}
+
+function formatDataAge(value) {
+  if (value === undefined || value === null || value === "") return "--";
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return String(value);
+  if (numeric < 60) return `${Math.round(numeric)}s`;
+  if (numeric < 3600) return `${Math.round(numeric / 60)}m`;
+  if (numeric < 86400) return `${Math.round(numeric / 3600)}h`;
+  return `${Math.round(numeric / 86400)}d`;
 }
 
 function Watchlists() {
@@ -156,6 +262,7 @@ function Watchlists() {
     error: "",
   });
   const [errorMessage, setErrorMessage] = useState("");
+  const [symbolMessage, setSymbolMessage] = useState("");
 
   useEffect(() => {
     persistSymbols(symbols);
@@ -181,34 +288,46 @@ function Watchlists() {
     async function loadProviderData() {
       if (!symbols.length) return;
 
-      const [status, diagnostics, quotes, signals] = await Promise.all([
-        getMarketProviderStatus(),
-        getProviderDiagnostics(),
-        getMarketQuotes(symbols),
-        getProviderSignals(symbols),
-      ]);
+      try {
+        const [status, diagnostics, quotes, signals] = await Promise.all([
+          getMarketProviderStatus(),
+          getProviderDiagnostics(),
+          getMarketQuotes(symbols),
+          getProviderSignals(symbols),
+        ]);
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      const quoteBySymbol = new Map(
-        quotes.map((quote) => [normalizeSymbol(quote.symbol), quote])
-      );
-      const signalBySymbol = new Map(
-        signals.map((signal) => [normalizeSymbol(signal.symbol), signal])
-      );
+        const quoteBySymbol = new Map(
+          quotes.map((quote) => [normalizeSymbol(quote.symbol), quote])
+        );
+        const signalBySymbol = new Map(
+          signals.map((signal) => [normalizeSymbol(signal.symbol), signal])
+        );
 
-      setProviderStatus(status);
-      setProviderDiagnostics(diagnostics);
+        setProviderStatus(status);
+        setProviderDiagnostics(diagnostics);
 
-      if (!quotes.length && !signals.length) {
-        setErrorMessage("Provider data temporarily unavailable");
-        return;
+        if (!quotes.length && !signals.length) {
+          setErrorMessage("Provider data temporarily unavailable");
+        } else {
+          setErrorMessage("");
+        }
+
+        setWatchlistRows((previousRows) =>
+          symbols.map((symbol) => mergeRow(symbol, previousRows, quoteBySymbol, signalBySymbol, status))
+        );
+      } catch {
+        if (!mounted) return;
+        const offlineStatus = getOfflineMarketProviderStatus();
+
+        setProviderStatus(offlineStatus);
+        setProviderDiagnostics(getOfflineProviderDiagnostics());
+        setErrorMessage("Backend unavailable");
+        setWatchlistRows((previousRows) =>
+          symbols.map((symbol) => getUnavailableRow(symbol, previousRows.find((row) => row.symbol === symbol) || getFallbackRow(symbol), offlineStatus, "BACKEND_UNAVAILABLE"))
+        );
       }
-
-      setErrorMessage("");
-      setWatchlistRows((previousRows) =>
-        symbols.map((symbol) => mergeRow(symbol, previousRows, quoteBySymbol, signalBySymbol, status))
-      );
     }
 
     loadProviderData();
@@ -309,7 +428,9 @@ function Watchlists() {
   const averageConfidence = watchlistRows.length
     ? (() => {
         const confidenceValues = watchlistRows
-          .map((item) => Number(item.confidence))
+          .map((item) => (item.confidence === undefined || item.confidence === null || item.confidence === ""
+            ? null
+            : Number(item.confidence)))
           .filter(Number.isFinite);
 
         return confidenceValues.length
@@ -327,21 +448,26 @@ function Watchlists() {
 
   function addSymbol(event) {
     event.preventDefault();
-    const symbol = normalizeSymbol(newSymbol);
+    const rawSymbol = String(newSymbol || "").trim().toUpperCase();
+    const symbol = normalizeSymbol(rawSymbol);
 
-    if (!symbol) return;
+    if (!isValidSymbolInput(rawSymbol)) {
+      setSymbolMessage("INVALID_SYMBOL");
+      return;
+    }
     if (symbols.includes(symbol)) {
-      setErrorMessage(`${symbol} is already in this watchlist`);
+      setSymbolMessage(`${symbol} is already in this watchlist`);
       return;
     }
 
     setSymbols((currentSymbols) => [...currentSymbols, symbol]);
     setSelectedSymbol(symbol);
     setNewSymbol("");
-    setErrorMessage("");
+    setSymbolMessage("");
   }
 
   function removeSymbol(symbol) {
+    setSymbolMessage("");
     setSymbols((currentSymbols) => currentSymbols.filter((item) => item !== symbol));
   }
 
@@ -443,6 +569,7 @@ function Watchlists() {
         </select>
       </section>
 
+      {symbolMessage ? <p className="watchlist-error">{symbolMessage}</p> : null}
       {errorMessage ? <p className="watchlist-error">{errorMessage}</p> : null}
 
       {selectedRow ? (
@@ -458,7 +585,7 @@ function Watchlists() {
           </div>
           <div>
             <span>Change %</span>
-            <strong className={Number(selectedRow.changePercent || 0) >= 0 ? "positive-change" : "negative-change"}>
+            <strong className={getChangeClass(selectedRow.changePercent)}>
               {formatChange(selectedRow.changePercent)}
             </strong>
           </div>
@@ -472,7 +599,7 @@ function Watchlists() {
           </div>
           <div>
             <span>Signal</span>
-            <strong>{selectedRow.signal || "NEUTRAL"}</strong>
+            <strong>{selectedRow.signal || "DATA_UNAVAILABLE"}</strong>
           </div>
           <div>
             <span>Confidence</span>
@@ -480,11 +607,27 @@ function Watchlists() {
           </div>
           <div>
             <span>Risk</span>
-            <strong>{selectedRow.risk || "MODERATE"}</strong>
+            <strong>{selectedRow.risk || "UNKNOWN"}</strong>
           </div>
           <div>
             <span>Last Updated</span>
             <strong>{formatUpdatedAt(selectedRow.updatedAt)}</strong>
+          </div>
+          <div>
+            <span>Source Type</span>
+            <strong>{displayState(selectedRow.sourceType, "DATA_UNAVAILABLE")}</strong>
+          </div>
+          <div>
+            <span>Session</span>
+            <strong>{displayState(selectedRow.sessionState, "UNKNOWN_SESSION")}</strong>
+          </div>
+          <div>
+            <span>Data Age</span>
+            <strong>{formatDataAge(selectedRow.dataAge)}</strong>
+          </div>
+          <div>
+            <span>Validation</span>
+            <strong>{displayState(selectedRow.validationStatus, "DATA_UNAVAILABLE")}</strong>
           </div>
         </section>
       ) : null}
@@ -521,7 +664,12 @@ function Watchlists() {
           <span>Manage</span>
         </div>
 
-        {visibleRows.map((item) => (
+        {visibleRows.length === 0 ? (
+          <div className="watchlist-empty-state">
+            <strong>{symbols.length ? "NO MATCHING SYMBOLS" : "EMPTY_WATCHLIST"}</strong>
+            <span>{symbols.length ? "Adjust search or filters." : "Add a symbol to begin provider validation."}</span>
+          </div>
+        ) : visibleRows.map((item) => (
           <div
             className={`watchlist-row ${selectedRow?.symbol === item.symbol ? "watchlist-row-selected" : ""}`}
             key={item.symbol}
@@ -540,39 +688,32 @@ function Watchlists() {
               <small>{item.name || item.symbol}</small>
             </span>
             <span>{formatPrice(item.price)}</span>
-            <span className={Number(item.changePercent || 0) >= 0 ? "positive-change" : "negative-change"}>
+            <span className={getChangeClass(item.changePercent)}>
               {formatChange(item.changePercent)}
             </span>
             <span>{item.volume || "--"}</span>
             <span>
-              <b className="watchlist-signal-badge">{item.signal || "NEUTRAL"}</b>
+              <b className="watchlist-signal-badge">{item.signal || "DATA_UNAVAILABLE"}</b>
             </span>
             <span>{formatConfidence(item.confidence)}</span>
             <span>
-              <b className={`watchlist-risk-badge risk-${String(item.risk || "MODERATE").toLowerCase()}`}>
-                {item.risk || "MODERATE"}
+              <b className={`watchlist-risk-badge risk-${String(item.risk || "UNKNOWN").toLowerCase()}`}>
+                {item.risk || "UNKNOWN"}
               </b>
             </span>
             <span>{displayProvider(item.provider)}</span>
             <span>
-              <b
+              <button
                 className="watchlist-remove-button"
-                role="button"
-                tabIndex={0}
+                aria-label={`Remove ${item.symbol} from watchlist`}
                 onClick={(event) => {
                   event.stopPropagation();
                   removeSymbol(item.symbol);
                 }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    removeSymbol(item.symbol);
-                  }
-                }}
+                type="button"
               >
                 Remove
-              </b>
+              </button>
             </span>
           </div>
         ))}

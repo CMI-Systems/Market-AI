@@ -7,19 +7,6 @@ const baseBehavioralScores = [
   { label: "Emotional Stability", score: 88 },
 ];
 
-const fallbackTopMistakes = [
-  { type: "Chasing", frequency: 2, severity: "High", impact: "Reduced reward-to-risk quality." },
-  { type: "Rule Violation", frequency: 1, severity: "High", impact: "Entered before required confirmation." },
-  { type: "Risk Ignored", frequency: 1, severity: "High", impact: "Held after liquidity support weakened." },
-];
-
-const fallbackMission = [
-  { label: "Primary Focus", value: "Late-session selectivity" },
-  { label: "Behavioral Goal", value: "Pause before entries when urgency increases." },
-  { label: "Execution Goal", value: "Wait for structure confirmation before breakout continuation." },
-  { label: "Risk Goal", value: "Cut exposure when liquidity support weakens." },
-];
-
 const tagScoreAdjustments = {
   Patient: { Patience: 10, "Emotional Stability": 4 },
   Disciplined: { Discipline: 10, "Execution Quality": 4 },
@@ -91,8 +78,17 @@ function getTags(input) {
   return Array.isArray(input?.behavioralTags) ? input.behavioralTags : [];
 }
 
+function hasMeaningfulOperatorEvidence(input, tags) {
+  return Boolean(
+    tags.length
+    || String(input?.behavioralReflection || "").trim().length >= 12
+    || String(input?.executionReview || "").trim().length >= 12
+    || String(input?.tradeThesis || input?.thesis || "").trim().length >= 12
+  );
+}
+
 function deriveBehavioralScores(tags) {
-  if (!tags.length) return baseBehavioralScores;
+  if (!tags.length) return [];
 
   return baseBehavioralScores.map((item) => {
     const adjustment = tags.reduce(
@@ -110,8 +106,8 @@ function deriveBehavioralScores(tags) {
 function deriveTraits(tags) {
   if (!tags.length) {
     return {
-      strongestTrait: "Discipline",
-      weakestTrait: "Conviction",
+      strongestTrait: "UNKNOWN",
+      weakestTrait: "UNKNOWN",
     };
   }
 
@@ -137,14 +133,14 @@ function deriveTraits(tags) {
 
 function deriveTopMistakes(tags) {
   const mapped = tags.map((tag) => tagMistakeMap[tag]).filter(Boolean);
-  return mapped.length ? mapped.slice(0, 3) : fallbackTopMistakes;
+  return mapped.slice(0, 3);
 }
 
 function deriveMission(tags) {
   const firstMappedTag = tags.find((tag) => tagMissionMap[tag]);
   const mission = tagMissionMap[firstMappedTag];
 
-  if (!mission) return fallbackMission;
+  if (!mission) return [];
 
   return [
     { label: "Primary Focus", value: mission.focus },
@@ -156,13 +152,31 @@ function deriveMission(tags) {
 
 export function analyzeReplayIntelligence(input = {}) {
   const tags = getTags(input);
+  const hasEvidence = hasMeaningfulOperatorEvidence(input, tags);
+
+  if (!hasEvidence) {
+    return {
+      status: "INSUFFICIENT_DATA",
+      evidenceCount: 0,
+      strongestTrait: "UNKNOWN",
+      weakestTrait: "UNKNOWN",
+      behavioralScores: [],
+      topMistakes: [],
+      missionForNextSession: [],
+      warnings: ["Persisted or explicit operator behavioral evidence is required before replay intelligence can evaluate behavior."],
+    };
+  }
+
   const traits = deriveTraits(tags);
 
   return {
+    status: tags.length ? "PARTIAL_REVIEW" : "INSUFFICIENT_TAG_DATA",
+    evidenceCount: tags.length,
     strongestTrait: traits.strongestTrait,
     weakestTrait: traits.weakestTrait,
     behavioralScores: deriveBehavioralScores(tags),
     topMistakes: deriveTopMistakes(tags),
     missionForNextSession: deriveMission(tags),
+    warnings: tags.length ? [] : ["Behavioral tags are required before traits, mistakes, or missions can be inferred."],
   };
 }

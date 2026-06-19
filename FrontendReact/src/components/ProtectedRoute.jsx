@@ -3,6 +3,8 @@ import { Navigate, useLocation } from "react-router-dom";
 import {
   getAuthSession,
   isSupabaseConfigured,
+  isPasswordRecoveryPending,
+  setPasswordRecoveryPending,
   signOutOperator,
   supabase,
 } from "../services/supabaseClient";
@@ -15,18 +17,94 @@ function ProtectedRoute({ children }) {
     checking: true,
     configured: isSupabaseConfigured,
     session: null,
+    operator: null,
+    recoveryPending: false,
   });
 
   useEffect(() => {
     let active = true;
+    let requestSequence = 0;
 
-    async function loadSession() {
-      const result = await getAuthSession();
+    async function resolveAuthorization({ configured, session }) {
+      const requestId = ++requestSequence;
 
       if (!active) return;
 
+      if (!configured || !session) {
+        setAuthState({
+          checking: false,
+          configured,
+          session: null,
+          operator: null,
+          recoveryPending: false,
+        });
+        return;
+      }
+
+      if (isPasswordRecoveryPending()) {
+        setAuthState({
+          checking: false,
+          configured: true,
+          session,
+          operator: null,
+          recoveryPending: true,
+        });
+        return;
+      }
+
+      setAuthState({
+        checking: true,
+        configured: true,
+        session,
+        operator: null,
+        recoveryPending: false,
+      });
+
+      const operator = await getCurrentOperator(session);
+
+      if (!active || requestId !== requestSequence) return;
+
       setAuthState({
         checking: false,
+        configured: true,
+        session,
+        operator,
+        recoveryPending: false,
+      });
+    }
+
+    async function loadSession() {
+      let result;
+
+      try {
+        result = await getAuthSession();
+      } catch (error) {
+        const code =
+          typeof error?.code === "string" ? error.code : "UNKNOWN";
+        console.error("AICC session validation failed.", { code });
+        await resolveAuthorization({
+          configured: isSupabaseConfigured,
+          session: null,
+        });
+        return;
+      }
+
+      if (!active) return;
+
+      if (result.error) {
+        const code =
+          typeof result.error.code === "string"
+            ? result.error.code
+            : "UNKNOWN";
+        console.error("AICC session validation failed.", { code });
+        await resolveAuthorization({
+          configured: result.configured,
+          session: null,
+        });
+        return;
+      }
+
+      await resolveAuthorization({
         configured: result.configured,
         session: result.session,
       });
@@ -42,18 +120,26 @@ function ProtectedRoute({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
 
-      setAuthState({
-        checking: false,
-        configured: true,
-        session,
-      });
+      if (event === "PASSWORD_RECOVERY") {
+        setPasswordRecoveryPending();
+      }
+
+      setTimeout(() => {
+        if (!active) return;
+
+        void resolveAuthorization({
+          configured: true,
+          session,
+        });
+      }, 0);
     });
 
     return () => {
       active = false;
+      requestSequence += 1;
       subscription.unsubscribe();
     };
   }, []);
@@ -74,27 +160,39 @@ function ProtectedRoute({ children }) {
     return <Navigate replace state={{ from: location }} to="/login" />;
   }
 
-  const operator = getCurrentOperator(authState.session);
+  if (authState.recoveryPending || isPasswordRecoveryPending()) {
+    return <Navigate replace to="/update-password" />;
+  }
 
-  if (!operator.authenticated || !operator.betaApproved) {
+  const operator = authState.operator;
+
+  if (!operator?.authenticated || !operator.betaApproved) {
+    const authorizationUnavailable =
+      operator?.authorizationState === "QUERY_ERROR";
+
     return (
       <div className="auth-page">
         <section className="auth-card auth-access-pending-card">
           <span>AICC CLOSED BETA</span>
-          <h1>Closed Beta Access Pending</h1>
+          <h1>
+            {authorizationUnavailable
+              ? "Authorization Check Unavailable"
+              : "Closed Beta Access Pending"}
+          </h1>
           <p>
-            Your operator account is authenticated, but it has not been approved
-            for AICC closed beta access yet.
+            {authorizationUnavailable
+              ? "AICC could not verify the protected operator profile. Access remains blocked."
+              : "Your operator account is authenticated, but its protected profile is missing, pending, or not consistently approved."}
           </p>
 
           <div className="auth-pending-grid">
             <div>
               <span>Operator Email</span>
-              <strong>{operator.email || "Unknown operator"}</strong>
+              <strong>{operator?.email || "Unknown operator"}</strong>
             </div>
             <div>
               <span>Status</span>
-              <strong>{operator.betaStatus}</strong>
+              <strong>{operator?.betaStatus || "AUTHORIZATION_UNAVAILABLE"}</strong>
             </div>
           </div>
 

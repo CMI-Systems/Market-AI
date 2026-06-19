@@ -33,18 +33,18 @@ function NewsLetterPanel() {
 
   return (
     <div className="panel">
-      <h2>Newsletter</h2>
-      <p>Intelligence Processing Center</p>
+      <h2>Operator Briefing</h2>
+      <p>Cognition digest. External news feed not implemented.</p>
 
       <div className="brain-metrics">
         <div>
-          <span>Breaking Events</span>
+          <span>Cognition Events</span>
           <strong>{priorityFeed?.events?.length || 0}</strong>
         </div>
 
         <div>
-          <span>Economic</span>
-          <strong>{overview?.mode || "SHADOW"}</strong>
+          <span>Mode</span>
+          <strong>{overview?.mode || "DATA_UNAVAILABLE"}</strong>
         </div>
 
         <div>
@@ -54,7 +54,7 @@ function NewsLetterPanel() {
 
         <div>
           <span>Status</span>
-          <strong>{priorityFeed?.feedState || "PROCESSING"}</strong>
+          <strong>{priorityFeed?.feedState || "DATA_UNAVAILABLE"}</strong>
         </div>
       </div>
     </div>

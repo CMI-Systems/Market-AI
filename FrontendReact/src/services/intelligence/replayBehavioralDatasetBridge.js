@@ -126,11 +126,11 @@ export function createBehavioralDatasetRecord(input = {}) {
     tradeAssessment: safeString(journalEntry.tradeAssessment, "UNASSESSED"),
     direction: safeString(journalEntry.direction),
     result: safeString(journalEntry.result),
-    thesis: safeString(journalEntry.tradeThesis || journalEntry.thesis, "No thesis supplied."),
-    executionReview: safeString(journalEntry.executionReview, "No execution review supplied."),
+    thesis: safeString(journalEntry.tradeThesis || journalEntry.thesis, ""),
+    executionReview: safeString(journalEntry.executionReview, ""),
     behavioralReflection: safeString(
       journalEntry.behavioralReflection,
-      "No behavioral reflection supplied."
+      ""
     ),
     behavioralTags,
   };

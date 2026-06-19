@@ -234,6 +234,10 @@
   color: #ff647d !important;
 }
 
+.unavailable-change {
+  color: #8fa6b8 !important;
+}
+
 .watchlist-signal-badge,
 .watchlist-risk-badge {
   display: inline-block;
@@ -258,11 +262,30 @@
   border-radius: 999px;
   background: rgba(255, 100, 125, 0.08);
   color: #ff8da0;
+  font: inherit;
   font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
+}
+
+.watchlist-empty-state {
+  display: grid;
+  gap: 6px;
+  padding: 24px 18px;
+  color: #b7c7e6;
+  text-align: center;
+}
+
+.watchlist-empty-state strong {
+  color: #ffcf5a;
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+}
+
+.watchlist-empty-state span {
+  color: #8fa6b8;
 }
 
 .risk-low {

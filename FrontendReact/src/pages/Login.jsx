@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import {
   getAuthSession,
   isSupabaseConfigured,
+  isPasswordRecoveryPending,
   signInOperator,
 } from "../services/supabaseClient";
 import "../styles/Auth.css";
@@ -67,6 +68,10 @@ function Login() {
   }
 
   if (session) {
+    if (isPasswordRecoveryPending()) {
+      return <Navigate replace to="/update-password" />;
+    }
+
     return <Navigate replace to={from} />;
   }
 

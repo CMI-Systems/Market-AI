@@ -1,4 +1,8 @@
 const STAGE_META = {
+  INSUFFICIENT_DATA: {
+    completionPercent: 0,
+    nextRequiredAction: "Load or create operator journal evidence",
+  },
   JOURNAL_CAPTURED: {
     completionPercent: 20,
     nextRequiredAction: "Complete replay review",
@@ -33,6 +37,11 @@ function hasObjectData(value) {
   return Object.keys(safeObject(value)).length > 0;
 }
 
+function hasKnownTrait(value) {
+  const text = String(value || "").trim().toUpperCase();
+  return Boolean(text) && text !== "UNKNOWN" && text !== "UNRATED";
+}
+
 function getContext(input) {
   const safeInput = safeObject(input);
 
@@ -45,7 +54,12 @@ function getContext(input) {
 
 function detectJournalData(record) {
   const journalContext = safeObject(record.journalContext);
-  return hasObjectData(journalContext) || Boolean(record.symbol);
+  return Boolean(
+    safeArray(journalContext.behavioralTags).length
+    || String(journalContext.behavioralReflection || "").trim().length >= 12
+    || String(journalContext.executionReview || "").trim().length >= 12
+    || String(journalContext.thesis || "").trim().length >= 12
+  );
 }
 
 function detectReplayReview(record) {
@@ -54,8 +68,8 @@ function detectReplayReview(record) {
   return (
     hasObjectData(replayContext) &&
     (
-      Boolean(replayContext.strongestTrait) ||
-      Boolean(replayContext.weakestTrait) ||
+      hasKnownTrait(replayContext.weakestTrait) ||
+      hasKnownTrait(replayContext.strongestTrait) ||
       safeArray(replayContext.behavioralScores).length > 0 ||
       safeArray(replayContext.topMistakes).length > 0 ||
       safeArray(replayContext.missionForNextSession).length > 0
@@ -114,7 +128,7 @@ function determineStage({ journalData, replayReviewed, datasetReady, queueEligib
   if (replayReviewed) return "REPLAY_REVIEWED";
   if (journalData) return "JOURNAL_CAPTURED";
 
-  return "JOURNAL_CAPTURED";
+  return "INSUFFICIENT_DATA";
 }
 
 export function analyzeBehavioralPipeline(input = {}) {

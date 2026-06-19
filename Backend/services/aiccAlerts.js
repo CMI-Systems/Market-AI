@@ -11,15 +11,26 @@ const {
 
 const DEFAULT_ALERT_SYMBOLS = ["SPY", "QQQ", "NVDA", "AAPL", "MSFT", "TSLA"];
 
+function isValidTimestamp(timestamp) {
+  return Number.isFinite(new Date(timestamp).getTime());
+}
+
 function createAlert({ severity, source, category, title, message, timestamp }) {
+  const stableKey = [source, category, title, message].map((value) => String(value || "UNKNOWN")).join("|");
+
   return {
-    id: crypto.randomUUID(),
-    timestamp: timestamp || new Date().toISOString(),
+    id: `alert-${crypto.createHash("sha256").update(stableKey).digest("hex").slice(0, 16)}`,
+    timestamp: isValidTimestamp(timestamp) ? timestamp : null,
     severity,
     source,
     category,
     title,
-    message
+    message,
+    status: "NEW",
+    acknowledged: false,
+    dismissed: false,
+    sourceType: source,
+    warnings: []
   };
 }
 
@@ -27,6 +38,32 @@ function severityForSignal(signal) {
   if (signal.signal === "RISK WATCH" || signal.risk === "HIGH") return "WARNING";
   if (signal.confidence >= 80) return "NOTICE";
   return "INFO";
+}
+
+function isActionableProviderSignal(signal = {}) {
+  const sourceType = String(signal.sourceType || signal.dataState || "").toUpperCase();
+  const timestamp = signal.updatedAt || signal.timestamp;
+  const blockedSourceTypes = new Set([
+    "SIMULATED",
+    "GENERATED",
+    "UNKNOWN_SOURCE",
+    "INVALID_TIMESTAMP",
+    "PROVIDER_OFFLINE",
+    "BACKEND_UNAVAILABLE",
+    "DATA_UNAVAILABLE",
+    "PROVIDER_UNAVAILABLE",
+    "BLOCKED"
+  ]);
+
+  return signal.available === true &&
+    signal.simulated !== true &&
+    signal.generated !== true &&
+    String(signal.provider || "").toUpperCase() === "ALPACA" &&
+    signal.signal &&
+    !["NEUTRAL", "UNAVAILABLE", "DATA_UNAVAILABLE"].includes(String(signal.signal).toUpperCase()) &&
+    !blockedSourceTypes.has(sourceType) &&
+    Number.isFinite(new Date(timestamp).getTime()) &&
+    Number.isFinite(Number(signal.confidence));
 }
 
 async function buildAiccAlerts(options = {}) {
@@ -51,7 +88,7 @@ async function buildAiccAlerts(options = {}) {
   ).toUpperCase();
 
   providerSignals
-    .filter((signal) => signal.signal && signal.signal !== "NEUTRAL")
+    .filter(isActionableProviderSignal)
     .forEach((signal) => {
       alerts.push(createAlert({
         timestamp: signal.updatedAt || timestamp,

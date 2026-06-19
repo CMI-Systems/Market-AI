@@ -2,6 +2,35 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY;
+const PASSWORD_RECOVERY_PENDING_KEY = "aicc.passwordRecoveryPending";
+
+let passwordRecoveryPending = false;
+
+function getSessionStorage() {
+  try {
+    return typeof window !== "undefined" ? window.sessionStorage : null;
+  } catch {
+    return null;
+  }
+}
+
+export function isPasswordRecoveryPending() {
+  const storage = getSessionStorage();
+  return (
+    passwordRecoveryPending ||
+    storage?.getItem(PASSWORD_RECOVERY_PENDING_KEY) === "true"
+  );
+}
+
+export function setPasswordRecoveryPending() {
+  passwordRecoveryPending = true;
+  getSessionStorage()?.setItem(PASSWORD_RECOVERY_PENDING_KEY, "true");
+}
+
+export function clearPasswordRecoveryPending() {
+  passwordRecoveryPending = false;
+  getSessionStorage()?.removeItem(PASSWORD_RECOVERY_PENDING_KEY);
+}
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
@@ -14,6 +43,17 @@ export const supabase = isSupabaseConfigured
       },
     })
   : null;
+
+if (supabase) {
+  supabase.auth.onAuthStateChange((event) => {
+    // A recovery session is authenticated but cannot enter operator surfaces.
+    if (event === "PASSWORD_RECOVERY") {
+      setPasswordRecoveryPending();
+    } else if (event === "SIGNED_OUT") {
+      clearPasswordRecoveryPending();
+    }
+  });
+}
 
 export async function getAuthSession() {
   if (!supabase) {
@@ -53,8 +93,16 @@ export async function signInOperator({ email, password }) {
 }
 
 export async function signOutOperator() {
-  if (!supabase) return { error: null };
+  if (!supabase) {
+    clearPasswordRecoveryPending();
+    return { error: null };
+  }
 
   const { error } = await supabase.auth.signOut();
+
+  if (!error) {
+    clearPasswordRecoveryPending();
+  }
+
   return { error };
 }

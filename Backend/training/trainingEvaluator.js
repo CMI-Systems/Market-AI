@@ -27,6 +27,18 @@ const VALID_QUALITY_LABELS = new Set([
   "high_quality"
 ]);
 
+const APPROVED_PROVIDERS = new Set(["alpaca"]);
+const BLOCKED_SOURCE_TYPES = new Set([
+  "SIMULATED",
+  "GENERATED",
+  "MOCK",
+  "DEMO",
+  "UNKNOWN_SOURCE",
+  "DATA_UNAVAILABLE",
+  "INVALID_DATA",
+  "BLOCKED"
+]);
+
 const SYMBOL_REQUIRED_CATEGORIES = new Set([
   "momentum",
   "anomaly",
@@ -76,6 +88,12 @@ function isSerializable(value) {
   }
 }
 
+function getMarketData(entry) {
+  return isRecord(entry.inputs) && isRecord(entry.inputs.marketData)
+    ? entry.inputs.marketData
+    : {};
+}
+
 function evaluateTrainingEntry(entry) {
   const errors = [];
   const warnings = [];
@@ -99,6 +117,8 @@ function evaluateTrainingEntry(entry) {
 
   if (!isNonEmptyString(entry.provider)) {
     errors.push("Provider must exist, even when it is unknown.");
+  } else if (!APPROVED_PROVIDERS.has(String(entry.provider).toLowerCase())) {
+    errors.push("Provider must be an approved locked market-data provider.");
   }
 
   if (!isNonEmptyString(entry.timeframe)) {
@@ -167,6 +187,16 @@ function evaluateTrainingEntry(entry) {
 
   if (!isSerializable(entry)) {
     errors.push("Entry cannot be safely serialized to JSONL.");
+  }
+
+  const marketData = getMarketData(entry);
+  const sourceType = String(marketData.sourceType || marketData.dataState || "").toUpperCase();
+  if (marketData.simulated === true || marketData.generated === true) {
+    errors.push("Simulated or generated market data cannot enter shadow-training readiness.");
+  }
+
+  if (BLOCKED_SOURCE_TYPES.has(sourceType)) {
+    errors.push("Blocked, unavailable, simulated, generated, or unknown source data cannot enter shadow-training readiness.");
   }
 
   if (entry.outcome?.known !== true) {

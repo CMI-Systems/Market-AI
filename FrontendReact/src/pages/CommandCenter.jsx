@@ -23,6 +23,7 @@ import {
   getOfflineProviderDiagnostics,
   getProviderSignals,
 } from "../services/marketProviderApi";
+import { displayState } from "../services/providerDisplay";
 import MarketPriceChart from "../components/charts/MarketPriceChart";
 import { CHART_TIMEFRAMES, getValidatedChartData } from "../services/chartDataService";
 import { Link } from "react-router-dom";
@@ -302,7 +303,7 @@ function CommandCenter() {
   };
   const displayedBehavioralBrain = {
     ...brainStatus?.behavioralBrain,
-    bias: brainStatus?.behavioralBrain?.bias || "ALIGNED",
+    bias: brainStatus?.behavioralBrain?.bias || "DATA_UNAVAILABLE",
     status: brainStatus?.behavioralBrain?.status || behavioralBrainState,
   };
   const displayedFailsafeBrain = {
@@ -1174,6 +1175,17 @@ function CommandCenter() {
     dominantNarrative: dominantTheme,
     mentionCount: priorityTimelineEvents.length,
     symbolBreadth: aiccMarketPulse.breadth.percentPositive,
+    provider: overviewChartState.provenance?.provider || providerDiagnostics.activeProvider || "UNKNOWN",
+    sourceType: overviewChartState.provenance?.sourceType || overviewChartState.provenance?.dataState || "DATA_UNAVAILABLE",
+    available: rawMarketInputsAvailable,
+    simulated: false,
+    generated: false,
+    timestamp: overviewChartState.provenance?.timestamp || overviewQuote?.timestamp || null,
+    dataAge: overviewChartState.provenance?.dataAge ?? overviewQuote?.dataAge,
+    sessionState: overviewChartState.provenance?.sessionState || overviewQuote?.sessionState || "UNKNOWN_SESSION",
+    marketOpen: overviewChartState.provenance?.marketOpen ?? overviewQuote?.marketOpen ?? false,
+    rawDataCertified: false,
+    trainingEligible: false,
   };
   const aiccIntelligence = analyzeAiccIntelligence({
     symbol: selectedOverviewSymbol,
@@ -1243,6 +1255,14 @@ function CommandCenter() {
     : /RISK_ON|EXPANSION|CONFIRMED|CONTROLLED/i.test(aiccRiskSource)
       ? "Risk-On"
       : "Neutral";
+  const aiccLayerFlow = [
+    { label: "TACTICAL", status: aiccTactical.tacticalState || aiccTactical.sourceType || "DATA_UNAVAILABLE" },
+    { label: "BEHAVIORAL", status: aiccBehavioral.behavioralState || aiccBehavioral.sourceType || "DATA_UNAVAILABLE" },
+    { label: "FAILSAFE", status: aiccFailsafe.failsafeState || aiccFailsafe.sourceType || "DATA_UNAVAILABLE" },
+    { label: "CONSENSUS", status: aiccConsensusState },
+    { label: "REGIME", status: aiccRegimeState },
+    { label: "NARRATIVE", status: aiccNarrativeHeadline === "AICC Intelligence Limited" ? "LIMITED" : aiccNarrative.confidenceLabel || "LIMITED" },
+  ];
   const aiccMarketStatusLine = `${aiccConsensusState} consensus is operating inside a ${aiccRegimeState} regime. ${aiccShortNarrative}`;
   const watchlistPreviewRows = PROVIDER_SIGNAL_SYMBOLS.map((symbol) => {
     const signal = providerSignals.find((item) => item.symbol === symbol);
@@ -1290,7 +1310,7 @@ function CommandCenter() {
           <Link to="/system-boot" className="nav-button">System Boot</Link>
           <Link to="/global-scan" className="nav-button">Global Scan</Link>
           <Link to="/data-streams" className="nav-button">Data Streams</Link>
-          <Link to="/newsletter" className="nav-button">Newsletter</Link>
+          <Link to="/newsletter" className="nav-button">Operator Briefing</Link>
           <Link to="/market-pulse" className="nav-button">Market Pulse</Link>
 
           <p>Intelligence Brains</p>
@@ -1366,7 +1386,7 @@ function CommandCenter() {
           <span><i className="live-dot"></i> Global Scan Active</span>
           <span><i className="live-dot"></i> Tactical Brain Analyzing</span>
           <span><i className="live-dot"></i> Market Pulse Updating</span>
-          <span><i className="live-dot"></i> Newsletter Processing</span>
+          <span><i className="live-dot"></i> Operator Briefing Internal</span>
           <span><i className="live-dot"></i> Failsafe Monitoring</span>
         </div>
 
@@ -1485,11 +1505,11 @@ function CommandCenter() {
         </section>
 
         <section className="intelligence-flow-panel" aria-label="AICC intelligence flow">
-          {["TACTICAL", "BEHAVIORAL", "FAILSAFE", "CONSENSUS", "REGIME", "NARRATIVE"].map((layer, index, stack) => (
-            <Fragment key={layer}>
+          {aiccLayerFlow.map((layer, index, stack) => (
+            <Fragment key={layer.label}>
               <div className="intelligence-flow-node">
-                <span>{layer}</span>
-                <strong>ONLINE</strong>
+                <span>{layer.label}</span>
+                <strong>{displayState(layer.status)}</strong>
               </div>
               {index < stack.length - 1 && <b aria-hidden="true">&darr;</b>}
             </Fragment>
@@ -1538,7 +1558,7 @@ function CommandCenter() {
             <div className="overview-brain-card compressed-brain-card">
               <div className="subsystem-card-header">
                 <h3>Tactical Brain</h3>
-                <span>ONLINE</span>
+                <span>{displayState(aiccTactical.tacticalState || aiccTactical.sourceType || "DATA_UNAVAILABLE")}</span>
               </div>
               <div className="compressed-brain-state">
                 <span>State</span>
@@ -1556,7 +1576,7 @@ function CommandCenter() {
             <div className="overview-brain-card compressed-brain-card">
               <div className="subsystem-card-header">
                 <h3>Behavioral Brain</h3>
-                <span>ONLINE</span>
+                <span>{displayState(aiccBehavioral.behavioralState || aiccBehavioral.sourceType || "DATA_UNAVAILABLE")}</span>
               </div>
               <div className="compressed-brain-state">
                 <span>State</span>
@@ -1574,7 +1594,7 @@ function CommandCenter() {
             <div className="overview-brain-card compressed-brain-card">
               <div className="subsystem-card-header">
                 <h3>Failsafe Brain</h3>
-                <span>ONLINE</span>
+                <span>{displayState(aiccFailsafe.failsafeState || aiccFailsafe.sourceType || "DATA_UNAVAILABLE")}</span>
               </div>
               <div className="compressed-brain-state">
                 <span>State</span>

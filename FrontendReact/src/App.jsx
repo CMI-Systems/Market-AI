@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CommandCenter from "./pages/CommandCenter";
 import Login from "./pages/Login";
+import UpdatePassword from "./pages/UpdatePassword";
 
 import SystemBoot from "./pages/SystemBoot";
 import GlobalScan from "./pages/GlobalScan";
@@ -33,6 +34,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/update-password" element={<UpdatePassword />} />
       <Route path="/" element={protect(<CommandCenter />)} />
       <Route path="/command-center" element={protect(<CommandCenter />)} />
 

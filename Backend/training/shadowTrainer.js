@@ -4,10 +4,9 @@
  * evaluation-ready records without changing live Market AI decisions.
  */
 
-const { appendTrainingEntry } = require("./trainingLogger");
 const { evaluateTrainingEntry } = require("./trainingEvaluator");
 
-const VALID_PROVIDERS = new Set(["webull", "alpaca", "unknown"]);
+const VALID_PROVIDERS = new Set(["alpaca", "unknown"]);
 const VALID_TIMEFRAMES = new Set(["1m", "5m", "1h", "daily", "unknown"]);
 const VALID_BIASES = new Set(["BULLISH", "BEARISH", "NEUTRAL", "NO_TRADE"]);
 
@@ -55,7 +54,7 @@ function createShadowEntry(normalizedEvent, brainOutputs = {}) {
     timestamp:
       typeof event.timestamp === "string" && event.timestamp.trim()
         ? event.timestamp
-        : new Date().toISOString(),
+        : "",
     category: event.category,
     provider: normalizeProvider(event.provider),
     symbol: typeof event.symbol === "string" ? event.symbol.toUpperCase() : "",
@@ -87,23 +86,12 @@ function observeShadowEvent(normalizedEvent, brainOutputs = {}) {
   const entry = createShadowEntry(normalizedEvent, brainOutputs);
   const evaluation = evaluateTrainingEntry(entry);
 
-  if (!evaluation.approved) {
-    return {
-      observed: true,
-      logged: false,
-      entry,
-      evaluation
-    };
-  }
-
-  const logResult = appendTrainingEntry(entry);
-
   return {
     observed: true,
-    logged: true,
+    logged: false,
     entry,
     evaluation,
-    logResult
+    reason: "shadow_trainer_logging_disabled_until_approved_activation"
   };
 }
 

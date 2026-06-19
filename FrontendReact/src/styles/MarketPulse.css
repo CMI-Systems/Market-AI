@@ -2,61 +2,106 @@
   min-height: 100vh;
   width: 100%;
   padding: 34px;
-  background:
-    radial-gradient(circle at top left, rgba(83, 211, 218, 0.12), transparent 35%),
-    radial-gradient(circle at top right, rgba(48, 255, 135, 0.08), transparent 35%),
-    #020817;
+  background: #020817;
   color: #e8fbff;
 }
 
-.market-pulse-header {
+.market-pulse-header,
+.pulse-hero,
+.pulse-provenance,
+.pulse-chart-shell,
+.pulse-grid {
   width: min(100%, 1440px);
   max-width: 1440px;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 28px;
+}
+
+.market-pulse-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
   padding-bottom: 20px;
   border-bottom: 1px solid rgba(83, 211, 218, 0.16);
-  text-align: center;
 }
 
 .market-pulse-header h1 {
   margin: 0;
-  font-size: 3rem;
-  letter-spacing: 3px;
+  font-size: 2.6rem;
+  letter-spacing: 0;
 }
 
 .market-pulse-header p {
-  margin-top: 6px;
+  margin: 6px 0 0;
   color: #8fb7c9;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   font-size: 0.8rem;
+}
+
+.pulse-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.pulse-controls label {
+  display: grid;
+  gap: 5px;
+  color: #8fa6b8;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.pulse-controls select,
+.pulse-controls button {
+  min-height: 38px;
+  border: 1px solid rgba(83, 211, 218, 0.25);
+  border-radius: 6px;
+  background: #071426;
+  color: #e8fbff;
+}
+
+.pulse-controls select {
+  min-width: 112px;
+  padding: 0 10px;
+}
+
+.pulse-controls button {
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.pulse-controls button:disabled {
+  cursor: wait;
+  opacity: 0.64;
 }
 
 .pulse-hero {
   display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 22px;
-  width: min(100%, 1440px);
-  max-width: 1440px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 24px;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
 }
 
 .pulse-score-card,
 .pulse-regime-card,
-.pulse-panel {
+.pulse-panel,
+.pulse-provenance,
+.pulse-chart-shell {
   border: 1px solid rgba(83, 211, 218, 0.18);
-  border-radius: 16px;
-  background: rgba(4, 10, 22, 0.78);
-  box-shadow: 0 0 22px rgba(83, 211, 218, 0.08);
+  border-radius: 8px;
+  background: rgba(4, 10, 22, 0.86);
+  box-shadow: 0 0 18px rgba(83, 211, 218, 0.08);
 }
 
 .pulse-score-card,
 .pulse-regime-card {
-  padding: 28px;
+  padding: 24px;
 }
 
 .pulse-score-card span,
@@ -64,123 +109,156 @@
   display: block;
   color: #8fa6b8;
   text-transform: uppercase;
-  letter-spacing: 1.4px;
+  letter-spacing: 1px;
   font-size: 0.72rem;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
-.pulse-score-card strong {
-  display: block;
-  color: #30ff87;
-  font-size: 4rem;
-  line-height: 1;
-}
-
+.pulse-score-card strong,
 .pulse-regime-card strong {
   display: block;
   color: #30ff87;
-  font-size: 2rem;
+  font-size: 2.4rem;
+  line-height: 1.08;
   text-transform: uppercase;
-  letter-spacing: 2px;
 }
 
 .pulse-score-card p,
 .pulse-regime-card p {
+  margin: 12px 0 0;
   color: #9fb8c8;
 }
 
-.pulse-grid {
+.pulse-provenance {
   display: grid;
-  grid-template-columns: repeat(2, minmax(320px, 1fr));
-  gap: 22px;
-  width: min(100%, 1440px);
-  max-width: 1440px;
-  margin-left: auto;
-  margin-right: auto;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 16px;
 }
 
-.pulse-panel {
-  padding: 24px;
-}
-
-.pulse-panel h2 {
-  margin: 0 0 18px;
-  font-size: 1rem;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
-.pulse-metrics {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.pulse-metrics div,
-.pulse-list span {
+.pulse-provenance div,
+.pulse-metrics div {
+  min-width: 0;
   padding: 14px;
-  border-radius: 10px;
-  background: rgba(2, 8, 23, 0.65);
+  border-radius: 6px;
+  background: rgba(2, 8, 23, 0.72);
 }
 
+.pulse-provenance span,
 .pulse-metrics span {
   display: block;
   color: #8fa6b8;
   font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
+  letter-spacing: 1px;
   margin-bottom: 8px;
 }
 
-.pulse-metrics strong,
-.pulse-list strong {
+.pulse-provenance strong,
+.pulse-metrics strong {
+  display: block;
   color: #30ff87;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.pulse-provenance small,
+.pulse-metrics small {
+  display: block;
+  margin-top: 6px;
+  color: #a9b7c7;
+  line-height: 1.4;
+}
+
+.pulse-chart-shell {
+  margin-bottom: 18px;
+  padding: 14px;
+}
+
+.pulse-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.pulse-panel {
+  padding: 22px;
+}
+
+.pulse-panel h2 {
+  margin: 0 0 18px;
+  color: #53d3da;
+  font-size: 0.9rem;
+  letter-spacing: 1.4px;
   text-transform: uppercase;
 }
 
-.pulse-list {
-  display: flex;
-  flex-direction: column;
+.pulse-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.pulse-list span {
-  display: flex;
-  justify-content: space-between;
-  color: #a9b7c7;
+.pulse-wide-panel {
+  grid-column: 1 / -1;
 }
 
-.pulse-summary,
 .pulse-alerts {
+  margin: 0;
+  padding-left: 18px;
   color: #a9b7c7;
   line-height: 1.8;
 }
 
-@media (max-width: 900px) {
+.pulse-alerts li {
+  margin-bottom: 6px;
+}
+
+@media (max-width: 980px) {
+  .market-pulse-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pulse-controls {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
   .pulse-hero,
   .pulse-grid {
     grid-template-columns: 1fr;
   }
 
-  .market-pulse-header h1 {
-    font-size: 2.2rem;
+  .pulse-provenance {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-.pulse-panel h2 {
-  margin-bottom: 18px;
-  color: #53d3da;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-}
+@media (max-width: 620px) {
+  .market-pulse-page {
+    padding: 20px;
+  }
 
-.pulse-panel {
-  transition: all 0.25s ease;
-}
+  .market-pulse-header h1 {
+    font-size: 2rem;
+  }
 
-.pulse-panel:hover {
-  transform: translateY(-2px);
-  border-color: rgba(83, 211, 218, 0.35);
-  box-shadow: 0 0 25px rgba(83, 211, 218, 0.12);
+  .pulse-controls,
+  .pulse-controls label,
+  .pulse-controls select,
+  .pulse-controls button {
+    width: 100%;
+  }
+
+  .pulse-provenance,
+  .pulse-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .pulse-score-card strong,
+  .pulse-regime-card strong {
+    font-size: 1.8rem;
+  }
 }

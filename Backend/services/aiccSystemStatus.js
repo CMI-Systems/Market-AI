@@ -81,14 +81,20 @@ function resolveStreamMode({ backendOnline, marketHours, marketSession, provider
 
   if (backendOnline && alpacaConnected && marketOpen) {
     return {
-      streamMode: "LIVE_ALPACA",
+      streamMode: "RAW_PROVIDER_SNAPSHOT",
+      transport: "REST_SNAPSHOT",
       provider: "ALPACA",
       simulationActive: false,
       simulationAllowed: simulationPolicy.simulationAllowed,
       providerAvailable: true,
       rawDataAvailable: true,
+      connected: false,
+      authenticated: false,
+      subscribed: false,
+      lastMessageAt: null,
+      lastHeartbeatAt: null,
       marketStatus: "OPEN",
-      environment: "LIVE_MARKET",
+      environment: "RAW_PROVIDER_SNAPSHOT",
       sessionState: session.sessionState,
       extendedHours: session.extendedHours,
       sessionSource: session.source,
@@ -106,11 +112,17 @@ function resolveStreamMode({ backendOnline, marketHours, marketSession, provider
   if (marketOpen && !alpacaConnected) {
     return {
       streamMode: "PROVIDER_OFFLINE",
+      transport: "REST_SNAPSHOT",
       provider: "PROVIDER_UNAVAILABLE",
       simulationActive: false,
       simulationAllowed: simulationPolicy.simulationAllowed,
       providerAvailable: false,
       rawDataAvailable: false,
+      connected: false,
+      authenticated: false,
+      subscribed: false,
+      lastMessageAt: null,
+      lastHeartbeatAt: null,
       marketStatus: "OPEN",
       environment: "PROVIDER_OFFLINE",
       sessionState: session.sessionState,
@@ -130,11 +142,17 @@ function resolveStreamMode({ backendOnline, marketHours, marketSession, provider
   if (!marketOpen) {
     return {
       streamMode: "MARKET_CLOSED",
+      transport: "REST_SNAPSHOT",
       provider: providerStatus.activeProvider,
       simulationActive: false,
       simulationAllowed: simulationPolicy.simulationAllowed,
       providerAvailable: providerStatus.providerAvailable,
       rawDataAvailable: false,
+      connected: false,
+      authenticated: false,
+      subscribed: false,
+      lastMessageAt: null,
+      lastHeartbeatAt: null,
       marketStatus: "CLOSED",
       environment: "MARKET_CLOSED",
       sessionState: session.sessionState,
@@ -189,9 +207,9 @@ function buildAiccSystemStatus(options = {}) {
     env,
     options: providerOptions
   });
-  const liveDataActive = streamState.streamMode === "LIVE_ALPACA";
+  const rawProviderDataActive = streamState.rawDataAvailable === true;
   const providerActive = streamState.rawDataAvailable === true && streamState.providerAvailable === true;
-  const brainsActive = liveDataActive || Boolean(streamStatus.active);
+  const brainsActive = rawProviderDataActive || Boolean(streamStatus.active);
   const backendConfidence = normalizePercent(confidence.score || overview.confidence?.score);
   const score = backendConfidence && backendConfidence > 0
     ? backendConfidence
@@ -204,7 +222,7 @@ function buildAiccSystemStatus(options = {}) {
 
   const mode = !backendOnline
     ? "OFFLINE"
-    : liveDataActive
+    : rawProviderDataActive
       ? "LIVE_ANALYSIS"
       : "DATA_UNAVAILABLE";
 
@@ -218,13 +236,13 @@ function buildAiccSystemStatus(options = {}) {
 
   const tactical = !backendOnline
     ? "STANDBY"
-    : liveDataActive
+    : rawProviderDataActive
       ? "ANALYZING"
       : "STANDBY";
-  const behavioral = backendOnline && liveDataActive && brainStatus.behavioralBrain
+  const behavioral = backendOnline && rawProviderDataActive && brainStatus.behavioralBrain
     ? "OBSERVING"
     : "STANDBY";
-  const failsafe = backendOnline && (runtimeHealthy || liveDataActive)
+  const failsafe = backendOnline && (runtimeHealthy || rawProviderDataActive)
     ? "MONITORING"
     : "STANDBY";
 
@@ -236,6 +254,12 @@ function buildAiccSystemStatus(options = {}) {
     backend: backendOnline ? "ONLINE" : "OFFLINE",
     mode,
     streamMode: streamState.streamMode,
+    transport: streamState.transport || "REST_SNAPSHOT",
+    connected: streamState.connected === true,
+    authenticated: streamState.authenticated === true,
+    subscribed: streamState.subscribed === true,
+    lastMessageAt: streamState.lastMessageAt || null,
+    lastHeartbeatAt: streamState.lastHeartbeatAt || null,
     simulationActive: streamState.simulationActive,
     simulationAllowed: simulationPolicy.simulationAllowed,
     runtimeEnvironment: simulationPolicy.runtimeEnvironment,
@@ -282,9 +306,9 @@ function buildAiccSystemStatus(options = {}) {
         : streamState.rawDataAvailable === true && streamStatus.symbol
           ? streamStatus.symbol
           : "UNAVAILABLE",
-      feedState: streamState.dataState === "MARKET_CLOSED"
-        ? "MARKET_CLOSED"
-        : providerStatus.providerHealth === "HEALTHY" || streamStatus.active ? "ACTIVE" : "DEGRADED",
+      feedState: streamState.rawDataAvailable === true
+        ? "SNAPSHOT_AVAILABLE"
+        : streamState.dataState || "DATA_UNAVAILABLE",
       events: Array.isArray(priorityFeed.events)
         ? priorityFeed.events.length
         : streamStatus.eventsProcessed || 0,

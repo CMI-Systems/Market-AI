@@ -47,12 +47,16 @@ const OFFLINE_SYSTEM_STATUS = {
 const FALLBACK_ALERTS = [
   {
     id: "fallback-provider-offline",
-    timestamp: new Date().toISOString(),
+    timestamp: null,
     severity: "WARNING",
     source: "AICC_FRONTEND",
     category: "PROVIDER",
     title: "AICC Alerts Unavailable",
     message: "AICC alerts endpoint is unavailable. No local alert simulation is active.",
+    status: "BACKEND_UNAVAILABLE",
+    acknowledged: false,
+    dismissed: false,
+    sourceType: "DATA_UNAVAILABLE",
     ...createUnavailableMetadata("BACKEND_UNAVAILABLE"),
   },
 ];

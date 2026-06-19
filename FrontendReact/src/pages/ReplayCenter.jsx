@@ -23,20 +23,20 @@ import {
 import "../styles/ReplayCenter.css";
 
 const sessionVerdict = [
-  { label: "Session Verdict", value: "GOOD SESSION" },
-  { label: "Session Score", value: "82" },
-  { label: "Execution Grade", value: "B+" },
-  { label: "Behavior Grade", value: "B" },
-  { label: "Discipline Grade", value: "A-" },
-  { label: "Strongest Trait", value: "Discipline" },
-  { label: "Weakest Trait", value: "Conviction" },
+  { label: "Session Verdict", value: "INSUFFICIENT DATA" },
+  { label: "Session Score", value: "UNAVAILABLE" },
+  { label: "Execution Grade", value: "UNRATED" },
+  { label: "Behavior Grade", value: "UNRATED" },
+  { label: "Discipline Grade", value: "UNRATED" },
+  { label: "Strongest Trait", value: "UNKNOWN" },
+  { label: "Weakest Trait", value: "UNKNOWN" },
 ];
 
 const operatorDebrief = [
-  { label: "Primary Strength", value: "Waited for confirmation on the highest-quality setups." },
-  { label: "Primary Weakness", value: "Late-session selectivity degraded after the strongest trades were complete." },
-  { label: "Primary Mistake", value: "Chased the final TSLA continuation without fresh liquidity support." },
-  { label: "Primary Success", value: "Protected gains by keeping risk controlled after the midday range." },
+  { label: "Primary Strength", value: "Unavailable until explicit operator evidence is loaded." },
+  { label: "Primary Weakness", value: "Unavailable until explicit operator evidence is loaded." },
+  { label: "Primary Mistake", value: "Unavailable until explicit operator evidence is loaded." },
+  { label: "Primary Success", value: "Unavailable until explicit operator evidence is loaded." },
 ];
 
 const sampleTrades = [
@@ -366,6 +366,7 @@ function ReplayCenter() {
     () => analyzeReplayIntelligence(journalEntry || {}),
     [journalEntry]
   );
+  const replayEvidenceAvailable = replayIntelligence.status !== "INSUFFICIENT_DATA";
   const behavioralDatasetRecord = useMemo(
     () =>
       createBehavioralDatasetRecord({
@@ -373,14 +374,14 @@ function ReplayCenter() {
         journalEntry: journalEntry || {},
         replayIntelligence,
         sessionContext: {
-          sessionVerdict: "GOOD SESSION",
-          sessionScore: 82,
-          executionGrade: "B+",
-          behaviorGrade: "B",
-          disciplineGrade: "A-",
+          sessionVerdict: replayEvidenceAvailable ? "PARTIAL_REVIEW" : "INSUFFICIENT_DATA",
+          sessionScore: replayEvidenceAvailable ? null : 0,
+          executionGrade: "UNRATED",
+          behaviorGrade: "UNRATED",
+          disciplineGrade: "UNRATED",
         },
       }),
-    [journalEntry, replayIntelligence]
+    [journalEntry, replayEvidenceAvailable, replayIntelligence]
   );
   const behavioralDatasetStatus = useMemo(
     () => analyzeBehavioralDataset(behavioralDatasetRecord),
@@ -626,7 +627,19 @@ function ReplayCenter() {
         <span>Operator Intelligence Review System</span>
         <h1>REPLAY CENTER</h1>
         <p>What happened, why it happened, how the operator performed, and what improves next.</p>
+        <p>Behavioral conclusions require explicit operator journal or replay evidence. Sample timeline context is not persisted operator history.</p>
       </header>
+
+      {!replayEvidenceAvailable && (
+        <section className="replay-section">
+          <div className="replay-section-title">
+            <span>00</span>
+            <h2>BEHAVIORAL REVIEW EVIDENCE NOTICE</h2>
+          </div>
+          <p>INSUFFICIENT_DATA: no persisted or explicit operator behavioral evidence is loaded for this review.</p>
+          <p>Static sample trades remain visible only as replay UI context and are not treated as behavioral conclusions.</p>
+        </section>
+      )}
 
       {journalEntry && (
         <section className="replay-section replay-operator-debrief">
@@ -710,17 +723,21 @@ function ReplayCenter() {
           <h2>BEHAVIORAL REVIEW</h2>
         </div>
 
-        <div className="replay-scorecard-grid">
-          {replayIntelligence.behavioralScores.map((item) => (
-            <div className="replay-scorecard" key={item.label}>
-              <span>{item.label}</span>
-              <strong>{item.score}</strong>
-              <div className="replay-score-track">
-                <i style={{ width: `${item.score}%` }}></i>
+        {replayIntelligence.behavioralScores.length > 0 ? (
+          <div className="replay-scorecard-grid">
+            {replayIntelligence.behavioralScores.map((item) => (
+              <div className="replay-scorecard" key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.score}</strong>
+                <div className="replay-score-track">
+                  <i style={{ width: `${item.score}%` }}></i>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p>INSUFFICIENT_DATA: behavioral scores require explicit operator tags or review evidence.</p>
+        )}
       </section>
 
       <section className="replay-section replay-top-mistakes-section">
@@ -729,23 +746,27 @@ function ReplayCenter() {
           <h2>TOP MISTAKES SUMMARY</h2>
         </div>
 
-        <div className="replay-top-mistakes-grid">
-          {replayIntelligence.topMistakes.map((item, index) => (
-            <div className="replay-top-mistake-card" key={item.type}>
-              <span>#{index + 1} {item.type}</span>
-              <div><em>Frequency</em><strong>{item.frequency}</strong></div>
-              <div><em>Severity</em><strong>{item.severity}</strong></div>
-              <p>{item.impact}</p>
-            </div>
-          ))}
-        </div>
+        {replayIntelligence.topMistakes.length > 0 ? (
+          <div className="replay-top-mistakes-grid">
+            {replayIntelligence.topMistakes.map((item, index) => (
+              <div className="replay-top-mistake-card" key={item.type}>
+                <span>#{index + 1} {item.type}</span>
+                <div><em>Frequency</em><strong>{item.frequency}</strong></div>
+                <div><em>Severity</em><strong>{item.severity}</strong></div>
+                <p>{item.impact}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>INSUFFICIENT_DATA: top mistakes require explicit behavioral tags or replay evidence.</p>
+        )}
       </section>
 
       <section className="replay-section replay-review-layout">
         <div>
           <div className="replay-section-title">
             <span>05</span>
-            <h2>TRADE TIMELINE</h2>
+            <h2>SAMPLE TRADE TIMELINE</h2>
           </div>
 
           <div className="replay-timeline">
@@ -769,7 +790,7 @@ function ReplayCenter() {
         <aside>
           <div className="replay-section-title">
             <span>06</span>
-            <h2>TRADE BREAKDOWN</h2>
+            <h2>SAMPLE TRADE BREAKDOWN</h2>
           </div>
 
           <div className="replay-breakdown-card">
@@ -826,7 +847,7 @@ function ReplayCenter() {
           <div className="replay-debrief-card">
             <span>Replay Source</span>
             <strong>{selectedTrade.symbol}</strong>
-            <p>Historical provider candles are shown only when they pass chart validation.</p>
+            <p>Historical provider candles are shown only when they pass chart validation. The selected trade row is sample replay context unless tied to persisted operator evidence.</p>
           </div>
         </div>
       </section>
@@ -908,8 +929,9 @@ function ReplayCenter() {
       <section className="replay-section">
         <div className="replay-section-title">
           <span>08</span>
-          <h2>MISTAKE INTELLIGENCE</h2>
+          <h2>REFERENCE MISTAKE TAXONOMY</h2>
         </div>
+        <p>Reference examples only. They are not operator findings unless tied to explicit journal or replay evidence.</p>
 
         <div className="replay-mistake-table">
           {mistakeIntelligence.map((item) => (
@@ -1416,12 +1438,17 @@ function ReplayCenter() {
         </div>
 
         <div className="replay-improvement-grid">
-          {replayIntelligence.missionForNextSession.map((item) => (
+          {replayIntelligence.missionForNextSession.length > 0 ? replayIntelligence.missionForNextSession.map((item) => (
             <div className="replay-improvement-card" key={item.label}>
               <span>{item.label}</span>
               <strong>{item.value}</strong>
             </div>
-          ))}
+          )) : (
+            <div className="replay-improvement-card">
+              <span>Mission Status</span>
+              <strong>INSUFFICIENT_DATA</strong>
+            </div>
+          )}
         </div>
       </section>
     </div>

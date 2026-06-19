@@ -401,6 +401,10 @@
   line-height: 1.5;
 }
 
+.signal-explanation-panel .signal-warning-text {
+  color: #ffd166;
+}
+
 @media (max-width: 1200px) {
   .signals-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

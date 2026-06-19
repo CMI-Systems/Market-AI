@@ -108,7 +108,7 @@ function SystemSettings() {
         </div>
         <div>
           <span>Fallback</span>
-          <strong>{providerDiagnostics.fallback?.status || "AVAILABLE"}</strong>
+          <strong>{providerDiagnostics.fallback?.status || "DISABLED"}</strong>
         </div>
         <div>
           <span>Warnings</span>

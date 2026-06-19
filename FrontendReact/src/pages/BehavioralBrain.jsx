@@ -6,7 +6,7 @@ import "../styles/ClosedBetaPages.css";
 import "../styles/BehavioralBrain.css";
 
 function displayState(value) {
-  if (!value) return "OBSERVING";
+  if (!value) return "DATA UNAVAILABLE";
   return String(value).replace(/_/g, " ");
 }
 
@@ -251,7 +251,7 @@ function BehavioralBrain() {
           </div>
           <div className="closed-beta-card">
             <span>Crowd Alignment</span>
-            <strong>{displayState(behavioralBrain.bias || "ALIGNED")}</strong>
+            <strong>{displayState(behavioralBrain.bias || "DATA_UNAVAILABLE")}</strong>
           </div>
           <div className="closed-beta-card">
             <span>Rotation</span>

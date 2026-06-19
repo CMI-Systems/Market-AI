@@ -230,7 +230,12 @@ export function validateAiccDatasetRecord(record = {}) {
   warnings.push(...provenance.warnings);
   rejectionReasons.push(...provenance.blockingReasons);
 
-  const valid = qualityScore >= 70 && !provenanceBlocked && !marketDataValidationBlocked && trainingActivated === false;
+  const valid =
+    qualityScore >= 70 &&
+    hasOperatorIdentity &&
+    !provenanceBlocked &&
+    !marketDataValidationBlocked &&
+    trainingActivated === false;
   const acceptedForShadowTraining =
     qualityScore >= 80 &&
     hasOperatorIdentity &&

@@ -22,21 +22,33 @@ const behavioralTags = [
   "Rule Break",
 ];
 const tradeAssessment = [
-  { label: "Trade Assessment", value: "VALID SETUP" },
-  { label: "Trade Quality", value: "B+" },
-  { label: "Execution Quality", value: "B" },
-  { label: "Behavioral Quality", value: "B-" },
-  { label: "Rule Compliance", value: "MOSTLY ALIGNED" },
-  { label: "Strongest Element", value: "Structure Confirmation" },
-  { label: "Weakest Element", value: "Exit Patience" },
+  { label: "Trade Assessment", value: "UNASSESSED" },
+  { label: "Trade Quality", value: "UNRATED" },
+  { label: "Execution Quality", value: "UNRATED" },
+  { label: "Behavioral Quality", value: "UNRATED" },
+  { label: "Rule Compliance", value: "UNRATED" },
+  { label: "Strongest Element", value: "UNKNOWN" },
+  { label: "Weakest Element", value: "UNKNOWN" },
 ];
+
+function createEmptyJournalEntry() {
+  return {
+    symbol: "UNKNOWN",
+    direction: "FLAT",
+    result: "FLAT",
+    tradeThesis: "",
+    executionReview: "",
+    behavioralReflection: "",
+    behavioralTags: [],
+  };
+}
 
 function mapPersistedJournalEntry(row) {
   return {
     id: row.id,
-    symbol: row.symbol || "AAPL",
-    direction: row.direction || "LONG",
-    result: row.result || "WIN",
+    symbol: row.symbol || "UNKNOWN",
+    direction: row.direction || "FLAT",
+    result: row.result || "FLAT",
     tradeThesis: row.trade_thesis || "",
     executionReview: row.execution_review || "",
     behavioralReflection: row.behavioral_reflection || "",
@@ -56,15 +68,7 @@ function TradingJournal() {
     message: "Journal persistence is available in staging only.",
     error: "",
   });
-  const [journalEntry, setJournalEntry] = useState({
-    symbol: "AAPL",
-    direction: "LONG",
-    result: "WIN",
-    tradeThesis: "Breakout retest with constructive market structure and clear leadership support.",
-    executionReview: "Entry followed the plan, but exit management could have been more patient.",
-    behavioralReflection: "Stayed calm through the first pullback and avoided adding size after entry.",
-    behavioralTags: ["Patient", "Disciplined", "Risk-Aware"],
-  });
+  const [journalEntry, setJournalEntry] = useState(createEmptyJournalEntry);
 
   const loadPersistedJournalEntries = useCallback(async () => {
     setJournalPersistenceStatus((current) => ({
@@ -188,15 +192,7 @@ function TradingJournal() {
   };
   const startNewJournalEntry = () => {
     setSelectedJournalId(null);
-    setJournalEntry({
-      symbol: "AAPL",
-      direction: "LONG",
-      result: "WIN",
-      tradeThesis: "",
-      executionReview: "",
-      behavioralReflection: "",
-      behavioralTags: [],
-    });
+    setJournalEntry(createEmptyJournalEntry());
     setJournalPersistenceStatus((current) => ({
       ...current,
       message: "New journal entry ready.",
@@ -247,6 +243,7 @@ function TradingJournal() {
       <header className="closed-beta-header">
         <h1>OPERATOR DECISION JOURNAL</h1>
         <p>Decision record, thesis capture, execution review, and behavioral reflection.</p>
+        <p>Behavioral review remains unrated until the operator supplies journal or replay evidence.</p>
         <span className="closed-beta-version">AICC Closed Beta v0.1</span>
       </header>
 

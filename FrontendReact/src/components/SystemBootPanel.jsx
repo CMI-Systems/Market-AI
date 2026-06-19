@@ -25,8 +25,8 @@ function displayActiveProvider(value) {
 }
 
 function displayStreamMode(systemStatus, activeProvider, fallbackMode) {
-  if (systemStatus.streamMode === "LIVE_ALPACA") {
-    return "LIVE ALPACA";
+  if (systemStatus.streamMode === "RAW_PROVIDER_SNAPSHOT" || systemStatus.rawDataAvailable === true) {
+    return "REST SNAPSHOT";
   }
 
   if (systemStatus.simulationActive) {
@@ -45,15 +45,17 @@ function displayStreamMode(systemStatus, activeProvider, fallbackMode) {
     return displayState(systemStatus.dataState || fallbackMode || "DATA_UNAVAILABLE");
   }
 
-  return activeProvider ? "LIVE PROVIDER" : displayState(fallbackMode);
+  return activeProvider ? "PROVIDER SNAPSHOT" : displayState(fallbackMode);
 }
 
 function isLiveProviderActive(providerStatus) {
-  return providerStatus.activeProvider === "ALPACA" && providerStatus.providerHealth === "HEALTHY";
+  return providerStatus.activeProvider === "ALPACA" &&
+    providerStatus.providerHealth === "HEALTHY" &&
+    providerStatus.rawDataAvailable === true;
 }
 
 function displayResolvedProvider(systemStatus, providerStatus) {
-  if (systemStatus.streamMode === "LIVE_ALPACA") return "ALPACA";
+  if (systemStatus.streamMode === "RAW_PROVIDER_SNAPSHOT" || systemStatus.rawDataAvailable === true) return "ALPACA";
   if (systemStatus.simulationActive) return "SIMULATION";
   if (providerStatus.rawDataAvailable !== true || providerStatus.sourceType === "DATA_UNAVAILABLE") {
     return "DATA UNAVAILABLE";
@@ -82,7 +84,7 @@ function SystemBootPanel() {
     return () => clearInterval(interval);
   }, []);
 
-  const liveProviderActive = systemStatus.streamMode === "LIVE_ALPACA" && isLiveProviderActive(providerStatus);
+  const liveProviderActive = systemStatus.rawDataAvailable === true && isLiveProviderActive(providerStatus);
   const backendOnline = systemStatus.backend === "ONLINE" && systemStatus.available !== false;
   const tacticalBrainState = liveProviderActive ? "ANALYZING" : "STANDBY";
   const behavioralBrainState = liveProviderActive ? "OBSERVING" : "STANDBY";

@@ -32,7 +32,13 @@ function getQueuePriority(queueScore) {
 }
 
 function hasMeaningfulText(value) {
-  return safeString(value).length >= 12;
+  const text = safeString(value);
+  return text.length >= 12 && !/^no .* supplied\.?$/i.test(text);
+}
+
+function hasKnownTrait(value) {
+  const text = safeString(value).toUpperCase();
+  return Boolean(text) && text !== "UNKNOWN" && text !== "UNRATED";
 }
 
 function deriveReadiness(record) {
@@ -43,8 +49,8 @@ function deriveReadiness(record) {
   if (safeArray(journalContext.behavioralTags).length) score += 25;
   if (hasMeaningfulText(journalContext.behavioralReflection)) score += 25;
   if (
-    safeString(replayContext.strongestTrait) ||
-    safeString(replayContext.weakestTrait) ||
+    hasKnownTrait(replayContext.strongestTrait) ||
+    hasKnownTrait(replayContext.weakestTrait) ||
     safeArray(replayContext.behavioralScores).length ||
     safeArray(replayContext.topMistakes).length
   ) {

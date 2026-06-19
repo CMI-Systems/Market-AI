@@ -68,7 +68,7 @@ export function analyzeValidation(input = {}) {
 
   if (hasObject(newsletterData)) {
     score += 5;
-    evidence.push('Newsletter context is available.');
+    evidence.push('Operator briefing context is available.');
   }
 
   const tacticalConfidence = confidenceOf(tactical);

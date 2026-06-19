@@ -32,6 +32,30 @@ export function clearPasswordRecoveryPending() {
   getSessionStorage()?.removeItem(PASSWORD_RECOVERY_PENDING_KEY);
 }
 
+export function hasPasswordRecoveryUrlHint() {
+  if (typeof window === "undefined") return false;
+
+  const searchParams = new URLSearchParams(window.location.search || "");
+  const hash = window.location.hash?.startsWith("#")
+    ? window.location.hash.slice(1)
+    : window.location.hash || "";
+  const hashParams = new URLSearchParams(hash);
+  const recoveryType = searchParams.get("type") || hashParams.get("type");
+
+  return (
+    recoveryType === "recovery" ||
+    (
+      window.location.pathname === "/update-password" &&
+      (
+        searchParams.has("code") ||
+        hashParams.has("code") ||
+        hashParams.has("access_token") ||
+        hashParams.has("refresh_token")
+      )
+    )
+  );
+}
+
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 export const supabase = isSupabaseConfigured

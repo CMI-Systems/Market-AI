@@ -3,12 +3,16 @@ import { useNavigate } from "react-router-dom";
 import {
   clearPasswordRecoveryPending,
   getAuthSession,
+  hasPasswordRecoveryUrlHint,
   isPasswordRecoveryPending,
   setPasswordRecoveryPending,
   signOutOperator,
   supabase,
 } from "../services/supabaseClient";
 import "../styles/Auth.css";
+
+const RECOVERY_HYDRATION_TIMEOUT_MS = 5000;
+const RECOVERY_HYDRATION_RETRY_MS = 150;
 
 function UpdatePassword() {
   const navigate = useNavigate();
@@ -19,50 +23,128 @@ function UpdatePassword() {
 
   useEffect(() => {
     let active = true;
+    let retryTimer = null;
+    let timeoutTimer = null;
 
-    async function validateRecoverySession() {
-      if (!isPasswordRecoveryPending()) {
-        if (active) {
-          setStatus("INVALID");
-          setError("No active password recovery request was found.");
-        }
-        return;
+    function clearTimers() {
+      if (retryTimer) {
+        window.clearTimeout(retryTimer);
+        retryTimer = null;
       }
 
+      if (timeoutTimer) {
+        window.clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
+    }
+
+    function markInvalid(message) {
+      clearPasswordRecoveryPending();
+      setStatus("INVALID");
+      setError(message);
+    }
+
+    async function verifyRecoverySession({ final = false } = {}) {
+      const recoveryHintPresent = hasPasswordRecoveryUrlHint();
+
+      if (recoveryHintPresent) {
+        setPasswordRecoveryPending();
+      }
+
+      const recoveryPending = recoveryHintPresent || isPasswordRecoveryPending();
       let result;
 
       try {
         result = await getAuthSession();
       } catch {
         if (active) {
+          clearTimers();
           setStatus("ERROR");
           setError("The password recovery session could not be verified.");
         }
-        return;
+        return true;
       }
 
-      if (!active) return;
+      if (!active) return true;
 
       if (result.error) {
+        clearTimers();
         setStatus("ERROR");
         setError("The password recovery session could not be verified.");
-        return;
+        return true;
       }
 
-      if (!result.configured || !result.session) {
-        clearPasswordRecoveryPending();
-        setStatus("INVALID");
-        setError("The password recovery link is missing or has expired.");
-        return;
+      if (result.configured && result.session && recoveryPending) {
+        clearTimers();
+        setStatus("READY");
+        setError("");
+        return true;
       }
 
-      setStatus("READY");
+      if (!final) return false;
+
+      clearTimers();
+
+      if (!recoveryPending) {
+        markInvalid("No active password recovery request was found.");
+        return true;
+      }
+
+      markInvalid("The password recovery link is missing or has expired.");
+      return true;
     }
 
-    void validateRecoverySession();
+    function scheduleRetry() {
+      retryTimer = window.setTimeout(async () => {
+        const resolved = await verifyRecoverySession();
+        if (!active || resolved) return;
+        scheduleRetry();
+      }, RECOVERY_HYDRATION_RETRY_MS);
+    }
+
+    if (!supabase) {
+      retryTimer = window.setTimeout(() => {
+        if (!active) return;
+        setStatus("ERROR");
+        setError("The password recovery session could not be verified.");
+      }, 0);
+
+      return () => {
+        active = false;
+        clearTimers();
+      };
+    }
+
+    const recoveryHintPresent = hasPasswordRecoveryUrlHint();
+
+    if (recoveryHintPresent) {
+      setPasswordRecoveryPending();
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (!active) return;
+
+      if (event === "PASSWORD_RECOVERY") {
+        setPasswordRecoveryPending();
+        void verifyRecoverySession();
+      }
+    });
+
+    void verifyRecoverySession().then((resolved) => {
+      if (!active || resolved) return;
+      scheduleRetry();
+    });
+
+    timeoutTimer = window.setTimeout(() => {
+      void verifyRecoverySession({ final: true });
+    }, RECOVERY_HYDRATION_TIMEOUT_MS);
 
     return () => {
       active = false;
+      clearTimers();
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -138,8 +220,8 @@ function UpdatePassword() {
       <div className="auth-page">
         <section className="auth-card">
           <span>AICC ACCOUNT RECOVERY</span>
-          <h1>Checking Recovery Session</h1>
-          <p>Validating the password recovery request.</p>
+          <h1>Verifying Recovery Session</h1>
+          <p>Waiting for the password recovery session to initialize.</p>
         </section>
       </div>
     );

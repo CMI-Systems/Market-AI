@@ -764,7 +764,7 @@ This deployed QA confirms two approved operators can authenticate through the de
 
 ## Password Recovery Email Flow QA
 
-Status: PARTIAL / REAL EMAIL LINK PENDING
+Status: FIX IMPLEMENTED / MANUAL RETEST REQUIRED
 
 Environment:
 
@@ -777,24 +777,47 @@ Implementation status:
 - `/update-password` exists outside `ProtectedRoute`: PASS
 - `PASSWORD_RECOVERY` sessions set only a boolean recovery-pending marker: PASS
 - Recovery-pending sessions are redirected away from protected AICC routes: PASS
-- Direct `/update-password` without the recovery marker fails closed: PASS by code inspection
+- `/update-password` now waits for Supabase auth/session hydration before showing invalid recovery state: PASS by code inspection
+- Direct `/update-password` without recovery session still fails closed after hydration completes: PASS by code inspection
 - Password update uses `supabase.auth.updateUser({ password })`: PASS
 - Successful password update clears the recovery marker, signs out, and redirects to `/login`: PASS
 - Login password reset request now uses `supabase.auth.resetPasswordForEmail(email, { redirectTo })`: PASS
 - Reset redirect target is `${window.location.origin}/update-password`: PASS
 - No tokens, recovery links, session objects, passwords, or operator identifiers are logged by the inspected recovery code: PASS
 
+Manual real-link QA before hydration fix:
+
+- Operator A recovery email received: PASS
+- Operator A link reaches `/update-password`: PASS
+- Operator A first update attempt: FAIL / HYDRATION DEFECT
+- Operator A refresh then update: PASS
+- Operator A normal login after reset: PASS
+- Operator B recovery email received: PASS
+- Operator B link reaches `/update-password`: PASS
+- Operator B first update attempt: FAIL / HYDRATION DEFECT
+- Operator B refresh then update: PASS
+- Operator B normal login after reset: PASS
+- Console errors observed: 0
+- Network errors observed: 0
+
 Code changes:
 
 - `FrontendReact/src/services/supabaseClient.js`
   - Added `requestPasswordRecovery(email)`.
   - Uses `redirectTo: ${window.location.origin}/update-password`.
+  - Added `hasPasswordRecoveryUrlHint()` to detect recovery URL state without reading, logging, or storing token values.
   - Does not store or log credentials, tokens, links, or session objects.
 
 - `FrontendReact/src/pages/Login.jsx`
   - Added a password reset request control.
   - Shows sanitized success/failure messages.
   - Does not display the operator email in logs or reports.
+
+- `FrontendReact/src/pages/UpdatePassword.jsx`
+  - Added a bounded recovery-session hydration window.
+  - Subscribes to `onAuthStateChange` and handles `PASSWORD_RECOVERY` before failing closed.
+  - Keeps the page in `Verifying Recovery Session` while Supabase processes the recovery URL/session.
+  - Shows invalid recovery state only after hydration completes and no valid recovery state exists.
 
 - `FrontendReact/src/styles/Auth.css`
   - Added a non-error notice style for password recovery request feedback.
@@ -805,7 +828,7 @@ Validation:
 - Frontend build: PASS
 - Existing large chunk warning remains.
 - Real recovery email sent by Codex: NO
-- Real recovery link passed: PENDING
+- First-load real recovery link after hydration fix: MANUAL RETEST REQUIRED
 
 Manual Supabase Auth configuration verification required:
 
@@ -825,24 +848,26 @@ Manual real-link QA steps:
 5. Open the received recovery email manually.
 6. Click the recovery link without copying it into chat.
 7. Confirm the app opens `/update-password`.
-8. Confirm direct navigation to protected routes redirects back to `/update-password` while the recovery marker is pending.
-9. Enter and confirm a new staging test password.
-10. Submit the update.
-11. Confirm the recovery marker is cleared, the session signs out, and the app returns to `/login`.
-12. Log in normally with the new password.
-13. Confirm protected routes work and no console/network errors appear.
-14. Repeat for Operator B only if both operator recovery flows must be certified before Private Beta.
+8. Confirm the page initially shows `Verifying Recovery Session` or the update form, not an immediate invalid-state failure.
+9. Confirm direct navigation to protected routes redirects back to `/update-password` while the recovery marker is pending.
+10. Enter and confirm a new staging test password without refreshing the page.
+11. Submit the update.
+12. Confirm the recovery marker is cleared, the session signs out, and the app returns to `/login`.
+13. Log in normally with the new password.
+14. Confirm protected routes work and no console/network errors appear.
+15. Repeat for Operator B only if both operator recovery flows must be certified before Private Beta.
 
 Result interpretation:
 
-- If Operator A completes the flow successfully, password recovery can move to PASS for one-operator staging QA.
-- If both Operator A and Operator B complete the flow successfully, password recovery can move to PASS for full two-operator staging QA.
+- If Operator A completes the first-load flow without refresh, password recovery can move to PASS for one-operator staging QA.
+- If both Operator A and Operator B complete the first-load flow without refresh, password recovery can move to PASS for full two-operator staging QA.
 - If the link opens Command Center directly or bypasses `/update-password`, classify as HIGH and keep Private Beta HOLD.
+- If the link reaches `/update-password` but still requires a refresh before `updateUser({ password })` succeeds, keep password recovery as FAIL / HYDRATION DEFECT and Private Beta HOLD.
 - If any token, recovery link, password, email, or session object is logged or displayed unexpectedly, classify as CRITICAL and keep Private Beta BLOCKED.
 
 ## Remaining Blockers
 
-1. Complete real password recovery email flow QA after Supabase rate-limit clears.
+1. Retest real password recovery email flow after hydration fix and confirm first-load update works without refresh.
 
 2. Align backend environment variable names with `Backend/services/supabaseClient.js`.
 
@@ -860,11 +885,11 @@ HOLD
 
 Reason:
 
-The app is buildable and core staging auth logic is materially improved. Supabase least-privilege grants have been remediated in staging. The deployed two-operator auth/CORS/browser QA gate is now PASS. New frontend dataset writes no longer populate `operator_email`. Private Beta remains HOLD until the real password recovery email flow passes, backend environment variable naming is aligned, and optional Supabase advisor hardening is evaluated.
+The app is buildable and core staging auth logic is materially improved. Supabase least-privilege grants have been remediated in staging. The deployed two-operator auth/CORS/browser QA gate is now PASS. New frontend dataset writes no longer populate `operator_email`. Password recovery now includes a hydration fix, but Private Beta remains HOLD until the real recovery link succeeds on first load without refresh, backend environment variable naming is aligned, and optional Supabase advisor hardening is evaluated.
 
 ## Manual Next Steps
 
-1. Complete real password recovery email QA.
+1. Retest real password recovery email QA on staging and verify first-load update succeeds without refresh.
 2. Align backend Supabase environment variable names.
 3. Decide whether to perform optional Supabase advisor hardening before Private Beta.
 4. Plan future non-destructive removal of the legacy nullable `operator_email` column after staging soak, if desired.

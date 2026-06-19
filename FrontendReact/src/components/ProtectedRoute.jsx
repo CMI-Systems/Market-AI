@@ -187,8 +187,10 @@ function ProtectedRoute({ children }) {
 
           <div className="auth-pending-grid">
             <div>
-              <span>Operator Email</span>
-              <strong>{operator?.email || "Unknown operator"}</strong>
+              <span>Operator Session</span>
+              <strong>
+                {operator?.authenticated ? "Authenticated" : "Unavailable"}
+              </strong>
             </div>
             <div>
               <span>Status</span>

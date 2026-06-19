@@ -57,6 +57,7 @@ function App() {
 
       <Route path="/profiles" element={protect(<Profiles />)} />
       <Route path="/subscriptions" element={protect(<Subscriptions />)} />
+      <Route path="/system-settings" element={protect(<SystemSettings />)} />
       <Route path="/settings" element={protect(<SystemSettings />)} />
     </Routes>
   );

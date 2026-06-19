@@ -11,15 +11,12 @@ function deriveDisplayName(user, profile) {
   const metadata = user?.user_metadata || {};
   const fullName = safeString(metadata.full_name);
   const name = safeString(metadata.name);
-  const email = safeString(user?.email);
 
   if (profileName) return profileName;
   if (fullName) return fullName;
   if (name) return name;
-  if (email.includes("@")) return email.split("@")[0];
-  if (email) return email;
 
-  return "Guest Operator";
+  return "Authenticated Operator";
 }
 
 function createOperatorResult(user, overrides = {}, profile = null) {

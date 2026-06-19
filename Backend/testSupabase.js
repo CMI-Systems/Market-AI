@@ -1,23 +1,27 @@
 require("dotenv").config();
 
-console.log("URL:", process.env.SUPABASE_URL);
-console.log("Service Role Loaded:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "YES" : "NO");
+console.log("Supabase URL configured:", process.env.SUPABASE_URL ? "YES" : "NO");
+console.log("Service role configured:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "YES" : "NO");
 
 const supabase = require("./services/supabaseClient");
 
 async function testConnection() {
-  const { data, error } = await supabase
-    .from("users")
-    .select("*")
-    .limit(1);
+  const { count, error } = await supabase
+    .from("operator_profiles")
+    .select("id", { count: "exact", head: true });
 
   if (error) {
-    console.error("Supabase Error:", error);
+    console.error("Supabase connection check failed.", {
+      code: error.code || "UNKNOWN",
+    });
     return;
   }
 
-  console.log("✅ Connected to Supabase");
-  console.log(data);
+  console.log("Connected to Supabase.");
+  console.log(
+    "Operator profile count available:",
+    Number.isFinite(count) ? count : "UNKNOWN"
+  );
 }
 
 testConnection();

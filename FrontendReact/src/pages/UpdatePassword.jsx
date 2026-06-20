@@ -2,20 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   clearPasswordRecoveryPending,
-  getAuthSession,
   hasPasswordRecoveryUrlHint,
   isPasswordRecoveryPending,
   setPasswordRecoveryPending,
   signOutOperator,
-  supabase,
+  updateOperatorPassword,
+  waitForPasswordRecoverySession,
 } from "../services/supabaseClient";
 import "../styles/Auth.css";
 
-const RECOVERY_HYDRATION_TIMEOUT_MS = 5000;
-const RECOVERY_HYDRATION_RETRY_MS = 150;
+const MIN_PASSWORD_LENGTH = 8;
 
 function UpdatePassword() {
   const navigate = useNavigate();
+
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [status, setStatus] = useState("CHECKING");
@@ -23,137 +23,66 @@ function UpdatePassword() {
 
   useEffect(() => {
     let active = true;
-    let retryTimer = null;
-    let timeoutTimer = null;
 
-    function clearTimers() {
-      if (retryTimer) {
-        window.clearTimeout(retryTimer);
-        retryTimer = null;
-      }
+    async function verifyRecoverySession() {
+      setStatus("CHECKING");
+      setError("");
 
-      if (timeoutTimer) {
-        window.clearTimeout(timeoutTimer);
-        timeoutTimer = null;
-      }
-    }
-
-    function markInvalid(message) {
-      clearPasswordRecoveryPending();
-      setStatus("INVALID");
-      setError(message);
-    }
-
-    async function verifyRecoverySession({ final = false } = {}) {
-      const recoveryHintPresent = hasPasswordRecoveryUrlHint();
-
-      if (recoveryHintPresent) {
+      if (hasPasswordRecoveryUrlHint()) {
         setPasswordRecoveryPending();
       }
 
-      const recoveryPending = recoveryHintPresent || isPasswordRecoveryPending();
-      let result;
+      const result = await waitForPasswordRecoverySession();
 
-      try {
-        result = await getAuthSession();
-      } catch {
-        if (active) {
-          clearTimers();
-          setStatus("ERROR");
-          setError("The password recovery session could not be verified.");
-        }
-        return true;
-      }
-
-      if (!active) return true;
-
-      if (result.error) {
-        clearTimers();
-        setStatus("ERROR");
-        setError("The password recovery session could not be verified.");
-        return true;
-      }
-
-      if (result.configured && result.session && recoveryPending) {
-        clearTimers();
-        setStatus("READY");
-        setError("");
-        return true;
-      }
-
-      if (!final) return false;
-
-      clearTimers();
-
-      if (!recoveryPending) {
-        markInvalid("No active password recovery request was found.");
-        return true;
-      }
-
-      markInvalid("The password recovery link is missing or has expired.");
-      return true;
-    }
-
-    function scheduleRetry() {
-      retryTimer = window.setTimeout(async () => {
-        const resolved = await verifyRecoverySession();
-        if (!active || resolved) return;
-        scheduleRetry();
-      }, RECOVERY_HYDRATION_RETRY_MS);
-    }
-
-    if (!supabase) {
-      retryTimer = window.setTimeout(() => {
-        if (!active) return;
-        setStatus("ERROR");
-        setError("The password recovery session could not be verified.");
-      }, 0);
-
-      return () => {
-        active = false;
-        clearTimers();
-      };
-    }
-
-    const recoveryHintPresent = hasPasswordRecoveryUrlHint();
-
-    if (recoveryHintPresent) {
-      setPasswordRecoveryPending();
-    }
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
       if (!active) return;
 
-      if (event === "PASSWORD_RECOVERY") {
-        setPasswordRecoveryPending();
-        void verifyRecoverySession();
+      if (result.error) {
+        setStatus("ERROR");
+        setError("The password recovery session could not be verified.");
+        return;
       }
-    });
 
-    void verifyRecoverySession().then((resolved) => {
-      if (!active || resolved) return;
-      scheduleRetry();
-    });
+      if (result.session && (isPasswordRecoveryPending() || hasPasswordRecoveryUrlHint())) {
+        setStatus("READY");
+        setError("");
+        return;
+      }
 
-    timeoutTimer = window.setTimeout(() => {
-      void verifyRecoverySession({ final: true });
-    }, RECOVERY_HYDRATION_TIMEOUT_MS);
+      clearPasswordRecoveryPending();
+      setStatus("INVALID");
+      setError(
+        result.timedOut
+          ? "The password recovery link is missing, expired, or could not be initialized."
+          : "No active password recovery request was found."
+      );
+    }
+
+    void verifyRecoverySession();
 
     return () => {
       active = false;
-      clearTimers();
-      subscription.unsubscribe();
     };
   }, []);
 
   async function handleSubmit(event) {
     event.preventDefault();
+
     setError("");
 
-    if (password.length < 8) {
-      setError("Use a password with at least 8 characters.");
+    if (status !== "READY") {
+      setStatus("INVALID");
+      setError("The password recovery session is unavailable.");
+      return;
+    }
+
+    if (!isPasswordRecoveryPending() && !hasPasswordRecoveryUrlHint()) {
+      setStatus("INVALID");
+      setError("The password recovery session is unavailable.");
+      return;
+    }
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Use a password with at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
 
@@ -162,56 +91,41 @@ function UpdatePassword() {
       return;
     }
 
-    if (!supabase || !isPasswordRecoveryPending()) {
-      setStatus("INVALID");
-      setError("The password recovery session is unavailable.");
-      return;
-    }
-
     setStatus("UPDATING");
 
-    try {
-      const { error: updateError } = await supabase.auth.updateUser({
-        password,
-      });
+    const { error: updateError } = await updateOperatorPassword(password);
 
-      if (updateError) {
-        setStatus("READY");
-        setError("The password could not be updated. Request a new recovery link if this link has expired.");
-        return;
-      }
-
-      const { error: signOutError } = await signOutOperator();
-
-      if (signOutError) {
-        setPasswordRecoveryPending();
-        setStatus("ERROR");
-        setError("The password was updated, but the recovery session could not be closed. Try signing out again.");
-        return;
-      }
-
-      clearPasswordRecoveryPending();
-      navigate("/login", {
-        replace: true,
-        state: { passwordUpdated: true },
-      });
-    } catch {
-      setPasswordRecoveryPending();
-      setStatus("ERROR");
-      setError("The password recovery request could not be completed.");
-    }
-  }
-
-  async function handleReturnToLogin() {
-    const { error: signOutError } = await signOutOperator();
-
-    if (signOutError) {
-      setStatus("ERROR");
-      setError("The recovery session could not be closed.");
+    if (updateError) {
+      setStatus("READY");
+      setError(
+        "The password could not be updated. Request a new recovery link if this link has expired."
+      );
       return;
     }
 
     clearPasswordRecoveryPending();
+
+    const { error: signOutError } = await signOutOperator();
+
+    if (signOutError) {
+      setStatus("ERROR");
+      setError(
+        "The password was updated, but the recovery session could not be closed. Return to login and sign in again."
+      );
+      return;
+    }
+
+    navigate("/login", {
+      replace: true,
+      state: { passwordUpdated: true },
+    });
+  }
+
+  async function handleReturnToLogin() {
+    clearPasswordRecoveryPending();
+
+    await signOutOperator();
+
     navigate("/login", { replace: true });
   }
 
@@ -247,8 +161,9 @@ function UpdatePassword() {
               <input
                 autoComplete="new-password"
                 disabled={status === "UPDATING"}
-                minLength={8}
+                minLength={MIN_PASSWORD_LENGTH}
                 onChange={(event) => setPassword(event.target.value)}
+                required
                 type="password"
                 value={password}
               />
@@ -259,14 +174,15 @@ function UpdatePassword() {
               <input
                 autoComplete="new-password"
                 disabled={status === "UPDATING"}
-                minLength={8}
+                minLength={MIN_PASSWORD_LENGTH}
                 onChange={(event) => setConfirmation(event.target.value)}
+                required
                 type="password"
                 value={confirmation}
               />
             </label>
 
-            {error && <p className="auth-error">{error}</p>}
+            {error ? <p className="auth-error">{error}</p> : null}
 
             <button disabled={status === "UPDATING"} type="submit">
               {status === "UPDATING" ? "Updating..." : "Update Password"}
@@ -274,7 +190,7 @@ function UpdatePassword() {
           </form>
         ) : (
           <div className="auth-form">
-            {error && <p className="auth-error">{error}</p>}
+            {error ? <p className="auth-error">{error}</p> : null}
             <button type="button" onClick={handleReturnToLogin}>
               Return to Login
             </button>

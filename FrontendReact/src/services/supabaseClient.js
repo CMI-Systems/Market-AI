@@ -174,6 +174,7 @@ export async function waitForPasswordRecoverySession({
   return new Promise((resolve) => {
     let settled = false;
     let timeoutId = null;
+    let subscription = null;
 
     const settle = (result) => {
       if (settled) return;
@@ -182,13 +183,18 @@ export async function waitForPasswordRecoverySession({
 
       if (timeoutId) {
         window.clearTimeout(timeoutId);
+        timeoutId = null;
       }
 
-      subscription?.unsubscribe?.();
+      if (subscription) {
+        subscription.unsubscribe();
+        subscription = null;
+      }
+
       resolve(result);
     };
 
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    const authListener = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         setPasswordRecoveryPending();
 
@@ -197,6 +203,8 @@ export async function waitForPasswordRecoverySession({
           error: null,
           timedOut: false,
         });
+
+        return;
       }
 
       if (
@@ -211,7 +219,7 @@ export async function waitForPasswordRecoverySession({
       }
     });
 
-    const subscription = data?.subscription;
+    subscription = authListener?.data?.subscription || null;
 
     timeoutId = window.setTimeout(async () => {
       const finalSession = await getAuthSession();

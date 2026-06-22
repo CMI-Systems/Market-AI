@@ -1,27 +1,50 @@
 require("dotenv").config();
 
-console.log("Supabase URL configured:", process.env.SUPABASE_URL ? "YES" : "NO");
-console.log("Service role configured:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "YES" : "NO");
+const supabaseUrl = process.env.SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const supabase = require("./services/supabaseClient");
+console.log("Supabase URL configured:", supabaseUrl ? "YES" : "NO");
+console.log("Service role configured:", serviceRoleKey ? "YES" : "NO");
 
-async function testConnection() {
-  const { count, error } = await supabase
-    .from("operator_profiles")
-    .select("id", { count: "exact", head: true });
-
-  if (error) {
-    console.error("Supabase connection check failed.", {
-      code: error.code || "UNKNOWN",
-    });
-    return;
-  }
-
-  console.log("Connected to Supabase.");
-  console.log(
-    "Operator profile count available:",
-    Number.isFinite(count) ? count : "UNKNOWN"
-  );
+if (!supabaseUrl || !serviceRoleKey) {
+  console.error("Missing required Supabase backend environment variables.");
+  process.exit(1);
 }
 
-testConnection();
+async function testConnection() {
+  try {
+    const url = `${supabaseUrl.replace(/\/$/, "")}/rest/v1/operator_profiles?select=id&limit=1`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        Accept: "application/json",
+      },
+    });
+
+    const body = await response.text();
+
+    console.log("REST status:", response.status);
+    console.log("REST status text:", response.statusText);
+    console.log("REST body:", body || "<empty>");
+
+    if (!response.ok) {
+      process.exit(1);
+    }
+
+    console.log("Supabase REST connection check: PASS");
+  } catch (error) {
+    console.error("Supabase REST connection check threw exception.", {
+      name: error?.name || null,
+      code: error?.code || "UNKNOWN",
+      message: error?.message || "UNKNOWN",
+      cause: error?.cause || null,
+      stack: error?.stack || null,
+    });
+    process.exit(1);
+  }
+}
+
+void testConnection();

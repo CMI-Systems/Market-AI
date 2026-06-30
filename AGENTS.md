@@ -1,3 +1,60 @@
+<!-- CMI_SYSTEMS_HIERARCHY_START -->
+# CMI-Systems, LLC Agent Hierarchy
+
+```text
+CMI-Systems, LLC
+|
++-- AI-DATABASE / AI-DATASET
+|   |-- Project root: C:\Users\Jesus Rebollar\OneDrive\Documents\CMI-Systems LLC\Development\Infrastructure\Core AI Development\AI DATASET
+|   |-- Owns: database infrastructure, Supabase migrations, governance, certification, security, replay persistence, dataset persistence, training archive, migration management
+|   |-- Branches:
+|   |   |-- main = stable protected baseline
+|   |   |-- devo = AI-DATASET development
+|   |   |-- market-ai-staging = staging projects and migration validation
+|   |   +-- market-ai-core = protected core architecture branch
+|   +-- Boundary: stays inside the AI-DATASET project root/repo
+|
++-- Market AI / AICC
+    |-- Project root: C:\Users\Jesus Rebollar\Market AI
+    |-- Owns: FrontendReact application, AICC operator intelligence UI, app services, frontend/backend consumer integration
+    |-- Branches:
+    |   |-- origin/main = Market AI stable remote baseline
+    |   |-- main = local stable branch when checked out from origin/main
+    |   |-- market-ai-staging = Market AI staging integration branch when explicitly requested
+    |   +-- market-ai-core = protected Market AI core architecture branch
+    +-- Boundary: stays inside the Market AI project root/repo
+```
+
+AI-DATASET and Market AI/AICC are separate repositories. They should interact only through approved staging integration and migration gates, and only when staging/migration work is ready to be promoted toward production. Do not move database ownership into Market AI, and do not move application ownership into AI-DATASET.
+
+Canonical branch spelling is `market-ai-staging`. If an instruction or note says `market-ai-stagiing`, treat it as a spelling mismatch and verify before checkout, commit, push, or migration work.
+<!-- CMI_SYSTEMS_HIERARCHY_END -->
+<!-- CHAT_CODEX_BASELINE_START -->
+# Mandatory Chat-Codex Baseline
+
+Before doing any work in this repository, every ChatGPT, Codex, Claude Code, or other coding-agent session must read the persistent project baseline:
+
+1. `Chat-Codex/AGENTS.md`
+2. `Chat-Codex/docs/AI_DATABASE_BRAIN_LAYER_ARCHITECTURE_v1.md`
+3. `Chat-Codex/docs/STAGING_SECURITY_HARDENING_v1_FINAL_CERTIFICATION.md`
+4. `Chat-Codex/docs/AICC_FRONTENDREACT_INTELLIGENCE_MAP.md`
+5. `Chat-Codex/docs/AICC_CURRENT_STATUS.md`
+6. `Chat-Codex/docs/AICC_SYSTEM_ARCHITECTURE_v1.md`
+7. `Chat-Codex/docs/AICC_MEMORY_GOVERNANCE_v1.md`
+
+Treat `Chat-Codex/` as canonical onboarding memory for this repository. Do not rely on chat history when the local documentation is available.
+
+Hard safety defaults from the baseline:
+
+- Production remains untouched unless explicitly authorized.
+- Training remains OFF unless explicitly authorized.
+- Shadow Trainer remains OFF unless explicitly authorized.
+- Brain Learning remains OFF unless explicitly authorized.
+- Do not apply Supabase migrations or mutate databases without explicit approval.
+- Do not expose secrets.
+
+If any instruction in this root `AGENTS.md` conflicts with `Chat-Codex/AGENTS.md`, stop and ask for clarification unless the user has given an explicit newer instruction.
+<!-- CHAT_CODEX_BASELINE_END -->
 # AGENTS.md
 
 ## Project Philosophy

@@ -8,6 +8,7 @@ const cognitionRoutes = require("./routes/cognitionRoutes");
 const aiccRoutes = require("./routes/aiccRoutes");
 const devStreamRoutes = require("./routes/devStreamRoutes");
 const marketRoutes = require("./routes/marketRoutes");
+const { createGroupAReadRouter } = require("./routes/groupAReadRoutes");
 const { createApiV1Router } = require("./routes/apiV1Routes");
 const { loadEnvironmentConfig } = require("./config/environment");
 const { getSimulationPolicy } = require("./config/runtimePolicy");
@@ -58,6 +59,7 @@ app.use("/api/cognition", cognitionRoutes);
 app.use("/api/aicc", aiccRoutes);
 app.use("/api/dev", devStreamRoutes);
 app.use("/api/market", marketRoutes);
+app.use("/api", createGroupAReadRouter());
 app.use("/api/v1", createApiV1Router());
 const frontendPath = path.join(__dirname, "..", "Frontend");
 

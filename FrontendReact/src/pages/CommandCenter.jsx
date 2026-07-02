@@ -37,6 +37,7 @@ import InstitutionalAccumlationPanel from "../components/InstitutionalAccumlatio
 import VolatilityCompressionPanel from "../components/VolatilityCompressionPanel";
 import CrisisManagementPanel from "../components/CrisisManagementPanel";
 import ExpansionPanel from "../components/ExpansionPanel";
+import GroupAStatusPanel from "../components/GroupAStatusPanel";
 
 const PROVIDER_SIGNAL_SYMBOLS = ["SPY", "QQQ", "NVDA", "AAPL", "MSFT", "TSLA"];
 const OVERVIEW_TIMEFRAMES = CHART_TIMEFRAMES;
@@ -1389,6 +1390,8 @@ function CommandCenter() {
           <span><i className="live-dot"></i> Operator Briefing Internal</span>
           <span><i className="live-dot"></i> Failsafe Monitoring</span>
         </div>
+
+        <GroupAStatusPanel />
 
         <section className="command-section executive-intelligence-section verdict-banner-section market-status-section">
           <div className="verdict-banner-header">

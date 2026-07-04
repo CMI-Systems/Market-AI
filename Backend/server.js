@@ -61,12 +61,18 @@ app.use("/api/dev", devStreamRoutes);
 app.use("/api/market", marketRoutes);
 app.use("/api", createGroupAReadRouter());
 app.use("/api/v1", createApiV1Router());
-const frontendPath = path.join(__dirname, "..", "Frontend");
+const frontendDistPath = path.join(__dirname, "..", "FrontendReact", "dist");
+const frontendIndexPath = path.join(frontendDistPath, "index.html");
 
-app.use(express.static(frontendPath));
+app.use(express.static(frontendDistPath));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
+app.get(/^\/(?!api(?:\/|$)|health$).*/, (req, res) => {
+  if (fs.existsSync(frontendIndexPath)) {
+    res.sendFile(frontendIndexPath);
+    return;
+  }
+
+  res.status(503).send("Frontend build artifact unavailable. Run FrontendReact build before starting the server.");
 });
 
 app.get("/health", (req, res) => {

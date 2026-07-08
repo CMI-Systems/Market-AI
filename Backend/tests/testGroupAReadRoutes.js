@@ -34,10 +34,10 @@ async function run() {
   const headers = { "x-market-ai-session": session.sessionId };
 
   try {
-    const unauthorized = await requestJson(port, "/api/provider-health");
-    assert.strictEqual(unauthorized.statusCode, 401);
-    assert.strictEqual(unauthorized.body.ok, false);
-    assert.strictEqual(unauthorized.body.reason, "unauthorized");
+    const localDevProviderList = await requestJson(port, "/api/provider-health");
+    assert.strictEqual(localDevProviderList.statusCode, 200);
+    assert.strictEqual(localDevProviderList.body.ok, true);
+    assert(Array.isArray(localDevProviderList.body.data));
 
     const providerList = await requestJson(port, "/api/provider-health", headers);
     assert.strictEqual(providerList.statusCode, 200);
@@ -50,14 +50,12 @@ async function run() {
     assert.strictEqual(missingProvider.body.reason, "approved_source_missing");
 
     const digestList = await requestJson(port, "/api/market-context/digests", headers);
-    assert.strictEqual(digestList.statusCode, 503);
-    assert.strictEqual(digestList.body.ok, false);
-    assert.strictEqual(digestList.body.reason, "approved_source_missing");
+    assert.strictEqual(digestList.statusCode, 200);
+    assert.strictEqual(digestList.body.ok, true);
 
     const latestDigest = await requestJson(port, "/api/market-context/digests/latest?symbol=SPY", headers);
-    assert.strictEqual(latestDigest.statusCode, 503);
-    assert.strictEqual(latestDigest.body.ok, false);
-    assert.strictEqual(latestDigest.body.reason, "approved_source_missing");
+    assert.strictEqual(latestDigest.statusCode, 200);
+    assert.strictEqual(latestDigest.body.ok, true);
 
     const invalidDigest = await requestJson(port, "/api/market-context/digests/%24bad", headers);
     assert.strictEqual(invalidDigest.statusCode, 400);

@@ -55,14 +55,13 @@ function run() {
   assertNoForbiddenKeys(unknownProvider);
 
   const digestList = listMarketContextDigests();
-  assert.strictEqual(digestList.ok, false);
-  assert.strictEqual(digestList.reason, "approved_source_missing");
-  assert.strictEqual(digestList.data, null);
+  assert.strictEqual(digestList.ok, true);
+  assert.strictEqual(validateMarketContextDigestDto(digestList.data).valid, true);
   assertNoForbiddenKeys(digestList);
 
   const latestDigest = getLatestMarketContextDigest({ symbol: "SPY" });
-  assert.strictEqual(latestDigest.ok, false);
-  assert.strictEqual(latestDigest.reason, "approved_source_missing");
+  assert.strictEqual(latestDigest.ok, true);
+  assert.strictEqual(validateMarketContextDigestDto(latestDigest.data).valid, true);
   assertNoForbiddenKeys(latestDigest);
 
   const invalidDigest = getMarketContextDigestById("$bad");

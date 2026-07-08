@@ -3,7 +3,8 @@ node_modules/
 
 # Environment / secrets
 .env
-.env.*
+.env.local
+.env.staging
 !.env.example
 
 # Logs
@@ -20,11 +21,17 @@ Backend/data/distributed-nodes/
 Backend/data/users/
 Backend/training/datasets/
 
+# Runtime identity and journal data storage
+Backend/data/journals/*.json
+!Backend/data/journals/.gitkeep
+Backend/data/identity/*.json
+!Backend/data/identity/.gitkeep
+
 # Runtime/cache/temp
 Backend/cache/
 Backend/runtime/
 Backend/temp/
-.tmp/
+*.tmp/
 temp/
 
 # OS / editor

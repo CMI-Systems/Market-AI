@@ -109,12 +109,11 @@ function rateLimitGroupA(req, res, next) {
 router.use(requireOperatorSession);
 router.use(rateLimitGroupA);
 
-router.get("/provider-health", (req, res) => {
-  const result = listProviderHealth();
-  safeLog(req, result.ok ? 200 : 503, result.ok ? "ok" : result.reason, {
-    freshnessState: result.freshnessState
-  });
-  res.status(result.ok ? 200 : 503).json(result);
+router.get("/market-context/digests", (req, res) => {
+  const result = listMarketContextDigests();
+  const statusCode = result.ok ? 200 : 503;
+  safeLog(req, statusCode, result.ok ? "ok" : result.reason);
+  res.status(statusCode).json(result);
 });
 
 router.get("/provider-health/:provider", (req, res) => {
@@ -133,7 +132,7 @@ router.get("/market-context/digests", (req, res) => {
 
 router.get("/market-context/digests/latest", (req, res) => {
   const result = getLatestMarketContextDigest({ symbol: req.query.symbol });
-  const statusCode = result.reason === "invalid_filter" ? 400 : 503;
+  const statusCode = result.ok ? 200 : result.reason === "invalid_filter" ? 400 : 503;
   safeLog(req, statusCode, result.reason, {
     filterSummary: req.query.symbol ? "symbol" : null
   });
@@ -142,7 +141,7 @@ router.get("/market-context/digests/latest", (req, res) => {
 
 router.get("/market-context/digests/:id", (req, res) => {
   const result = getMarketContextDigestById(req.params.id);
-  const statusCode = result.reason === "invalid_filter" ? 400 : 503;
+  const statusCode = result.ok ? 200 : result.reason === "invalid_filter" ? 400 : 503;
   safeLog(req, statusCode, result.reason, {
     filterSummary: "digestId"
   });

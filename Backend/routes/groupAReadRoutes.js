@@ -116,6 +116,13 @@ router.get("/market-context/digests", (req, res) => {
   res.status(statusCode).json(result);
 });
 
+router.get("/provider-health", (req, res) => {
+  const result = listProviderHealth();
+  const statusCode = result.ok ? 200 : 503;
+  safeLog(req, statusCode, result.ok ? "ok" : result.reason);
+  res.status(statusCode).json(result);
+});
+
 router.get("/provider-health/:provider", (req, res) => {
   const result = getProviderHealth(req.params.provider);
   safeLog(req, result.ok ? 200 : 404, result.ok ? "ok" : result.reason, {

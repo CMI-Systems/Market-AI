@@ -15,6 +15,18 @@ function normalizeProviderName(providerId) {
   return providerId;
 }
 
+function buildUnavailableProviderStatus(providerId, now, warnings = []) {
+  return {
+    activeProvider: providerId === "alpaca" ? "ALPACA" : "PROVIDER_UNAVAILABLE",
+    providerHealth: "OFFLINE",
+    providerAvailable: false,
+    rawDataAvailable: false,
+    currentTime: new Date(now).toISOString(),
+    lastUpdate: null,
+    warnings
+  };
+}
+
 function mapProviderStatusToDto(providerStatus = {}, now = Date.now()) {
   const activeProvider = String(providerStatus.activeProvider || "PROVIDER_UNAVAILABLE").toUpperCase();
   const providerId = activeProvider === "ALPACA"
@@ -121,13 +133,14 @@ function listProviderHealth(options = {}) {
     const now = options.now || Date.now();
     const providerStatus = readProviderStatusSafely(now);
     const productionHealth = buildProductionHealth();
-    const data = [];
-
-    if (providerStatus) {
-      data.push(safeValidateProviderDto(mapProviderStatusToDto(providerStatus, now)));
-    }
-
-    data.push(safeValidateProviderDto(mapBackendHealthToDto(productionHealth, now)));
+    const activeProvider = String(providerStatus?.activeProvider || "").toUpperCase();
+    const alpacaStatus = activeProvider === "ALPACA"
+      ? providerStatus
+      : buildUnavailableProviderStatus("alpaca", now, providerStatus?.warnings || ["source_missing"]);
+    const data = [
+      safeValidateProviderDto(mapBackendHealthToDto(productionHealth, now)),
+      safeValidateProviderDto(mapProviderStatusToDto(alpacaStatus, now))
+    ];
 
     return {
       ok: true,

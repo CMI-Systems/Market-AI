@@ -28,7 +28,7 @@ Set these in the Render service environment settings. Do not commit `.env` files
 The backend accepts requests from:
 
 - `http://localhost:5173`
-- `http://localhost:3000`
+- `http://localhost:3001`
 - `https://market-ai-one-kappa.vercel.app`
 - `FRONTEND_URL` when configured
 

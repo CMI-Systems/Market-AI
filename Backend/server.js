@@ -38,7 +38,7 @@ const runtimeConfig = loadEnvironmentConfig();
 const app = express();
 const allowedOrigins = new Set([
   "http://localhost:5173",
-  "http://localhost:3000",
+  "http://localhost:3001",
   "https://market-ai-one-kappa.vercel.app",
   process.env.FRONTEND_URL
 ].filter(Boolean));

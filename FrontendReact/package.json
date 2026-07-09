@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@datadog/browser-rum": "^7.5.0",
+    "@datadog/browser-rum-react": "^7.5.0",
     "@supabase/supabase-js": "^2.108.1",
     "lightweight-charts": "^5.2.0",
     "react": "^19.2.6",

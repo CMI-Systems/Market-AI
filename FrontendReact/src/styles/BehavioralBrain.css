@@ -150,7 +150,6 @@
 }
 
 .behavioral-state-section .closed-beta-card {
-  min-height: auto;
   padding: 12px;
   background: rgba(0, 10, 25, 0.58);
   border-color: rgba(83, 211, 218, 0.1);
@@ -172,7 +171,6 @@
 }
 
 .behavioral-assessment-section .closed-beta-card {
-  min-height: auto;
   padding: 12px;
   border-color: rgba(83, 211, 218, 0.1);
   background: rgba(0, 10, 25, 0.58);

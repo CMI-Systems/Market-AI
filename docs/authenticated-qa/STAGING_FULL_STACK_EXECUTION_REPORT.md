@@ -40,8 +40,8 @@ Remaining staging blockers:
 - Supabase grants on operator-owned persistence tables remain broader than least privilege: `anon` has table-level CRUD grants on persistence tables even though RLS owner predicates are present.
 - Supabase policies are scoped with `{public}` and `auth.uid()` expressions; advisors flag GraphQL discoverability and RLS initplan performance issues.
 - Dataset persistence still stores `operator_email`, which is personal data and should be removed or formally justified before broader beta.
-- Backend staging env naming is inconsistent with `Backend/services/supabaseClient.js`: local backend env uses different Supabase variable names than the backend Supabase client expects.
-- Backend CORS relies on `FRONTEND_URL` for staging and still includes a production Vercel origin in code-level defaults.
+- Backend source and deployment documentation consistently use `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; runtime presence and correctness of the actual staging values remain unverified.
+- Backend CORS is environment-driven through `FRONTEND_URL` and optional `CORS_ALLOWED_ORIGINS`; no deployed origin is hard-coded, and staging fails closed when no approved browser origin is configured.
 - External Vercel Preview and Render environment settings were not modified and require manual provider-console verification.
 
 ## Files Inspected
@@ -49,10 +49,8 @@ Remaining staging blockers:
 Frontend environment and deployment:
 
 - `FrontendReact/.env.example`
-- `FrontendReact/.env.local`
-- `FrontendReact/.env.staging`
-- `FrontendReact/.env.staging.local`
-- `FrontendReact/.env.staging.example`
+- `FrontendReact/.env.local` (ignored local file; values not inspected during the current remediation)
+- `FrontendReact/.env.staging` (ignored local file; values not inspected during the current remediation)
 - `FrontendReact/package.json`
 - `FrontendReact/vercel.json`
 - `FrontendReact/netlify.toml`
@@ -110,7 +108,7 @@ Frontend pages and components:
 Backend environment, routes, and services:
 
 - `Backend/.env`
-- `Backend/.env.example`
+- `Backend/.env.example` (not present)
 - `Backend/package.json`
 - `Backend/RENDER_DEPLOYMENT.md`
 - `Backend/server.js`
@@ -161,24 +159,23 @@ Supabase staging metadata:
 Present:
 
 - `FrontendReact/.env.example`
-- `FrontendReact/.env.local`
-- `FrontendReact/.env.staging.example`
+- `FrontendReact/.env.local` (ignored; values not inspected during the current remediation)
+- `FrontendReact/.env.staging` (ignored; values not inspected during the current remediation)
 
 Missing:
 
-- `FrontendReact/.env.staging`
 - `FrontendReact/.env.staging.local`
+- `FrontendReact/.env.staging.example`
 
 Findings:
 
 - Frontend env variables are `VITE_` public-client variables except `BETA_MODE`, which Vite will not expose to client code unless explicitly referenced.
-- `VITE_SUPABASE_URL` points to the staging Supabase project ref.
-- `VITE_SUPABASE_ANON_KEY` is present as a client-side key. It was not printed.
-- No frontend service-role key pattern was found.
-- No SMTP secret pattern was found in frontend source/env files inspected.
+- `FrontendReact/.env.example` contains placeholder-only Supabase and API values; real ignored environment values were not inspected during this remediation.
+- No frontend service-role key pattern was found in the tracked source or example configuration.
+- No SMTP secret pattern was found in the tracked frontend source or example configuration.
 - `VITE_CLOSED_BETA_EMAILS` is not used as an authorization gate.
-- `VITE_API_BASE_URL` is present in example/local env files and points to a backend API URL, not Supabase or a mail URL.
-- `VITE_TRAINING_ENABLED=false` is present in frontend env examples/local env names.
+- `VITE_API_URL` is the single API base variable used by the tracked example and API clients.
+- `VITE_TRAINING_ENABLED=false` is present in the tracked frontend environment example.
 
 ### Auth/Routing Status
 
@@ -210,19 +207,30 @@ Remaining limitation:
 
 ### API Client Status
 
-Status: PARTIAL
+Status: CODE_COMPLETE_ENVIRONMENT_UNVERIFIED
 
 Verified:
 
-- `aiccApi.js` and `marketProviderApi.js` use `VITE_API_BASE_URL` with a local fallback.
-- `cognitionApi.js` uses `VITE_API_BASE_URL` without a localhost fallback and returns explicit unavailable metadata when backend access fails.
+- Frontend API clients use the shared `VITE_API_URL` configuration.
+- The localhost fallback is available only in explicit Vite development mode with a development runtime environment; staging fails closed when the API URL is missing.
+- `cognitionApi.js` returns explicit unavailable metadata when backend access fails.
 - Network failures in the inspected API clients resolve to unavailable/offline states rather than crashes.
 - No frontend service-role key usage was found.
 
 Limitations:
 
-- In deployed staging, `VITE_API_BASE_URL` must be set. Otherwise `aiccApi.js` and `marketProviderApi.js` fall back to `http://localhost:3001`, which is invalid from Vercel/Preview.
+- In deployed staging, `VITE_API_URL` must be set. Missing staging configuration fails closed before a backend request is made.
 - Some frontend offline status constants still label legacy provider relationships such as `WEBULL_PENDING`; this is display-level wording and should remain clearly NOT_IMPLEMENTED.
+
+### Group A Read-Service Remediation
+
+Status: IMPLEMENTED IN SOURCE / DEPLOYED QA NOT RUN
+
+- Outside explicit `NODE_ENV=development`, Group A requires a Supabase bearer session and an approved `operator_profiles` record.
+- Missing, invalid, expired, or unapproved staging credentials fail closed; credentials are sent in the `Authorization` header, never a URL.
+- The in-memory `LOCAL_DEV` fallback is available only in explicit development.
+- Market-context endpoints return HTTP 503 with `not_ready`, `sourceCount: 0`, deterministic placeholder identifiers, and `validatedSnapshot: false` while no approved normalized source exists.
+- Group A does not implement or claim Phase R.4 validated market snapshots.
 
 ### UI/Product Surface Status
 
@@ -279,19 +287,20 @@ Moderate defects fixed:
 Remaining findings:
 
 - `operator_email` is still written by dataset persistence.
-- `VITE_API_BASE_URL` fallback can silently target localhost if staging env is missing.
+- Staging API configuration still requires external environment verification; source no longer falls back to localhost outside explicit development.
 - Actual Vercel Preview environment variables were not inspected through Vercel; provider-console verification is still manual.
 
 ### Required Frontend Env Variables
 
-- `VITE_SUPABASE_PROJECT_ID`
 - `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_AUTH_URL`
 - `VITE_SUPABASE_ANON_KEY`
-- `VITE_API_BASE_URL`
+- `VITE_FRONTEND_URL`
+- `VITE_API_URL`
 - `VITE_ENVIRONMENT=staging`
 - `VITE_PERSISTENCE_ENABLED=true`
 - `VITE_TRAINING_ENABLED=false`
+
+Datadog public-client variables remain optional and environment-driven. Telemetry initialization stays disabled when its application ID or client token is absent.
 
 ### Deprecated Frontend Variables
 
@@ -332,7 +341,7 @@ Limitations:
 
 - Backend routes are mostly open diagnostic/market-data routes and do not validate a Supabase user session.
 - `/api/v1/*` exposes diagnostic/product-status surfaces without route auth middleware.
-- CORS default allowlist includes localhost origins and a production Vercel origin; staging-specific frontend origin must be supplied through `FRONTEND_URL`.
+- CORS permits localhost origins only for explicit `NODE_ENV=development`; staging origins must be supplied through `FRONTEND_URL` or `CORS_ALLOWED_ORIGINS`.
 
 ### Service Security Status
 
@@ -381,11 +390,12 @@ Status: PARTIAL
 
 Current backend code allows:
 
-- `http://localhost:5173`
-- `http://localhost:3000`
-- one production Vercel origin
-- `FRONTEND_URL` when configured
-- no-origin requests
+- exact origins configured through `FRONTEND_URL` or `CORS_ALLOWED_ORIGINS`;
+- `http://localhost:5173` and `http://127.0.0.1:5173` only when `NODE_ENV=development`;
+- no hard-coded deployed origin;
+- no-origin requests, for non-browser and same-origin traffic.
+
+When `NODE_ENV=staging` and no approved origin is configured, browser cross-origin requests fail closed with `403`.
 
 Staging requirement:
 
@@ -430,8 +440,8 @@ Defects fixed:
 Remaining findings:
 
 - Missing `Backend/.env.example`.
-- Backend Supabase env names are inconsistent with `services/supabaseClient.js`.
-- Backend default CORS list includes production Vercel origin in code.
+- Backend Supabase environment-variable naming is aligned on `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; actual staging values were not inspected and still require runtime verification.
+- Backend CORS has no hard-coded deployed origin and fails closed for unapproved staging browser origins.
 - Backend diagnostic routes are unauthenticated and should be treated as internal/staging-only unless intentionally public.
 - `RENDER_DEPLOYMENT.md` needs updating to remove stale simulation fallback wording.
 
@@ -461,12 +471,12 @@ Do not expose backend secrets through frontend `VITE_` variables.
 
 | Location | Allowed contents | Must not contain | Notes |
 |---|---|---|---|
-| `FrontendReact/.env.example` | Public placeholders for `VITE_SUPABASE_PROJECT_ID`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_AUTH_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL`, staging flags | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Safe template only. |
-| `FrontendReact/.env.local` | Local staging public Vite values only | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Values were not printed; current names point to staging Supabase. |
-| `FrontendReact/.env.staging` | Staging public Vite values for deploy simulation | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Missing locally. |
+| `FrontendReact/.env.example` | Public placeholders for `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_FRONTEND_URL`, `VITE_API_URL`, Datadog public-client settings, and staging flags | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Safe template only. |
+| `FrontendReact/.env.local` | Local public Vite values only | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Ignored local file exists; values were not inspected during the current remediation. |
+| `FrontendReact/.env.staging` | Staging public Vite values for deploy simulation | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Ignored local file exists; values were not inspected during the current remediation. |
 | `FrontendReact/.env.staging.local` | Local override for staging public Vite values | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Missing locally. |
-| `Backend/.env.example` | Placeholder server env names only | real secret values | Missing; should be created before handoff. |
-| `Backend/.env` | Server-only secrets and runtime config | frontend-public values unless intentionally duplicated as non-secret URLs | Values were not printed; do not commit. |
+| `Backend/.env.example` | Placeholder server env names only | real secret values | Not present; backend staging variables are documented in `Backend/RENDER_DEPLOYMENT.md`. |
+| `Backend/.env` | Server-only secrets and runtime config, including exact CORS origins | frontend-public values unless intentionally duplicated as non-secret URLs | Ignored local file exists; values were not inspected during the current remediation. |
 
 ## Supabase Staging Audit Result
 
@@ -558,7 +568,7 @@ Manual provider-console verification still required:
 - Confirm Vercel Preview env uses staging `VITE_SUPABASE_URL`.
 - Confirm Preview uses only anon/publishable Supabase key.
 - Confirm Preview has no service-role keys.
-- Confirm `VITE_API_BASE_URL` points to approved staging backend.
+- Confirm `VITE_API_URL` points to approved staging backend.
 - Confirm production Supabase URL is not present in Preview env.
 
 ## Render Backend Audit Result
@@ -574,6 +584,7 @@ Manual provider-console verification still required:
 
 - Confirm staging Render service uses `NODE_ENV=staging` and `MARKET_AI_MODE=staging`.
 - Confirm `MARKET_AI_AUTO_SIM=false`.
+- Confirm `FRONTEND_URL` and any `CORS_ALLOWED_ORIGINS` entries contain only approved staging origins.
 - Confirm no production Supabase URL/credentials are in staging Render.
 - Confirm no frontend `VITE_` secrets are mirrored into backend.
 - Confirm backend CORS includes staging frontend origin and does not rely on localhost for deployed Preview.
@@ -590,8 +601,8 @@ High:
 
 Moderate:
 
-- Backend Supabase env names are inconsistent with the backend Supabase client.
-- Backend CORS defaults include a production frontend origin and require staging `FRONTEND_URL` to be configured correctly.
+- Staging backend Supabase credentials remain deployment configuration and were not runtime-verified.
+- Staging `FRONTEND_URL` or `CORS_ALLOWED_ORIGINS` still requires deployment configuration and runtime verification.
 - External Vercel/Render envs were not directly verified.
 - Backend diagnostic API surfaces are unauthenticated.
 - `Backend/.env.example` is missing.
@@ -769,7 +780,7 @@ Status: FIX IMPLEMENTED / MANUAL RETEST REQUIRED
 Environment:
 
 - Supabase project URL verified through MCP: `https://ilogukxgdhqymgxpxejr.supabase.co`
-- Staging frontend target: `https://market-ai-git-main-jesus-xprs-projects.vercel.app`
+- Staging frontend target: `<APPROVED_STAGING_FRONTEND_HOST>`; the previously recorded Vercel hostname requires environment-classification verification before reuse.
 - Required recovery route: `/update-password`
 
 Implementation status:
@@ -782,7 +793,7 @@ Implementation status:
 - Password update uses `supabase.auth.updateUser({ password })`: PASS
 - Successful password update clears the recovery marker, signs out, and redirects to `/login`: PASS
 - Login password reset request now uses `supabase.auth.resetPasswordForEmail(email, { redirectTo })`: PASS
-- Reset redirect target is `${window.location.origin}/update-password`: PASS
+- Reset redirect target uses `VITE_FRONTEND_URL` with a browser-origin fallback: PASS
 - No tokens, recovery links, session objects, passwords, or operator identifiers are logged by the inspected recovery code: PASS
 
 Manual real-link QA before hydration fix:
@@ -804,7 +815,7 @@ Code changes:
 
 - `FrontendReact/src/services/supabaseClient.js`
   - Added `requestPasswordRecovery(email)`.
-  - Uses `redirectTo: ${window.location.origin}/update-password`.
+  - Uses `redirectTo` based on `VITE_FRONTEND_URL` with a browser-origin fallback.
   - Added `hasPasswordRecoveryUrlHint()` to detect recovery URL state without reading, logging, or storing token values.
   - Does not store or log credentials, tokens, links, or session objects.
 
@@ -832,12 +843,12 @@ Validation:
 
 Manual Supabase Auth configuration verification required:
 
-- Confirm Supabase Auth password recovery redirect points to `https://market-ai-git-main-jesus-xprs-projects.vercel.app/update-password`.
+- Confirm Supabase Auth password recovery redirect points to `https://<APPROVED_STAGING_FRONTEND_HOST>/update-password`.
 - Confirm the redirect allow-list includes:
-  - `https://market-ai-git-main-jesus-xprs-projects.vercel.app`
-  - `https://market-ai-git-main-jesus-xprs-projects.vercel.app/*`
-  - `https://market-ai-git-main-jesus-xprs-projects.vercel.app/update-password`
-  - `https://market-ai-git-main-jesus-xprs-projects.vercel.app/update-password/*`
+  - `https://<APPROVED_STAGING_FRONTEND_HOST>`
+  - `https://<APPROVED_STAGING_FRONTEND_HOST>/*`
+  - `https://<APPROVED_STAGING_FRONTEND_HOST>/update-password`
+  - `https://<APPROVED_STAGING_FRONTEND_HOST>/update-password/*`
 
 Manual real-link QA steps:
 
@@ -869,7 +880,7 @@ Result interpretation:
 
 1. Retest real password recovery email flow after hydration fix and confirm first-load update works without refresh.
 
-2. Align backend environment variable names with `Backend/services/supabaseClient.js`.
+2. Verify the runtime presence and correctness of staging `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Naming alignment is resolved between backend source and deployment documentation; actual staging values were not inspected during this remediation.
 
 3. Optional Supabase advisor hardening:
    - Fix mutable function `search_path` warnings.
@@ -885,12 +896,12 @@ HOLD
 
 Reason:
 
-The app is buildable and core staging auth logic is materially improved. Supabase least-privilege grants have been remediated in staging. The deployed two-operator auth/CORS/browser QA gate is now PASS. New frontend dataset writes no longer populate `operator_email`. Password recovery now includes a hydration fix, but Private Beta remains HOLD until the real recovery link succeeds on first load without refresh, backend environment variable naming is aligned, and optional Supabase advisor hardening is evaluated.
+The app is buildable and core staging auth logic is materially improved. Supabase least-privilege grants have been remediated in staging. The deployed two-operator auth/CORS/browser QA gate is now PASS. New frontend dataset writes no longer populate `operator_email`. Password recovery now includes a hydration fix, but Private Beta remains HOLD until the real recovery link succeeds on first load without refresh, the aligned backend Supabase variables are verified in the staging runtime, and optional Supabase advisor hardening is evaluated.
 
 ## Manual Next Steps
 
 1. Retest real password recovery email QA on staging and verify first-load update succeeds without refresh.
-2. Align backend Supabase environment variable names.
+2. Verify the runtime presence and correctness of staging `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` without exposing their values.
 3. Decide whether to perform optional Supabase advisor hardening before Private Beta.
 4. Plan future non-destructive removal of the legacy nullable `operator_email` column after staging soak, if desired.
 

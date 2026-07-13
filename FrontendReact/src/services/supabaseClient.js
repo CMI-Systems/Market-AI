@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY;
+const configuredFrontendUrl = import.meta.env?.VITE_FRONTEND_URL;
 
 const PASSWORD_RECOVERY_PENDING_KEY = "aicc.passwordRecoveryPending";
 const PASSWORD_RECOVERY_HYDRATION_TIMEOUT_MS = 5000;
@@ -18,6 +19,14 @@ function getSessionStorage() {
   } catch {
     return null;
   }
+}
+
+function getFrontendBaseUrl() {
+  if (configuredFrontendUrl) {
+    return configuredFrontendUrl.replace(/\/$/, "");
+  }
+
+  return isBrowser() ? window.location.origin : "";
 }
 
 function getRecoveryUrlState() {
@@ -56,6 +65,40 @@ function getRecoveryUrlState() {
   };
 }
 
+function clearRecoveryUrlParameters() {
+  if (!isBrowser()) {
+    return;
+  }
+
+  const searchParams = new URLSearchParams(window.location.search || "");
+  const hash = window.location.hash?.startsWith("#")
+    ? window.location.hash.slice(1)
+    : window.location.hash || "";
+  const hashParams = new URLSearchParams(hash);
+  const authParameters = [
+    "access_token",
+    "refresh_token",
+    "expires_at",
+    "expires_in",
+    "token_type",
+    "type",
+    "code",
+  ];
+
+  authParameters.forEach((parameter) => {
+    searchParams.delete(parameter);
+    hashParams.delete(parameter);
+  });
+
+  const nextSearch = searchParams.toString();
+  const nextHash = hashParams.toString();
+  const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${
+    nextHash ? `#${nextHash}` : ""
+  }`;
+
+  window.history.replaceState(window.history.state, "", nextUrl);
+}
+
 export function hasPasswordRecoveryUrlHint() {
   return getRecoveryUrlState().hasRecoveryHint;
 }
@@ -85,7 +128,7 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        detectSessionInUrl: false,
         persistSession: true,
       },
     })
@@ -156,6 +199,24 @@ export async function waitForPasswordRecoverySession({
 
   if (hasPasswordRecoveryUrlHint()) {
     setPasswordRecoveryPending();
+  }
+
+  const recoveredSession = await recoverPasswordSessionFromUrl();
+
+  if (recoveredSession.error) {
+    return {
+      session: null,
+      error: recoveredSession.error,
+      timedOut: false,
+    };
+  }
+
+  if (recoveredSession.session) {
+    return {
+      session: recoveredSession.session,
+      error: null,
+      timedOut: false,
+    };
   }
 
   const initialSession = await getAuthSession();
@@ -238,6 +299,82 @@ export async function waitForPasswordRecoverySession({
   });
 }
 
+export async function recoverPasswordSessionFromUrl() {
+  if (!supabase) {
+    return {
+      session: null,
+      error: new Error("Supabase is not configured for this environment."),
+      recovered: false,
+    };
+  }
+
+  const urlState = getRecoveryUrlState();
+
+  if (!urlState.hasRecoveryHint) {
+    return {
+      session: null,
+      error: null,
+      recovered: false,
+    };
+  }
+
+  setPasswordRecoveryPending();
+
+  const searchParams = new URLSearchParams(window.location.search || "");
+  const hash = window.location.hash?.startsWith("#")
+    ? window.location.hash.slice(1)
+    : window.location.hash || "";
+  const hashParams = new URLSearchParams(hash);
+  const accessToken = hashParams.get("access_token");
+  const refreshToken = hashParams.get("refresh_token");
+  const code = searchParams.get("code") || hashParams.get("code");
+
+  if (accessToken || refreshToken) {
+    if (!accessToken || !refreshToken) {
+      return {
+        session: null,
+        error: new Error("Password recovery link is missing required session tokens."),
+        recovered: false,
+      };
+    }
+
+    const { data, error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+
+    if (!error) {
+      clearRecoveryUrlParameters();
+    }
+
+    return {
+      session: data?.session || null,
+      error,
+      recovered: !error,
+    };
+  }
+
+  if (code) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (!error) {
+      clearRecoveryUrlParameters();
+    }
+
+    return {
+      session: data?.session || null,
+      error,
+      recovered: !error,
+    };
+  }
+
+  return {
+    session: null,
+    error: null,
+    recovered: false,
+  };
+}
+
 export async function signInOperator({ email, password }) {
   if (!supabase) {
     return {
@@ -264,8 +401,9 @@ export async function requestPasswordRecovery(email) {
     };
   }
 
-  const redirectTo = isBrowser()
-    ? `${window.location.origin}/update-password`
+  const frontendBaseUrl = getFrontendBaseUrl();
+  const redirectTo = frontendBaseUrl
+    ? `${frontendBaseUrl}/update-password`
     : undefined;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {

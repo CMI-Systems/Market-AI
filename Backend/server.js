@@ -10,6 +10,7 @@ const devStreamRoutes = require("./routes/devStreamRoutes");
 const marketRoutes = require("./routes/marketRoutes");
 const { createGroupAReadRouter } = require("./routes/groupAReadRoutes");
 const { createApiV1Router } = require("./routes/apiV1Routes");
+const { createCorsGuard, createCorsOptions } = require("./config/corsPolicy");
 const { loadEnvironmentConfig } = require("./config/environment");
 const { getSimulationPolicy } = require("./config/runtimePolicy");
 const logger = require("./services/structuredLogger");
@@ -36,23 +37,9 @@ const {
 
 const runtimeConfig = loadEnvironmentConfig();
 const app = express();
-const allowedOrigins = new Set([
-  "http://localhost:5173",
-  "http://localhost:3001",
-  "https://market-ai-one-kappa.vercel.app",
-  process.env.FRONTEND_URL
-].filter(Boolean));
-const corsOptions = {
-  origin(origin, callback) {
-    if (!origin || allowedOrigins.has(origin)) {
-      callback(null, true);
-      return;
-    }
+const corsOptions = createCorsOptions(process.env);
 
-    callback(null, false);
-  }
-};
-
+app.use(createCorsGuard(process.env));
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use("/api/cognition", cognitionRoutes);

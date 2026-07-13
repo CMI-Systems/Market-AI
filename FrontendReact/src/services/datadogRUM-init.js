@@ -1,58 +1,53 @@
-import { datadogRum } from '@datadog/browser-rum';
-import { reactPlugin } from '@datadog/browser-rum-react';
-import { RouterProvider } from 'react-router-dom';
 import { datadogRum } from "@datadog/browser-rum";
 import { reactPlugin } from "@datadog/browser-rum-react";
-import { ErrorBoundary } from '@datadog/browser-rum-react';
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v6';
 
-datadogRum.init({
-  applicationId: "7f4781a8-0af2-4681-afe1-abbc55b70afa",
-  clientToken: "pubfe9292a20f2fb7544f60334f63f50705",
-  site: "datadoghq.com",
+const REQUIRED_DATADOG_ENV_KEYS = [
+  "VITE_DD_APPLICATION_ID",
+  "VITE_DD_CLIENT_TOKEN",
+  "VITE_DD_SITE",
+  "VITE_DD_ENV",
+  "VITE_DD_VERSION",
+];
 
-  service: "ai-database-frontend",
-  env: "prod",
-  version: "0.1.0",
+function getDatadogRumConfig() {
+  const env = import.meta.env || {};
+  const missingKeys = REQUIRED_DATADOG_ENV_KEYS.filter((key) => !env[key]);
 
-  sessionSampleRate: 100,
-  sessionReplaySampleRate: 20,
+  if (missingKeys.length > 0) {
+    return null;
+  }
 
-  trackResources: true,
-  trackUserInteractions: true,
-  trackLongTasks: true,
-
-  defaultPrivacyLevel: "mask-user-input",
-
-  plugins: [reactPlugin()],
-});
-
-datadogRum.startSessionReplayRecording();
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Root />,
-    ...
-  },
-]);
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-    <RouterProvider router={router} />,
-);
-
-function App() {
-    return (
-        <ErrorBoundary fallback={ErrorFallback}>
-            <MyComponent />
-        </ErrorBoundary>
-    );
+  return {
+    applicationId: env.VITE_DD_APPLICATION_ID,
+    clientToken: env.VITE_DD_CLIENT_TOKEN,
+    site: env.VITE_DD_SITE,
+    service: env.VITE_DD_SERVICE || "market-ai-frontend",
+    env: env.VITE_DD_ENV,
+    version: env.VITE_DD_VERSION,
+  };
 }
 
-function ErrorFallback({ resetError, error }) {
-    return (
-        <p>
-            Oops! <strong>{String(error)}</strong>{' '}
-            <button onClick={resetError}>Retry</button>
-        </p>
-    );
+export function initializeDatadogRum() {
+  const config = getDatadogRumConfig();
+
+  if (!config || datadogRum.getInitConfiguration()) {
+    return false;
+  }
+
+  datadogRum.init({
+    ...config,
+    sessionSampleRate: 100,
+    sessionReplaySampleRate: 20,
+    trackResources: true,
+    trackLongTasks: true,
+    trackUserInteractions: true,
+    defaultPrivacyLevel: "mask-user-input",
+    plugins: [reactPlugin({ router: true })],
+  });
+
+  datadogRum.startSessionReplayRecording();
+
+  return true;
 }
+
+initializeDatadogRum();

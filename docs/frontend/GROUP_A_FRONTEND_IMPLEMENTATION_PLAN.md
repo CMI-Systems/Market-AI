@@ -1,10 +1,10 @@
 # Group A FrontendReact Implementation Plan
 
-## 1. Planning Status
+## 1. Implementation Status
 
-PLANNING ONLY - FrontendReact implementation is not approved yet.
+IMPLEMENTED ON `market-ai-staging` - remediation review remains in progress.
 
-This document defines a concrete implementation path for Group A DTO consumption. It does not implement UI, modify FrontendReact source code, modify Backend, modify Supabase, create migrations, call providers, deploy, alter AICC architecture, or activate learning/training.
+This document records the controlled Group A DTO consumption design now implemented in FrontendReact. The implementation remains read-only and does not modify Supabase, create migrations, deploy, alter AICC architecture, or activate learning/training.
 
 ## 2. Purpose
 
@@ -56,7 +56,7 @@ Existing reusable panel/card components live under `FrontendReact/src/components
 
 Existing frontend API clients live under `FrontendReact/src/services/` and use a consistent pattern:
 
-- define `API_BASE_URL` from `import.meta.env.VITE_API_BASE_URL` with a local fallback;
+- build URLs from the shared `VITE_API_URL` helper, with a localhost fallback only during explicit Vite development mode;
 - call Backend endpoints through `fetch`;
 - return fail-closed fallback data when requests fail;
 - avoid exposing raw backend errors to UI components.
@@ -86,9 +86,9 @@ Relevant examples:
 - `CommandCenter.css` contains command-section, grid, panel, card, status, and dashboard styling.
 - Most AICC panels use existing card/panel classes rather than a separate CSS file per component.
 
-## 4. Exact Files Proposed To Create Or Change
+## 4. Implemented Frontend File Set
 
-### A. Files To Create
+### A. Files Created
 
 #### `FrontendReact/src/services/groupAReadApi.js`
 
@@ -170,7 +170,7 @@ Relevant examples:
 - Risk level: low.
 - Rollback impact: remove test file.
 
-### B. Files To Change
+### B. Files Changed
 
 #### `FrontendReact/src/pages/CommandCenter.jsx`
 
@@ -188,7 +188,7 @@ Relevant examples:
 - Risk level: low.
 - Rollback impact: remove Group A CSS block.
 
-No Backend, Supabase, SQL migration, provider, or deployment files are proposed.
+The frontend implementation did not require Supabase schema changes, SQL migrations, provider expansion, or deployment actions.
 
 ## 5. Target AICC Components And Panels
 
@@ -321,7 +321,7 @@ Planned mock coverage:
 - hidden reasoning field rejection
 - training/autonomy field rejection
 
-Proposed test files:
+Recommended future frontend test files:
 
 - `FrontendReact/src/services/groupAReadContracts.test.js`
 - `FrontendReact/src/components/ProviderHealthCard.test.jsx`
@@ -367,7 +367,7 @@ If implementation is later approved and must be rolled back:
 
 ## 12. Implementation Sequence
 
-Planning-only sequence:
+Recorded implementation sequence:
 
 1. Create DTO types/type guards.
 2. Create API client wrappers.
@@ -394,11 +394,11 @@ Planning-only sequence:
 - no raw payload display;
 - no public unauthenticated view.
 
-## 14. Approval Gate
+## 14. Review Gate
 
-Coding must not begin until owner explicitly approves:
+The original implementation gate was satisfied by the subsequent committed Group A frontend work. Further behavioral changes still require owner review:
 
-OWNER APPROVAL - GROUP A FRONTENDREACT IMPLEMENTATION CODING
+OWNER REVIEW - GROUP A FRONTENDREACT REMEDIATION
 
 ## 15. Explicit Locks
 

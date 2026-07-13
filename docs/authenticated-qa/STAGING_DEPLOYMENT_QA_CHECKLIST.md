@@ -41,7 +41,7 @@ Pending external verification:
 - `FrontendReact/vercel.json`
 - `FrontendReact/.env.example`
 - `FrontendReact/.env.local` variable names and classifications only
-- `FrontendReact/.env.staging.example`
+- `FrontendReact/.env.staging` file presence only; ignored values were not inspected
 - `FrontendReact/src/App.jsx`
 - `FrontendReact/src/components/ProtectedRoute.jsx`
 - `FrontendReact/src/pages/Login.jsx`
@@ -78,7 +78,8 @@ Set these only on the staging/Preview frontend environment:
 | --- | --- |
 | `VITE_SUPABASE_URL` | `https://ilogukxgdhqymgxpxejr.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | Active client-safe staging publishable key; never a service-role or secret key |
-| `VITE_API_BASE_URL` | `https://<APPROVED_STAGING_BACKEND_HOST>` |
+| `VITE_FRONTEND_URL` | `https://<APPROVED_STAGING_FRONTEND_HOST>` |
+| `VITE_API_URL` | `https://<APPROVED_STAGING_BACKEND_HOST>` |
 | `VITE_ENVIRONMENT` | `staging` |
 | `VITE_PERSISTENCE_ENABLED` | `true` |
 | `VITE_DEMO_MODE` | `false` |
@@ -92,7 +93,7 @@ Do not configure:
 - Production Supabase URL or keys
 - Production backend URL
 
-`VITE_API_BASE_URL` is mandatory for staging deployment. Without it, `aiccApi.js` and `marketProviderApi.js` fall back to `http://localhost:3001`, which is invalid from Vercel.
+`VITE_API_URL` is mandatory for staging deployment. Missing staging configuration fails closed before a backend request; localhost fallback is restricted to explicit development.
 
 ## Vercel Configuration
 
@@ -117,10 +118,8 @@ Before deployment, compare every Preview variable against the table above and co
 
 Local staging URLs:
 
-- `http://127.0.0.1:5174`
-- `http://127.0.0.1:5174/update-password`
-- `http://localhost:5174`
-- `http://localhost:5174/update-password`
+- `http://localhost:5173`
+- `http://localhost:5173/update-password`
 
 Deployed staging URLs, after assigning the stable staging hostname:
 
@@ -138,12 +137,13 @@ The exact deployed URLs remain pending until `<STAGING_FRONTEND_HOST>` is known.
 3. Set only the required staging variables above.
 4. Verify the Supabase URL project reference matches staging.
 5. Verify the Supabase key is publishable/anon, not secret or service-role.
-6. Set `VITE_API_BASE_URL` to the approved staging backend HTTPS origin.
-7. Configure the staging backend CORS `FRONTEND_URL` for the stable staging frontend origin.
-8. Build a Vercel Preview deployment without promoting it to production.
-9. Record the stable staging hostname.
-10. Add the exact staging root and `/update-password` URLs to staging Supabase Auth configuration.
-11. Do not promote or alias the deployment to production.
+6. Set `VITE_FRONTEND_URL` to the approved staging frontend HTTPS origin.
+7. Set `VITE_API_URL` to the approved staging backend HTTPS origin.
+8. Configure the staging backend CORS `FRONTEND_URL` and, only if needed, `CORS_ALLOWED_ORIGINS` with exact approved staging origins.
+9. Build a Vercel Preview deployment without promoting it to production.
+10. Record the stable staging hostname.
+11. Add the exact staging root and `/update-password` URLs to staging Supabase Auth configuration.
+12. Do not promote or alias the deployment to production.
 
 ## Post-Deploy QA
 
@@ -151,6 +151,9 @@ The exact deployed URLs remain pending until `<STAGING_FRONTEND_HOST>` is known.
 - Open `/command-center` signed out; confirm redirect to `/login`.
 - Sign in as Operator A; confirm protected access and profile-derived approval.
 - Sign out; confirm protected content is cleared.
+- Confirm signed-out Group A requests return 401 and do not receive provider-health or market-context data.
+- Confirm an approved signed-in operator can access provider health through the existing Supabase session.
+- Confirm market-context endpoints remain HTTP 503 / `not_ready` with `sourceCount: 0` and no validated-snapshot claim.
 - Repeat with Operator B.
 - Confirm cross-user Journal, Replay, Dataset, Validation, and Shadow Readiness isolation.
 - Open `/update-password` without a recovery flow; confirm fail-closed state.

@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import { Route } from "react-router-dom";
+import { Routes } from "@datadog/browser-rum-react/react-router-v7";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import CommandCenter from "./pages/CommandCenter";

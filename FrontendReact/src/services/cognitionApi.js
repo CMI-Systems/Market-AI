@@ -3,8 +3,7 @@ import {
   createUnavailableMetadata,
   getFrontendDemoPolicy,
 } from "./frontendRuntimePolicy";
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+import { buildApiUrl } from "./apiBaseUrl";
 
 function createUnavailableResponse(endpoint, reason = "BACKEND_UNAVAILABLE") {
   const base = {
@@ -95,14 +94,14 @@ async function fetchJson(endpoint) {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const response = await fetch(buildApiUrl(endpoint));
 
     if (!response.ok) {
       throw new Error(`Request failed: ${response.status}`);
     }
 
     return await response.json();
-  } catch (error) {
+  } catch {
     return createUnavailableResponse(endpoint, "BACKEND_UNAVAILABLE");
   }
 }

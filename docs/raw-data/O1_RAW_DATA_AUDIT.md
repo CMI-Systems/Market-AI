@@ -263,7 +263,7 @@ Failsafe does not fully detect or block:
 
 Frontend env variables observed:
 
-- `VITE_API_BASE_URL`
+- `VITE_API_URL`
 - `VITE_DEMO_MODE`
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`

@@ -43,5 +43,4 @@ tmp/
 
 # Supabase
 .supabase/
-supabase/.temp/
-supabase\.temp\
+/supabase/.temp/

@@ -1,6 +1,5 @@
 import { createUnavailableMetadata } from "./frontendRuntimePolicy";
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:3001").replace(/\/$/, "");
+import { buildApiUrl } from "./apiBaseUrl";
 
 const OFFLINE_SYSTEM_STATUS = {
   ...createUnavailableMetadata("BACKEND_UNAVAILABLE"),
@@ -84,7 +83,7 @@ const FALLBACK_REPLAY = [
 
 async function fetchJson(endpoint) {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const response = await fetch(buildApiUrl(endpoint));
 
     if (!response.ok) {
       throw new Error(`Request failed with status ${response.status}`);

@@ -1,8 +1,10 @@
 # Group A Frontend Consumption Plan
 
+Status: IMPLEMENTED BASELINE ON `market-ai-staging`; remediation review remains in progress.
+
 ## 1. Purpose
 
-This plan defines how FrontendReact may consume Market AI Backend Group A read-service DTOs without changing AICC architecture. It is planning only and does not implement UI, Backend changes, Supabase changes, provider integrations, migrations, deployment, or learning/training behavior.
+This document records how FrontendReact consumes Market AI Backend Group A read-service DTOs without changing AICC architecture. The implementation is read-only and does not add Supabase changes, provider integrations, migrations, deployment, or learning/training behavior.
 
 Verified Backend baseline:
 
@@ -114,7 +116,7 @@ FrontendReact must:
 
 ## 6. Suggested UI Placement
 
-Planning-only placement:
+Implemented baseline placement on `market-ai-staging`:
 
 - AICC Command Center status rail or system intelligence panel.
 - `ProviderHealthCard` for provider/system status.
@@ -145,43 +147,39 @@ Planning-only placement:
 - Auth-required consumption only.
 - No unauthenticated public display.
 
-## 9. Contract Alignment Checklist
+## 9. Contract Alignment Baseline
 
-Before UI implementation:
+Implemented baseline review record:
 
-- [ ] Provider health DTO fields reviewed.
-- [ ] Market context digest DTO fields reviewed.
-- [ ] Validation rules mapped to UI states.
-- [ ] Redaction rules mapped to rendering rules.
-- [ ] Freshness rules mapped to labels and severity.
-- [ ] Fail-closed response contract mapped to fallback states.
-- [ ] Backend consumption boundary confirmed.
-- [ ] Owner approval gate confirmed.
+- Provider health and market context digest fields are mapped through frontend validators.
+- Validation, redaction, freshness, and fail-closed rules are mapped to UI states.
+- Backend consumption remains read-only and authenticated outside explicit local development.
+- Group A status components are integrated into the AICC Command Center.
+- Future contract or UI changes require normal owner review and focused testing.
 
-## 10. Implementation Readiness Gate
+## 10. Implementation Baseline Review
 
-FrontendReact implementation requires separate owner approval after this plan.
+The FrontendReact Group A integration is implemented on `market-ai-staging`. This document records that consumption baseline; it is not a pre-implementation approval gate and does not establish deployment readiness.
 
-Implementation must not begin until:
+The implemented baseline retains these review conditions:
 
-- this plan is reviewed;
-- target UI components are selected;
-- auth consumption behavior is verified;
-- error-state copy is approved;
-- no architecture change is confirmed.
+- authentication and fail-closed behavior remain verified by focused tests;
+- error-state copy remains redacted and non-predictive;
+- AICC architecture remains unchanged;
+- future material changes require normal review and testing;
+- deployment and manual staging verification remain separate gates.
 
-## 11. Recommended Implementation Sequence
+## 11. Implemented Baseline Sequence
 
-Planning-only sequence:
+The current baseline includes:
 
-1. Create frontend API client wrappers.
-2. Create DTO type guards or validators.
-3. Create redacted error handler.
-4. Create `ProviderHealthCard`.
-5. Create `MarketContextDigestCard`.
-6. Create optional `DigestDetailDrawer`.
-7. Create tests and mocks for stale, unavailable, `401`, `429`, and redacted error states.
-8. Integrate into AICC Command Center only after explicit approval.
+1. Shared frontend API client wrappers.
+2. DTO validators and redacted error handling.
+3. `ProviderHealthCard` and `MarketContextDigestCard` UI states.
+4. Test fixtures for stale, unavailable, `401`, `429`, and redacted error behavior.
+5. Existing AICC Command Center integration.
+
+Optional future UI additions, including a `DigestDetailDrawer`, require normal review and focused testing before implementation.
 
 ## 12. Explicit Locks
 

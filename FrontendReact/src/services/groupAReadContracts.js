@@ -74,6 +74,19 @@ export function createRedactedErrorResponse(reason = "error_redacted", statusCod
   };
 }
 
+export function createAccessDeniedResponse(statusCode = 401) {
+  const forbidden = statusCode === 403;
+
+  return {
+    ...createRedactedErrorResponse(forbidden ? "forbidden" : "unauthorized", statusCode),
+    uiState: GROUP_A_UI_STATES.UNAUTHORIZED,
+    status: forbidden ? "forbidden" : "unauthorized",
+    message: forbidden
+      ? "Approved operator access is required."
+      : "Authenticated operator access is required.",
+  };
+}
+
 export function createLoadingState() {
   return {
     ok: false,
@@ -222,13 +235,8 @@ export function validateFailClosedResponse(payload) {
 }
 
 export function normalizeGroupAResponse(payload, validator, statusCode = 200) {
-  if (statusCode === 401) {
-    return {
-      ...createRedactedErrorResponse("unauthorized", statusCode),
-      uiState: GROUP_A_UI_STATES.UNAUTHORIZED,
-      status: "unauthorized",
-      message: "Authenticated operator access is required.",
-    };
+  if (statusCode === 401 || statusCode === 403) {
+    return createAccessDeniedResponse(statusCode);
   }
 
   if (statusCode === 429) {

@@ -1,15 +1,26 @@
 import {
+  createAccessDeniedResponse,
   createRedactedErrorResponse,
   normalizeGroupAResponse,
   validateMarketContextDigestResponse,
   validateProviderHealthResponse,
 } from "./groupAReadContracts";
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:3001").replace(/\/$/, "");
+import { buildApiUrl, isExplicitLocalDevelopment } from "./apiBaseUrl";
+import { getAuthSession } from "./supabaseClient";
 
 async function fetchGroupAJson(endpoint, validator) {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const authResult = await getAuthSession();
+    const accessCredential = authResult.session?.access_token || null;
+
+    if (!accessCredential && !isExplicitLocalDevelopment) {
+      return createAccessDeniedResponse(401);
+    }
+
+    const headers = accessCredential
+      ? { Authorization: `Bearer ${accessCredential}` }
+      : {};
+    const response = await fetch(buildApiUrl(endpoint), { headers });
     let payload = null;
 
     try {

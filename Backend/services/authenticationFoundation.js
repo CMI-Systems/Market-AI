@@ -4,6 +4,16 @@ const AWAITING_SESSION_STATUS = "Awaiting session status.";
 const SESSION_TTL_MS = 60 * 60 * 1000;
 const sessions = new Map();
 
+function createUnauthenticatedStatus() {
+  return {
+    authState: "UNAUTHENTICATED",
+    sessionState: "MISSING",
+    operatorRole: null,
+    warnings: ["Authenticated operator session is required."],
+    summary: "Operator session is unavailable."
+  };
+}
+
 function createLocalSession(operatorRole = "operator", now = Date.now()) {
   const sessionId = crypto.randomBytes(16).toString("hex");
   const session = {
@@ -16,16 +26,25 @@ function createLocalSession(operatorRole = "operator", now = Date.now()) {
   return session;
 }
 
-function validateSession(sessionId, now = Date.now()) {
+function validateSession(sessionId, now = Date.now(), options = {}) {
   const session = sessionId ? sessions.get(sessionId) : null;
+
   if (!session) {
-    return {
-      authState: "LOCAL_DEV",
-      sessionState: "LOCAL_DEV",
-      operatorRole: "operator",
-      warnings: ["Local development session fallback is active."],
-      summary: "Local development authentication foundation is active."
-    };
+    const localDevelopmentAllowed =
+      options.allowLocalDevFallback === true &&
+      String(options.nodeEnv || process.env.NODE_ENV || "").toLowerCase() === "development";
+
+    if (localDevelopmentAllowed) {
+      return {
+        authState: "LOCAL_DEV",
+        sessionState: "LOCAL_DEV",
+        operatorRole: "operator",
+        warnings: ["Explicit local development session fallback is active."],
+        summary: "Local development authentication foundation is active."
+      };
+    }
+
+    return createUnauthenticatedStatus();
   }
 
   if (Date.parse(session.expiresAt) <= now) {
@@ -48,8 +67,8 @@ function validateSession(sessionId, now = Date.now()) {
   };
 }
 
-function getSessionStatus(sessionId) {
-  return validateSession(sessionId);
+function getSessionStatus(sessionId, options = {}) {
+  return validateSession(sessionId, Date.now(), options);
 }
 
 module.exports = {

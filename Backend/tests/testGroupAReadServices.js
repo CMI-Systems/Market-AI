@@ -1,7 +1,6 @@
 const assert = require("assert");
 const {
   classifyFreshness,
-  validateMarketContextDigestDto,
   validateProviderHealthDto
 } = require("../services/groupAReadServiceContracts");
 const {
@@ -9,6 +8,7 @@ const {
   getProviderHealth
 } = require("../services/providerHealthReadService");
 const {
+  deterministicNotReadyDigestId,
   getLatestMarketContextDigest,
   getMarketContextDigestById,
   listMarketContextDigests
@@ -55,31 +55,36 @@ function run() {
   assertNoForbiddenKeys(unknownProvider);
 
   const digestList = listMarketContextDigests();
-  assert.strictEqual(digestList.ok, true);
-  assert.strictEqual(validateMarketContextDigestDto(digestList.data).valid, true);
+  assert.strictEqual(digestList.ok, false);
+  assert.strictEqual(digestList.status, "not_ready");
+  assert.strictEqual(digestList.reason, "approved_source_missing");
+  assert.strictEqual(digestList.digestType, "not_ready");
+  assert.strictEqual(digestList.sourceCount, 0);
+  assert.strictEqual(digestList.confidence, 0);
+  assert.strictEqual(digestList.validatedSnapshot, false);
+  assert.strictEqual(digestList.digestId, deterministicNotReadyDigestId("SPY"));
+  assert.strictEqual(listMarketContextDigests().digestId, digestList.digestId);
+  assert(!JSON.stringify(digestList).toLowerCase().includes("validated market snapshot"));
   assertNoForbiddenKeys(digestList);
 
   const latestDigest = getLatestMarketContextDigest({ symbol: "SPY" });
-  assert.strictEqual(latestDigest.ok, true);
-  assert.strictEqual(validateMarketContextDigestDto(latestDigest.data).valid, true);
+  assert.strictEqual(latestDigest.ok, false);
+  assert.strictEqual(latestDigest.status, "not_ready");
+  assert.strictEqual(latestDigest.sourceCount, 0);
   assertNoForbiddenKeys(latestDigest);
+
+  const requestedId = "requested-digest-id";
+  const digestById = getMarketContextDigestById(requestedId);
+  assert.strictEqual(digestById.ok, false);
+  assert.strictEqual(digestById.status, "not_ready");
+  assert.strictEqual(digestById.digestId, requestedId);
+  assert.strictEqual(digestById.sourceCount, 0);
+  assert.strictEqual(digestById.validatedSnapshot, false);
 
   const invalidDigest = getMarketContextDigestById("$bad");
   assert.strictEqual(invalidDigest.ok, false);
   assert.strictEqual(invalidDigest.reason, "invalid_filter");
   assertNoForbiddenKeys(invalidDigest);
-
-  const validation = validateMarketContextDigestDto({
-    digestId: "not_ready",
-    marketScope: "market",
-    digestType: "not_ready",
-    summary: "",
-    sourceCount: 0,
-    confidence: 0,
-    freshnessState: "unavailable",
-    generatedAt: new Date(now).toISOString()
-  });
-  assert.strictEqual(validation.valid, true, validation.errors.join(","));
 
   console.log("Group A read services test passed.");
 }

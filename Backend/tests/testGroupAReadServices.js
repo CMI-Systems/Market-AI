@@ -2,7 +2,7 @@ const assert = require("assert");
 const {
   classifyFreshness,
   validateProviderHealthDto
-} = require("../services/groupAReadServiceContracts");
+} = require("../services/GroupAReadServiceContracts");
 const {
   listProviderHealth,
   getProviderHealth

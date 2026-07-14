@@ -4,7 +4,7 @@ import {
   normalizeGroupAResponse,
   validateMarketContextDigestResponse,
   validateProviderHealthResponse,
-} from "./groupAReadContracts";
+} from "./GroupAReadContracts";
 import { buildApiUrl, isExplicitLocalDevelopment } from "./apiBaseUrl";
 import { getAuthSession } from "./supabaseClient";
 

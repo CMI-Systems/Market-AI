@@ -1,7 +1,7 @@
 const {
   failClosedResponse,
   sanitizeText
-} = require("./groupAReadServiceContracts");
+} = require("./GroupAReadServiceContracts");
 
 function deterministicNotReadyDigestId(symbol) {
   return `market-context-${String(symbol).toLowerCase()}-not-ready`;

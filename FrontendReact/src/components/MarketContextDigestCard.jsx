@@ -1,7 +1,7 @@
 import {
   GROUP_A_UI_STATES,
   sanitizeDisplayText,
-} from "../services/groupAReadContracts";
+} from "../services/GroupAReadContracts";
 
 const STATE_LABELS = {
   [GROUP_A_UI_STATES.LOADING]: "Loading",

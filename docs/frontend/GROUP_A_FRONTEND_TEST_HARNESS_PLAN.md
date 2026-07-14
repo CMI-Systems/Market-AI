@@ -84,21 +84,21 @@ Storybook-style isolated visual harness:
 - Risk level: low.
 - Rollback impact: remove the test file.
 
-### `FrontendReact/src/services/__tests__/groupAReadContracts.test.js`
+### `FrontendReact/src/services/__tests__/GroupAReadContracts.test.js`
 
 - Purpose: validate DTO guards, redaction decisions, unsafe field rejection, and fail-closed normalizers.
 - Required: YES.
 - Risk level: low.
 - Rollback impact: remove the test file.
 
-### `FrontendReact/src/services/__tests__/groupAReadApi.test.js`
+### `FrontendReact/src/services/__tests__/GroupAReadApi.test.js`
 
 - Purpose: validate approved endpoint calls, status mapping, malformed response handling, and no browser persistence.
 - Required: YES if fetch wrapper behavior is included in harness scope.
 - Risk level: low.
 - Rollback impact: remove the test file.
 
-### `FrontendReact/src/test/groupATestUtils.js`
+### `FrontendReact/src/test/GroupATestUtils.js`
 
 - Purpose: shared render helpers, fetch mocks, and safe assertion helpers for Group A tests.
 - Required: optional.
@@ -137,7 +137,7 @@ Storybook-style isolated visual harness:
 
 Use existing fixtures:
 
-- `FrontendReact/src/services/__mocks__/groupAReadFixtures.js`
+- `FrontendReact/src/services/__mocks__/GroupAReadFixtures.js`
 
 Planned mock states:
 

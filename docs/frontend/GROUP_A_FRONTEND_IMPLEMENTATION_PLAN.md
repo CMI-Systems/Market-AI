@@ -90,7 +90,7 @@ Relevant examples:
 
 ### A. Files Created
 
-#### `FrontendReact/src/services/groupAReadApi.js`
+#### `FrontendReact/src/services/GroupAReadApi.js`
 
 - Purpose: frontend API client wrapper for Group A Backend endpoints.
 - Responsibility: call endpoints, normalize HTTP statuses into safe UI states, and return redacted fail-closed results.
@@ -98,7 +98,7 @@ Relevant examples:
 - Risk level: low.
 - Rollback impact: remove the file and imports from Group A components.
 
-#### `FrontendReact/src/services/groupAReadContracts.js`
+#### `FrontendReact/src/services/GroupAReadContracts.js`
 
 - Purpose: DTO type guards, safe-state constants, redacted error helpers, and forbidden-field checks.
 - Responsibility: validate Provider Health, Market Context Digest, list responses, fail-closed responses, and malformed responses.
@@ -138,7 +138,7 @@ Relevant examples:
 - Risk level: medium.
 - Rollback impact: remove drawer import and trigger from `MarketContextDigestCard`.
 
-#### `FrontendReact/src/services/__mocks__/groupAReadFixtures.js`
+#### `FrontendReact/src/services/__mocks__/GroupAReadFixtures.js`
 
 - Purpose: static mock fixtures for loading, fresh, delayed, stale, unavailable, unknown, unauthorized, rate-limited, malformed, and redacted-error states.
 - Responsibility: support future component/service tests without live Backend or provider calls.
@@ -146,7 +146,7 @@ Relevant examples:
 - Risk level: low.
 - Rollback impact: remove fixture imports.
 
-#### `FrontendReact/src/services/groupAReadContracts.test.js`
+#### `FrontendReact/src/services/GroupAReadContracts.test.js`
 
 - Purpose: future pure-module tests for DTO guard and redaction behavior.
 - Responsibility: validate secret-like field rejection, raw payload rejection, hidden reasoning rejection, and learning/autonomy field rejection.
@@ -266,7 +266,7 @@ Explicit exclusions:
 
 ## 7. DTO Validation And Type-Guard Strategy
 
-Create pure type guards in `groupAReadContracts.js` for:
+Create pure type guards in `GroupAReadContracts.js` for:
 
 - Provider Health DTO
 - Provider Health detail DTO
@@ -323,13 +323,13 @@ Planned mock coverage:
 
 Recommended future frontend test files:
 
-- `FrontendReact/src/services/groupAReadContracts.test.js`
+- `FrontendReact/src/services/GroupAReadContracts.test.js`
 - `FrontendReact/src/components/ProviderHealthCard.test.jsx`
 - `FrontendReact/src/components/MarketContextDigestCard.test.jsx`
 
 Mocking strategy:
 
-- use local static fixtures under `FrontendReact/src/services/__mocks__/groupAReadFixtures.js`;
+- use local static fixtures under `FrontendReact/src/services/__mocks__/GroupAReadFixtures.js`;
 - mock frontend client responses rather than live Backend;
 - do not call provider APIs;
 - do not mutate Supabase;

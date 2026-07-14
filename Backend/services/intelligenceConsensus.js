@@ -33,7 +33,7 @@ function runtimeAligned(runtimeHealth = {}) {
   return ["HEALTHY", "STABLE"].includes(runtimeHealth.status);
 }
 
-function groupAligned(multiSymbolContext = {}) {
+function GroupAligned(multiSymbolContext = {}) {
   return ["STRONG", "MODERATE"].includes(multiSymbolContext.alignment) &&
     !["MIXED", "UNKNOWN"].includes(multiSymbolContext.groupBias);
 }
@@ -95,7 +95,7 @@ function collectSystemAlignment(input = {}) {
   if (input.multiSymbolContext?.alignment === "CONFLICTED") {
     conflictingSystems.push("multiSymbolContext");
     warnings.push("Multi-symbol context is conflicted.");
-  } else if (groupAligned(input.multiSymbolContext)) {
+  } else if (GroupAligned(input.multiSymbolContext)) {
     alignedSystems.push("multiSymbolContext");
     observations.push("Multi-symbol context is aligned.");
   } else {

@@ -4,7 +4,7 @@ const express = require("express");
 const {
   authenticateSupabaseOperator,
   createGroupAReadRouter
-} = require("../routes/GroupAReadRoutes");
+} = require("../routes/groupAReadRoutes");
 const { createLocalSession } = require("../services/authenticationFoundation");
 
 const APPROVED_TEST_CREDENTIAL = "approved-test-session";

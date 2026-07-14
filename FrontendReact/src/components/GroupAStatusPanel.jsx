@@ -4,8 +4,8 @@ import MarketContextDigestCard from "./MarketContextDigestCard";
 import {
   fetchLatestMarketContextDigest,
   fetchProviderHealth,
-} from "../services/GroupAReadApi";
-import { createLoadingState } from "../services/GroupAReadContracts";
+} from "../services/groupAReadApi";
+import { createLoadingState } from "../services/groupAReadContracts";
 
 function GroupAStatusPanel() {
   const [providerHealth, setProviderHealth] = useState(createLoadingState());

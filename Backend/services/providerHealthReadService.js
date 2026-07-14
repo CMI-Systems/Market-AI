@@ -6,7 +6,7 @@ const {
   sanitizeArray,
   sanitizeText,
   validateProviderHealthDto
-} = require("./GroupAReadServiceContracts");
+} = require("./groupAReadServiceContracts");
 
 function normalizeProviderName(providerId) {
   if (providerId === "alpaca") return "Alpaca";

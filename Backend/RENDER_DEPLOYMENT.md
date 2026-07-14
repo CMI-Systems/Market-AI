@@ -5,8 +5,8 @@
 - Render service type: Web Service
 - Root Directory: `Backend`
 - Environment: Node
-- Build Command: `npm install`
-- Start Command: `npm start`
+- Build Command: `cd Backend && npm install`
+- Start Command: `cd Backend && npm start`
 
 ## Required Environment Variables
 

@@ -175,7 +175,7 @@ Findings:
 - No SMTP secret pattern was found in the tracked frontend source or example configuration.
 - `VITE_CLOSED_BETA_EMAILS` is not used as an authorization gate.
 - `VITE_API_URL` is the single API base variable used by the tracked example and API clients.
-- `VITE_TRAINING_ENABLED=false` is present in the tracked frontend environment example.
+- `VITE_TRAINING_ENABLED` is not included because current frontend source does not reference it; training remains OFF through the documented governance boundary.
 
 ### Auth/Routing Status
 
@@ -298,7 +298,8 @@ Remaining findings:
 - `VITE_API_URL`
 - `VITE_ENVIRONMENT=staging`
 - `VITE_PERSISTENCE_ENABLED=true`
-- `VITE_TRAINING_ENABLED=false`
+- `VITE_DEMO_MODE=false`
+- `VITE_MODE=staging`
 
 Datadog public-client variables remain optional and environment-driven. Telemetry initialization stays disabled when its application ID or client token is absent.
 
@@ -408,7 +409,7 @@ Status: PASS
 
 Verified:
 
-- `VITE_TRAINING_ENABLED=false` in frontend env examples/local names.
+- No frontend training environment flag is consumed; training remains OFF through the documented governance boundary.
 - Runtime simulation policy blocks staging/production/unknown simulation.
 - Dev stream route cannot start simulated stream outside explicitly enabled development/test.
 - No route was found that starts Training, Shadow Trainer, Brain Learning, Shadow Observation, or PBT-1.
@@ -471,7 +472,7 @@ Do not expose backend secrets through frontend `VITE_` variables.
 
 | Location | Allowed contents | Must not contain | Notes |
 |---|---|---|---|
-| `FrontendReact/.env.example` | Public placeholders for `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_FRONTEND_URL`, `VITE_API_URL`, Datadog public-client settings, and staging flags | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Safe template only. |
+| `FrontendReact/.env.example` | Public placeholders for the referenced Supabase, frontend URL, API URL, runtime, persistence, demo-mode, and Datadog browser-client variables | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Safe template only; no staging identifier or credential-like value is stored. |
 | `FrontendReact/.env.local` | Local public Vite values only | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Ignored local file exists; values were not inspected during the current remediation. |
 | `FrontendReact/.env.staging` | Staging public Vite values for deploy simulation | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Ignored local file exists; values were not inspected during the current remediation. |
 | `FrontendReact/.env.staging.local` | Local override for staging public Vite values | service-role keys, provider secrets, SMTP secrets, passwords, operator emails | Missing locally. |

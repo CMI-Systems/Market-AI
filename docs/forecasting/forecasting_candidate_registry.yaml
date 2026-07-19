@@ -1,0 +1,1576 @@
+schema_version: "1.0"
+registry_name: "Market AI Forecasting Candidate Registry"
+last_reviewed: "2026-07-16"
+human_readable_authority: "FORECASTING_CANDIDATE_REGISTRY.md"
+derivative_only: true
+governance_authority: false
+constitutional_baseline: "Phase R.5.3 - Ratified"
+phase_s_status: "definition-only, unapproved, and unimplemented"
+training_status: "off"
+shadow_trainer_status: "off"
+brain_learning_status: "off"
+autonomous_learning_status: "off"
+production_status: "untouched"
+
+authority_disclaimers:
+  - "Registration is not approval."
+  - "Selection for a proof of concept is not Certification."
+  - "Benchmark success is not Promotion."
+  - "Local inference is not production authorization."
+  - "A license entry is not legal advice."
+  - "All licenses must be reverified before implementation and release."
+
+constitutional_scope:
+  market_ai_owns:
+    - reasoning
+    - intelligence_orchestration
+    - forecasting_research_for_market_intelligence_generation
+    - model_adapter_and_benchmark_planning
+  ai_database_retains:
+    - dataset_governance
+    - provenance_and_lineage
+    - certified_datasets
+    - dataset_eligibility
+    - certification_and_promotion_governance
+    - model_and_training_metadata_governance
+  embedded_ai_training_system_retains:
+    - governed_training
+    - governed_evaluation
+    - certification_preparation
+    - promotion_preparation
+  cmi_systems_llc_retains:
+    - operational_authorization
+    - production_authorization
+    - release_authority
+    - security_authority
+
+controlled_statuses:
+  selected_for_staging_poc: "Selected only for a bounded staging proof-of-concept proposal; implementation still requires authorization."
+  registered: "Recorded for governed comparison with no implementation authorization."
+  deferred: "Preserved for later sequencing after prerequisites or higher-priority work."
+  watchlist: "Monitored for future reassessment with no current implementation plan."
+  research_only: "Restricted to non-production research consideration."
+  excluded_noncommercial: "Excluded from commercial and production-bound work because of license restrictions."
+  blocked_pending_authorization: "Blocked until the named governance authorization is granted."
+  implemented_unverified: "Code may exist, but required verification and governance gates have not passed."
+  benchmarked: "Controlled benchmark evidence exists; this is not Certification, Promotion, or Operational Authorization."
+  rejected: "Evaluated and rejected with the reason preserved."
+  retired: "Previously active registry entry removed from further consideration while history is retained."
+
+prohibited_initial_statuses:
+  - production_approved
+  - certified
+  - promoted
+  - operationally_authorized
+
+global_authorizations:
+  implementation_authorized: false
+  training_authorized: false
+  production_authorized: false
+
+entry_schema:
+  required_fields:
+    - registry_id
+    - display_name
+    - provider
+    - category
+    - component_type
+    - upstream_artifact_id
+    - package_or_repository
+    - official_source_urls
+    - license
+    - license_verification_date
+    - commercial_eligibility
+    - execution_mode
+    - training_required
+    - zero_shot_supported
+    - point_forecast_supported
+    - probabilistic_output
+    - native_quantile_support
+    - multivariate_support
+    - past_covariate_support
+    - future_covariate_support
+    - exogenous_variable_support
+    - cpu_support
+    - gpu_support
+    - expected_context_constraints
+    - initial_forecast_horizon
+    - dependency_group
+    - planned_adapter
+    - implementation_priority
+    - registry_status
+    - implementation_authorized
+    - training_authorized
+    - production_authorized
+    - known_constraints
+    - evaluation_requirements
+    - source_reverification_required
+    - notes
+
+source_sets:
+  chronos: &chronos_sources
+    - "https://huggingface.co/amazon/chronos-2"
+    - "https://github.com/amazon-science/chronos-forecasting"
+  timesfm: &timesfm_sources
+    - "https://huggingface.co/google/timesfm-2.5-200m-pytorch"
+    - "https://github.com/google-research/timesfm"
+  granite_r3: &granite_r3_sources
+    - "https://huggingface.co/ibm-granite/granite-timeseries-ttm-r3"
+    - "https://github.com/ibm-granite/granite-tsfm"
+  granite_r2: &granite_r2_sources
+    - "https://huggingface.co/ibm-granite/granite-timeseries-ttm-r2"
+    - "https://github.com/ibm-granite/granite-tsfm"
+  timegpt: &timegpt_sources
+    - "https://www.nixtla.io/docs/introduction/about_timegpt"
+    - "https://www.nixtla.io/docs/forecasting/timegpt_2_family"
+    - "https://www.nixtla.io/docs/reference/sdk_reference"
+    - "https://www.nixtla.io/industries/financial-markets"
+    - "https://www.nixtla.io/docs/about/privacy-notice"
+    - "https://www.nixtla.io/docs/about/terms-and-conditions"
+    - "https://www.nixtla.io/blog/timegpt-2-announcement"
+    - "https://www.nixtla.io/blog/timegpt-2-1-announcement"
+    - "https://www.nixtla.io/genai-waitlist"
+  statsforecast: &statsforecast_sources
+    - "https://github.com/Nixtla/statsforecast"
+    - "https://nixtlaverse.nixtla.io/statsforecast/"
+  neuralforecast: &neuralforecast_sources
+    - "https://github.com/Nixtla/neuralforecast"
+    - "https://nixtlaverse.nixtla.io/neuralforecast/"
+  hierarchicalforecast: &hierarchicalforecast_sources
+    - "https://github.com/Nixtla/hierarchicalforecast"
+    - "https://nixtlaverse.nixtla.io/hierarchicalforecast/"
+  moirai: &moirai_sources
+    - "https://huggingface.co/Salesforce/moirai-2.0-R-small"
+    - "https://github.com/SalesforceAIResearch/uni2ts"
+  lag_llama: &lag_llama_sources
+    - "https://huggingface.co/time-series-foundation-models/Lag-Llama"
+    - "https://github.com/time-series-foundation-models/lag-llama"
+
+entry_templates:
+  external: &external_entry
+    provider: unknown
+    category: unknown
+    component_type: unknown
+    upstream_artifact_id: null
+    package_or_repository: null
+    official_source_urls: []
+    license: requires_verification
+    license_verification_date: "2026-07-16"
+    commercial_eligibility: requires_verification
+    execution_mode:
+      - research_planning_only
+    training_required: unknown
+    zero_shot_supported: unknown
+    point_forecast_supported: unknown
+    probabilistic_output: unknown
+    native_quantile_support: unknown
+    multivariate_support: unknown
+    past_covariate_support: unknown
+    future_covariate_support: unknown
+    exogenous_variable_support: unknown
+    cpu_support: unknown
+    gpu_support: unknown
+    expected_context_constraints:
+      - requires_verification
+    initial_forecast_horizon: requires_verification
+    dependency_group: unknown
+    planned_adapter: unknown
+    implementation_priority: "none"
+    registry_status: registered
+    implementation_authorized: false
+    training_authorized: false
+    production_authorized: false
+    known_constraints:
+      - "Capability, package, checkpoint, and license details must be reverified before implementation."
+    evaluation_requirements:
+      - "Use controlled walk-forward evaluation where forecasting is performed."
+      - "Compare against naive and conventional baselines where applicable."
+    source_reverification_required: true
+    notes: []
+  internal: &internal_entry
+    <<: *external_entry
+    provider: "Market AI Research"
+    license: not_applicable
+    commercial_eligibility: not_applicable
+    source_reverification_required: true
+  stats_model: &stats_model_entry
+    <<: *external_entry
+    provider: Nixtla
+    category: statistical_baselines
+    component_type: statistical_model
+    package_or_repository: statsforecast
+    official_source_urls: *statsforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu
+    training_required: false
+    zero_shot_supported: not_applicable
+    point_forecast_supported: true
+    probabilistic_output: true
+    native_quantile_support: false
+    multivariate_support: false
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: requires_verification
+    cpu_support: true
+    gpu_support: not_applicable
+    expected_context_constraints:
+      - "Minimum history and seasonality configuration must be valid for the selected method."
+    initial_forecast_horizon: "5_periods"
+    dependency_group: statsforecast
+    planned_adapter: statsforecast_adapter
+    implementation_priority: "P0"
+    registry_status: registered
+    known_constraints:
+      - "Point forecasts and prediction intervals are distinct outputs."
+      - "A point forecast must not automatically be labeled q_0_5."
+      - "Interval bounds must not be presented as native quantiles unless the upstream method defines them that way."
+    evaluation_requirements:
+      - "Participate in controlled walk-forward validation."
+      - "Evaluate nonseasonal and five-trading-day configurations where supported."
+      - "Do not assume five-day seasonality improves daily return forecasts."
+    notes:
+      - "Statistical fitting is part of evaluation and is not treated as authorization for neural training."
+  neural_model: &neural_model_entry
+    <<: *external_entry
+    provider: Nixtla
+    category: trained_neural_baselines
+    component_type: trained_neural_model
+    package_or_repository: neuralforecast
+    official_source_urls: *neuralforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu_requires_benchmark
+      - local_gpu
+    training_required: true
+    zero_shot_supported: false
+    point_forecast_supported: true
+    probabilistic_output: requires_verification
+    native_quantile_support: requires_verification
+    multivariate_support: requires_verification
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: requires_verification
+    cpu_support: true
+    gpu_support: true
+    expected_context_constraints:
+      - "History, windows, loss, scaling, and architecture-specific requirements require an approved design."
+    initial_forecast_horizon: "5_periods_after_training_authorization"
+    dependency_group: neuralforecast
+    planned_adapter: neuralforecast_adapter
+    implementation_priority: "P3"
+    registry_status: blocked_pending_authorization
+    known_constraints:
+      - "Requires fitting or training."
+      - "Not part of the Chronos-2 inference smoke test."
+      - "Implementation remains blocked while Training is OFF."
+    evaluation_requirements:
+      - "Require a separately approved training phase and leakage-controlled walk-forward evaluation."
+      - "Compare against StatsForecast and approved foundation-model baselines."
+    notes:
+      - "Registration does not authorize training."
+  reconciliation: &reconciliation_entry
+    <<: *external_entry
+    provider: Nixtla
+    category: forecast_reconciliation
+    package_or_repository: hierarchicalforecast
+    official_source_urls: *hierarchicalforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu
+    training_required: false
+    zero_shot_supported: not_applicable
+    point_forecast_supported: not_applicable
+    probabilistic_output: not_applicable
+    native_quantile_support: not_applicable
+    multivariate_support: not_applicable
+    past_covariate_support: not_applicable
+    future_covariate_support: not_applicable
+    exogenous_variable_support: not_applicable
+    cpu_support: true
+    gpu_support: not_applicable
+    expected_context_constraints:
+      - "Requires normalized base forecasts and a versioned hierarchy."
+    initial_forecast_horizon: inherited_from_base_forecast
+    dependency_group: hierarchicalforecast
+    planned_adapter: hierarchical_forecast_reconciliation_adapter
+    implementation_priority: "P3"
+    registry_status: deferred
+    known_constraints:
+      - "This is not a base forecasting model."
+      - "It must follow the normalized forecast-adapter layer and must not precede base adapters."
+    evaluation_requirements:
+      - "Measure coherence error before and after reconciliation."
+      - "Preserve and compare base and reconciled forecasts."
+    notes:
+      - "Basic reconciliation does not authorize model training."
+  deferred_specialist: &deferred_specialist_entry
+    <<: *external_entry
+    provider: Nixtla
+    category: deferred_specialists
+    package_or_repository: statsforecast
+    official_source_urls: *statsforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu_requires_benchmark
+    training_required: false
+    zero_shot_supported: not_applicable
+    point_forecast_supported: requires_verification
+    probabilistic_output: requires_verification
+    native_quantile_support: requires_verification
+    multivariate_support: requires_verification
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: requires_verification
+    cpu_support: true
+    gpu_support: not_applicable
+    expected_context_constraints:
+      - "Use-case-specific history, frequency, and seasonality requirements require verification."
+    initial_forecast_horizon: requires_verification
+    dependency_group: statsforecast_deferred_specialists
+    planned_adapter: deferred_specialist_adapter
+    implementation_priority: "P4"
+    registry_status: deferred
+    known_constraints:
+      - "Deferred until foundation, conventional baseline, validation, and benchmark layers are stable."
+    evaluation_requirements:
+      - "Define a use-case-specific deterministic fixture and walk-forward benchmark before implementation."
+    notes:
+      - "May later support intraday volume, liquidity, volatility, market-session effects, sparse instruments, or structured scenarios."
+
+canonical_input_contract:
+  required_fields:
+    - id
+    - timestamp
+    - target
+  optional_fields:
+    - past_covariates
+    - known_future_covariates
+    - static_features
+    - hierarchy_fields
+    - data_view_identifier
+    - source_provider_identifier
+  nixtla_mapping:
+    id: unique_id
+    timestamp: ds
+    target: y
+  validation_principles:
+    - parseable_timestamps
+    - ordered_observations_within_each_series
+    - unique_id_timestamp_pairs
+    - numeric_and_finite_targets
+    - no_missing_identifiers
+    - sufficient_history_per_candidate
+    - no_future_leakage
+    - no_artificial_history_padding
+    - provenance_retained_for_transformed_data
+
+normalized_forecast_output_contract:
+  fields:
+    - id
+    - timestamp
+    - model_id
+    - model_version
+    - adapter_version
+    - point_forecast
+    - q_0_1
+    - q_0_5
+    - q_0_9
+    - interval_lower
+    - interval_upper
+    - interval_level
+    - forecast_horizon
+    - execution_seconds
+    - peak_memory_mb
+    - model_cache_size_mb
+    - evaluation_window
+    - data_view
+    - run_id
+    - license
+    - registry_status
+  rules:
+    - unsupported_fields_remain_null
+    - quantiles_must_never_be_fabricated
+    - prediction_intervals_must_not_be_mislabeled_as_quantiles
+    - point_forecasts_must_not_automatically_be_treated_as_medians
+    - quantile_crossing_must_be_detected_and_reported
+    - raw_provider_specific_outputs_remain_available_for_traceability
+
+evaluation_contract:
+  point_accuracy:
+    - MAE
+    - RMSE
+    - MASE
+    - sMAPE
+    - directional_accuracy
+  probabilistic_accuracy:
+    - pinball_loss
+    - median_pinball_loss
+    - CRPS_where_supported
+    - interval_coverage
+    - interval_width
+    - quantile_crossing_rate
+  operational:
+    - inference_time
+    - training_time_when_later_authorized
+    - peak_memory
+    - model_cache_or_download_size
+    - CPU_compatibility
+    - GPU_requirement
+    - failure_rate
+    - reproducibility
+  governance:
+    - license_eligibility
+    - source_provenance
+    - version_pinning
+    - dataset_lineage
+    - leakage_protection
+    - deterministic_fixture_support
+    - model_card_source_verification_date
+  advancement_rule: "A candidate must beat or materially complement naive and conventional baselines in controlled walk-forward evaluation before infrastructure or deployment work is considered."
+
+data_views:
+  - raw_series
+  - anomaly_flagged_series
+  - governed_repaired_series
+
+future_reconciliation_fields:
+  - base_forecast
+  - reconciled_forecast
+  - reconciliation_method
+  - hierarchy_version
+  - coherence_error_before
+  - coherence_error_after
+
+hierarchy_examples:
+  market_hierarchy:
+    - total_market
+    - asset_class
+    - sector
+    - industry
+    - symbol
+  temporal_hierarchy:
+    - monthly
+    - weekly
+    - daily
+    - intraday
+
+implementation_order:
+  - "Registry and common contracts"
+  - "StatsForecast naive and conventional baselines"
+  - "Shared validation and normalized output schema"
+  - "Chronos-2 local CPU staging proof of concept"
+  - "Walk-forward benchmark harness"
+  - "TimesFM 2.5 adapter"
+  - "Granite TTM-R3 adapter"
+  - "Granite TTM-R2/R2.1 adapter"
+  - "Risk, anomaly, volatility, and conformal workflows"
+  - "NeuralForecast only after explicit training authorization"
+  - "HierarchicalForecast after stable base forecasts exist"
+  - "Deferred specialist research"
+
+source_and_license_policy:
+  primary_sources:
+    - official_model_cards
+    - official_repositories
+    - official_documentation
+    - published_papers
+  non_authoritative_sources:
+    - search_snippets
+    - community_fine_tunes
+    - spaces
+    - third_party_blogs
+  local_research_aids_only:
+    - downloaded_offline_html_pages
+  prohibited_committed_research_artifacts:
+    - downloaded_html
+    - downloaded_asset_folders
+  requirements:
+    - "Reverify licenses from official sources before implementation and before release."
+    - "Treat third-party model weights and code as potentially differently licensed."
+    - "Obtain legal review where required for commercial distribution."
+
+change_control:
+  required_actions:
+    - explicit_registry_update
+    - official_source_reverification
+    - license_review
+    - capability_verification
+    - benchmark_evidence_for_status_promotion
+    - authorization_decision_before_implementation
+    - governed_certification_promotion_and_operational_authorization_where_applicable
+  code_presence_rule: "A candidate may not move from registered or selected_for_staging_poc to a stronger status solely because its code was added."
+
+entries:
+  - <<: *external_entry
+    lane: foundation_forecasters
+    registry_id: amazon_chronos_2
+    display_name: "Amazon Chronos-2"
+    provider: Amazon
+    category: foundation_forecaster
+    component_type: pretrained_model
+    upstream_artifact_id: amazon/chronos-2
+    package_or_repository: chronos-forecasting
+    official_source_urls: *chronos_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu
+      - local_gpu
+    training_required: false
+    zero_shot_supported: true
+    point_forecast_supported: true
+    probabilistic_output: true
+    native_quantile_support: true
+    multivariate_support: true
+    past_covariate_support: true
+    future_covariate_support: true
+    exogenous_variable_support: true
+    cpu_support: true
+    gpu_support: true
+    expected_context_constraints:
+      - "Upstream documents a maximum context length, but the exact implementation-time package and checkpoint limits must be reverified."
+      - "Initial deterministic fixture uses approximately 250 observations for each of five series."
+    initial_forecast_horizon: "5_periods"
+    dependency_group: chronos
+    planned_adapter: chronos_2_adapter
+    implementation_priority: "P0"
+    registry_status: selected_for_staging_poc
+    known_constraints:
+      - "Selection is only for a local CPU staging proof of concept."
+      - "No package installation, model download, inference, or production use is authorized by this registry."
+    evaluation_requirements:
+      - "Use deterministic synthetic financial-style data with five series and approximately 250 observations per series."
+      - "Evaluate a five-period horizon with quantiles 0.1, 0.5, and 0.9 on local CPU."
+      - "Compare against StatsForecast naive and conventional baselines in walk-forward evaluation."
+    notes:
+      - "Documented for zero-shot univariate, multivariate, past-covariate, known-future-covariate, point, and quantile forecasting on CPU or GPU."
+
+  - <<: *external_entry
+    lane: foundation_forecasters
+    registry_id: google_timesfm_2_5_200m_pytorch
+    display_name: "Google TimesFM 2.5 200M PyTorch"
+    provider: "Google Research"
+    category: foundation_forecaster
+    component_type: pretrained_model
+    upstream_artifact_id: google/timesfm-2.5-200m-pytorch
+    package_or_repository: timesfm
+    official_source_urls: *timesfm_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu_requires_benchmark
+      - local_gpu
+    training_required: false
+    zero_shot_supported: true
+    point_forecast_supported: true
+    probabilistic_output: true
+    native_quantile_support: true
+    multivariate_support: requires_verification
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: requires_verification
+    cpu_support: true
+    gpu_support: true
+    expected_context_constraints:
+      - "Configurable context and horizon are documented; selected limits require adapter-time verification."
+      - "Continuous quantile-head configuration and quantile-crossing behavior must be verified."
+    initial_forecast_horizon: "5_periods"
+    dependency_group: timesfm
+    planned_adapter: timesfm_2_5_adapter
+    implementation_priority: "P1"
+    registry_status: registered
+    known_constraints:
+      - "Installation and packaging changed over time and must be reverified at implementation."
+      - "Do not assume the installation or adapter method matches Chronos."
+    evaluation_requirements:
+      - "Benchmark local CPU compatibility before accepting CPU execution."
+      - "Verify point and continuous-quantile output shapes, horizon configuration, and quantile crossing."
+    notes:
+      - "The official repository currently documents TimesFM 2.5 and PyTorch installation options, while the model card contains older packaging guidance; implementation must use freshly verified official instructions."
+
+  - <<: *external_entry
+    lane: foundation_forecasters
+    registry_id: ibm_granite_ttm_r3
+    display_name: "IBM Granite TinyTimeMixer R3"
+    provider: "IBM Granite"
+    category: foundation_forecaster
+    component_type: pretrained_model_family
+    upstream_artifact_id: ibm-granite/granite-timeseries-ttm-r3
+    package_or_repository: granite-tsfm
+    official_source_urls: *granite_r3_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu_requires_benchmark
+      - local_gpu
+    training_required: false
+    zero_shot_supported: true
+    point_forecast_supported: true
+    probabilistic_output: true
+    native_quantile_support: requires_verification
+    multivariate_support: true
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: true
+    cpu_support: true
+    gpu_support: true
+    expected_context_constraints:
+      - "Checkpoint, expert routing, input history, and adapter output contracts require implementation-time verification."
+    initial_forecast_horizon: "5_periods"
+    dependency_group: granite_ttm_r3
+    planned_adapter: granite_ttm_r3_adapter
+    implementation_priority: "P1"
+    registry_status: registered
+    known_constraints:
+      - "The family supports expert selection or routing; the selected checkpoint must be recorded."
+      - "Native compatibility with quantiles 0.1, 0.5, and 0.9 is not asserted until checkpoint and adapter outputs are verified."
+    evaluation_requirements:
+      - "Verify zero-shot, few-shot, fine-tuning, multivariate, exogenous, routing, and output-mode claims against the selected release."
+      - "Benchmark CPU before staging selection."
+    notes:
+      - "Few-shot adaptation and fine-tuning capability are documented but are not authorized."
+
+  - <<: *external_entry
+    lane: foundation_forecasters
+    registry_id: ibm_granite_ttm_r2_family
+    display_name: "IBM Granite TinyTimeMixer R2 and R2.1"
+    provider: "IBM Granite"
+    category: foundation_forecaster
+    component_type: pretrained_model_family
+    upstream_artifact_id: ibm-granite/granite-timeseries-ttm-r2
+    package_or_repository: granite-tsfm
+    official_source_urls: *granite_r2_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu
+      - local_gpu
+    training_required: false
+    zero_shot_supported: true
+    point_forecast_supported: true
+    probabilistic_output: requires_verification
+    native_quantile_support: requires_verification
+    multivariate_support: true
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: true
+    cpu_support: true
+    gpu_support: true
+    expected_context_constraints:
+      - "Branch and checkpoint selection depends on context length, prediction length, frequency, and release."
+      - "Common contexts may require 512 or 1024 observations."
+      - "R2.1 adds daily and weekly resolution support."
+      - "Zero-padding must not fabricate required history."
+    initial_forecast_horizon: "5_periods"
+    dependency_group: granite_ttm_r2
+    planned_adapter: granite_ttm_r2_adapter
+    implementation_priority: "P2"
+    registry_status: registered
+    known_constraints:
+      - "R2 and R2.1 checkpoints are contained within the model family."
+      - "Documented use is primarily point forecasting."
+      - "Model selection must use the upstream supported selection process."
+    evaluation_requirements:
+      - "Use five synthetic series with at least 1,024 observations each when the selected checkpoint requires it."
+      - "Benchmark a five-period horizon on CPU without history padding."
+    notes:
+      - "The exact release branch and checkpoint must be preserved in benchmark evidence."
+
+  - <<: *external_entry
+    lane: foundation_forecasters
+    registry_id: nixtla_timegpt_family
+    display_name: "Nixtla TimeGPT Foundation Model Family"
+    provider: Nixtla
+    category: foundation_forecaster
+    component_type: proprietary_foundation_model_service
+    upstream_artifact_id: nixtla/timegpt-family
+    package_or_repository: nixtla
+    official_source_urls: *timegpt_sources
+    license: proprietary_commercial_terms
+    license_verification_date: "2026-07-16"
+    commercial_eligibility: requires_contract_and_license_review
+    execution_mode:
+      - hosted_api
+      - managed_cloud
+      - self_hosted_enterprise
+    training_required: false
+    zero_shot_supported: true
+    point_forecast_supported: true
+    probabilistic_output: prediction_intervals
+    native_quantile_support: requires_verification
+    multivariate_support: requires_verification
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: true
+    cpu_support: requires_verification
+    gpu_support: requires_verification
+    expected_context_constraints:
+      - "Model-specific history, context, horizon, request-size, endpoint, and account limits require verification."
+      - "Available limits and output behavior may differ across TimeGPT-1, its long-horizon variant, TimeGPT-2, and TimeGPT-2.1."
+    initial_forecast_horizon: requires_verification
+    dependency_group: timegpt
+    planned_adapter: timegpt_adapter
+    implementation_priority: "P1"
+    registry_status: blocked_pending_authorization
+    implementation_authorized: false
+    training_authorized: false
+    production_authorized: false
+    source_reverification_required: true
+    model_family_variants_requiring_verification:
+      - TimeGPT-1
+      - "TimeGPT-1 long-horizon variant"
+      - TimeGPT-2
+      - TimeGPT-2.1
+    access_status:
+      - "Early-access or commercial access may require Nixtla approval."
+      - "CMI-Systems, LLC has joined the Nixtla GenAI waitlist."
+      - "Waitlist enrollment does not establish access rights or implementation authorization."
+      - "Exact TimeGPT model versions available to the account require verification."
+    vendor_described_use_cases:
+      - return_forecasting
+      - volatility_forecasting
+      - price_and_spread_forecasting
+      - volume_and_liquidity_forecasting
+      - correlation_forecasting
+      - cross_venue_forecasting
+      - portfolio_construction_support
+      - hedging_and_risk_management_support
+      - execution_planning
+      - product_analytics
+    vendor_reported_claims:
+      - "Vendor-reported claim; not independently verified by Market AI: accuracy improvement."
+      - "Vendor-reported claim; not independently verified by Market AI: compute-cost reduction."
+      - "Vendor-reported claim; not independently verified by Market AI: code reduction."
+      - "Vendor-reported claim; not independently verified by Market AI: deployment speed."
+      - "Vendor-reported claim; not independently verified by Market AI: operational efficiency."
+    known_constraints:
+      - "Proprietary commercial terms require review."
+      - "Model access and version availability require verification."
+      - "API pricing and rate limits require verification."
+      - "Forecast, token, or other usage costs require measurement."
+      - "Hosted-service privacy and retention terms require review."
+      - "Financial-data confidentiality requirements must be evaluated."
+      - "Processing locations and data residency require review."
+      - "API-key governance is required before any implementation."
+      - "Model-version pinning and reproducibility require verification."
+      - "Service availability and failure behavior require testing."
+      - "Self-hosted enterprise availability, agreement terms, hardware requirements, and pricing require verification; it must not be assumed generally available."
+      - "Prediction intervals must not be mislabeled as native quantiles."
+      - "Proprietary or governed datasets must not be transmitted to a hosted service without separate data-governance authorization."
+      - "Initial hosted testing, when separately authorized, must use synthetic or explicitly approved public data."
+    evaluation_requirements:
+      - "Verify the contracted model version, endpoint, execution mode, access rights, and account availability."
+      - "Verify point and prediction-interval output semantics without fabricating native quantiles or treating intervals as quantiles."
+      - "Compare point accuracy and interval coverage against naive and conventional baselines in controlled walk-forward evaluation."
+      - "Measure inference time, failure rate, reproducibility, request limits, rate limits, and forecast or usage costs."
+      - "Review privacy, security, confidentiality, processing location, retention, and data residency before transmitting data."
+      - "Use only synthetic or explicitly approved public data for initial hosted testing if separately authorized."
+    notes:
+      - "Optional fine-tuning or adaptation may exist but remains unauthorized."
+      - "The Financial Markets page is supporting evidence for this family entry, not a separate candidate."
+      - "Vendor-described financial use cases are not approved Market AI use cases and authorize no trading, portfolio management, order execution, or customer deployment."
+      - "TimeGPT is a proprietary foundation-model service; StatsForecast is an open-source statistical library, NeuralForecast is an open-source trained-neural library, and HierarchicalForecast is an open-source reconciliation library."
+      - "Registration, vendor documentation, waitlist enrollment, and local research organization do not establish benchmark evidence, implementation authorization, Certification, Promotion, or Operational Authorization."
+
+  - <<: *external_entry
+    lane: statistical_baselines
+    registry_id: nixtla_statsforecast
+    display_name: "Nixtla StatsForecast"
+    provider: Nixtla
+    category: statistical_baselines
+    component_type: forecasting_library
+    package_or_repository: statsforecast
+    official_source_urls: *statsforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu
+    training_required: false
+    zero_shot_supported: not_applicable
+    point_forecast_supported: true
+    probabilistic_output: true
+    native_quantile_support: requires_verification
+    multivariate_support: false
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: true
+    cpu_support: true
+    gpu_support: not_applicable
+    expected_context_constraints:
+      - "Method-specific history and seasonality requirements apply."
+    initial_forecast_horizon: "5_periods"
+    dependency_group: statsforecast
+    planned_adapter: statsforecast_adapter
+    implementation_priority: "P0"
+    registry_status: registered
+    known_constraints:
+      - "Library component only; child model behavior must be evaluated separately."
+      - "Prediction intervals are not automatically native quantiles."
+    evaluation_requirements:
+      - "All registered child models participate in walk-forward validation."
+      - "Retain separate point, interval, and verified quantile fields."
+    notes:
+      - "Parent library for statistical baselines and selected risk workflows."
+
+  - <<: *stats_model_entry
+    lane: statistical_baselines
+    registry_id: statsforecast_naive
+    display_name: "StatsForecast Naive"
+    upstream_artifact_id: statsforecast.models.Naive
+    exogenous_variable_support: false
+    notes:
+      - "Primary naive benchmark; nonseasonal configuration."
+
+  - <<: *stats_model_entry
+    lane: statistical_baselines
+    registry_id: statsforecast_random_walk_with_drift
+    display_name: "StatsForecast RandomWalkWithDrift"
+    upstream_artifact_id: statsforecast.models.RandomWalkWithDrift
+    exogenous_variable_support: false
+    notes:
+      - "Conventional drift baseline; nonseasonal configuration."
+
+  - <<: *stats_model_entry
+    lane: statistical_baselines
+    registry_id: statsforecast_seasonal_naive
+    display_name: "StatsForecast SeasonalNaive"
+    upstream_artifact_id: statsforecast.models.SeasonalNaive
+    exogenous_variable_support: false
+    expected_context_constraints:
+      - "Requires sufficient history for the configured season length."
+      - "Initial candidate season length is five trading days."
+    notes:
+      - "Evaluate against the nonseasonal Naive baseline; no improvement is assumed."
+
+  - <<: *stats_model_entry
+    lane: statistical_baselines
+    registry_id: statsforecast_auto_arima
+    display_name: "StatsForecast AutoARIMA"
+    upstream_artifact_id: statsforecast.models.AutoARIMA
+    exogenous_variable_support: true
+    notes:
+      - "Evaluate nonseasonal and five-trading-day configurations where supported."
+
+  - <<: *stats_model_entry
+    lane: statistical_baselines
+    registry_id: statsforecast_auto_ets
+    display_name: "StatsForecast AutoETS"
+    upstream_artifact_id: statsforecast.models.AutoETS
+    exogenous_variable_support: false
+    notes:
+      - "Evaluate nonseasonal and five-trading-day configurations where supported."
+
+  - <<: *stats_model_entry
+    lane: statistical_baselines
+    registry_id: statsforecast_auto_theta
+    display_name: "StatsForecast AutoTheta"
+    upstream_artifact_id: statsforecast.models.AutoTheta
+    exogenous_variable_support: false
+    notes:
+      - "Evaluate nonseasonal and five-trading-day configurations where supported."
+
+  - <<: *external_entry
+    lane: risk_uncertainty_data_quality
+    registry_id: statsforecast_probabilistic_forecasting
+    display_name: "StatsForecast Probabilistic Forecasting"
+    provider: Nixtla
+    category: risk_uncertainty_data_quality
+    component_type: probabilistic_forecasting_workflow
+    package_or_repository: statsforecast
+    official_source_urls: *statsforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu
+    training_required: false
+    zero_shot_supported: not_applicable
+    point_forecast_supported: true
+    probabilistic_output: true
+    native_quantile_support: requires_verification
+    multivariate_support: false
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: requires_verification
+    cpu_support: true
+    gpu_support: not_applicable
+    expected_context_constraints:
+      - "Output semantics depend on the selected statistical model and interval method."
+    initial_forecast_horizon: "5_periods"
+    dependency_group: statsforecast
+    planned_adapter: statsforecast_uncertainty_adapter
+    implementation_priority: "P2"
+    registry_status: registered
+    known_constraints:
+      - "Prediction intervals and quantiles are distinct and must retain upstream semantics."
+      - "Point forecasts must not automatically be treated as medians."
+    evaluation_requirements:
+      - "Measure interval coverage, interval width, pinball loss only for verified quantiles, and quantile crossing where applicable."
+    notes:
+      - "Workflow under the StatsForecast parent, not a foundation model."
+
+  - <<: *external_entry
+    lane: risk_uncertainty_data_quality
+    registry_id: statsforecast_conformal_prediction
+    display_name: "StatsForecast Conformal Prediction"
+    provider: Nixtla
+    category: risk_uncertainty_data_quality
+    component_type: uncertainty_method
+    package_or_repository: statsforecast
+    official_source_urls: *statsforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu
+    training_required: false
+    zero_shot_supported: not_applicable
+    point_forecast_supported: false
+    probabilistic_output: true
+    native_quantile_support: false
+    multivariate_support: requires_verification
+    past_covariate_support: not_applicable
+    future_covariate_support: not_applicable
+    exogenous_variable_support: not_applicable
+    cpu_support: true
+    gpu_support: not_applicable
+    expected_context_constraints:
+      - "Calibration windows and exchangeability assumptions require verification."
+    initial_forecast_horizon: inherited_from_base_forecast
+    dependency_group: statsforecast
+    planned_adapter: statsforecast_conformal_adapter
+    implementation_priority: "P2"
+    registry_status: registered
+    known_constraints:
+      - "Conformal intervals must remain intervals and must not be relabeled as native quantiles."
+    evaluation_requirements:
+      - "Evaluate empirical coverage, interval width, calibration-window sensitivity, and coverage stability across regimes."
+    notes:
+      - "Method under the StatsForecast parent, not a foundation model."
+
+  - <<: *external_entry
+    lane: risk_uncertainty_data_quality
+    registry_id: statsforecast_anomaly_detection
+    display_name: "StatsForecast Anomaly Detection"
+    provider: Nixtla
+    category: risk_uncertainty_data_quality
+    component_type: anomaly_detection_workflow
+    package_or_repository: statsforecast
+    official_source_urls: *statsforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu
+    training_required: false
+    zero_shot_supported: not_applicable
+    point_forecast_supported: false
+    probabilistic_output: not_applicable
+    native_quantile_support: not_applicable
+    multivariate_support: requires_verification
+    past_covariate_support: not_applicable
+    future_covariate_support: not_applicable
+    exogenous_variable_support: not_applicable
+    cpu_support: true
+    gpu_support: not_applicable
+    expected_context_constraints:
+      - "Requires sufficient in-sample history for the selected model and interval method."
+    initial_forecast_horizon: not_applicable
+    dependency_group: statsforecast
+    planned_adapter: statsforecast_anomaly_adapter
+    implementation_priority: "P2"
+    registry_status: registered
+    known_constraints:
+      - "Detected anomalies are flagged, not automatically deleted."
+      - "Raw observations remain immutable; corrections create traceable derived data."
+      - "A market shock may be valid rather than bad data."
+      - "No database or AI-DATABASE implementation is authorized."
+    evaluation_requirements:
+      - "Compare raw_series, anomaly_flagged_series, and governed_repaired_series."
+      - "Preserve provenance and evaluate false-positive handling for valid market shocks."
+    notes:
+      - "Anomaly handling must preserve source and transformation lineage."
+
+  - <<: *external_entry
+    lane: risk_uncertainty_data_quality
+    registry_id: statsforecast_arch
+    display_name: "StatsForecast ARCH"
+    provider: Nixtla
+    category: risk_uncertainty_data_quality
+    component_type: volatility_model
+    upstream_artifact_id: statsforecast.models.ARCH
+    package_or_repository: statsforecast
+    official_source_urls: *statsforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu
+    training_required: false
+    zero_shot_supported: not_applicable
+    point_forecast_supported: true
+    probabilistic_output: true
+    native_quantile_support: false
+    multivariate_support: false
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: requires_verification
+    cpu_support: true
+    gpu_support: not_applicable
+    expected_context_constraints:
+      - "Requires a volatility-target definition, sufficient history, and validated residual or return inputs."
+    initial_forecast_horizon: "5_periods"
+    dependency_group: statsforecast
+    planned_adapter: statsforecast_volatility_adapter
+    implementation_priority: "P2"
+    registry_status: registered
+    known_constraints:
+      - "Volatility target only; do not compare directly with price or return point forecasters as if the targets were identical."
+    evaluation_requirements:
+      - "Evaluate volatility loss, interval behavior, regime sensitivity, and residual diagnostics against volatility baselines."
+    notes:
+      - "ARCH is a volatility model, not a foundation forecaster."
+
+  - <<: *external_entry
+    lane: risk_uncertainty_data_quality
+    registry_id: statsforecast_garch
+    display_name: "StatsForecast GARCH"
+    provider: Nixtla
+    category: risk_uncertainty_data_quality
+    component_type: volatility_model
+    upstream_artifact_id: statsforecast.models.GARCH
+    package_or_repository: statsforecast
+    official_source_urls: *statsforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu
+    training_required: false
+    zero_shot_supported: not_applicable
+    point_forecast_supported: true
+    probabilistic_output: true
+    native_quantile_support: false
+    multivariate_support: false
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: requires_verification
+    cpu_support: true
+    gpu_support: not_applicable
+    expected_context_constraints:
+      - "Requires a volatility-target definition, sufficient history, and validated residual or return inputs."
+    initial_forecast_horizon: "5_periods"
+    dependency_group: statsforecast
+    planned_adapter: statsforecast_volatility_adapter
+    implementation_priority: "P2"
+    registry_status: registered
+    known_constraints:
+      - "Volatility target only; do not compare directly with price or return point forecasters as if the targets were identical."
+    evaluation_requirements:
+      - "Evaluate volatility loss, interval behavior, regime sensitivity, and residual diagnostics against volatility baselines."
+    notes:
+      - "GARCH is a volatility model, not a foundation forecaster."
+
+  - &internal_anomaly_workflow
+    <<: *internal_entry
+    lane: risk_uncertainty_data_quality
+    registry_id: residual_anomaly_detection
+    display_name: "Residual Anomaly Detection"
+    category: risk_uncertainty_data_quality
+    component_type: anomaly_detection_method
+    execution_mode:
+      - research_workflow
+    training_required: false
+    zero_shot_supported: not_applicable
+    point_forecast_supported: false
+    probabilistic_output: not_applicable
+    native_quantile_support: not_applicable
+    multivariate_support: requires_verification
+    past_covariate_support: not_applicable
+    future_covariate_support: not_applicable
+    exogenous_variable_support: not_applicable
+    cpu_support: true
+    gpu_support: not_applicable
+    expected_context_constraints:
+      - "Requires governed forecast residuals and an evaluation window."
+    initial_forecast_horizon: not_applicable
+    dependency_group: market_ai_data_quality_methods
+    planned_adapter: governed_anomaly_detection_adapter
+    implementation_priority: "P2"
+    registry_status: registered
+    known_constraints:
+      - "Detected anomalies are flagged, not automatically deleted."
+      - "Raw observations remain immutable; corrections create traceable derived data."
+      - "A market shock may be valid rather than bad data."
+      - "No database or AI-DATABASE implementation is authorized."
+    evaluation_requirements:
+      - "Compare raw_series, anomaly_flagged_series, and governed_repaired_series."
+      - "Preserve provenance and quantify false positives on valid market shocks."
+    notes:
+      - "Internal research method; source and capability definitions still require change-control review."
+
+  - <<: *internal_anomaly_workflow
+    registry_id: prediction_interval_breach_detection
+    display_name: "Prediction Interval Breach Detection"
+    component_type: uncertainty_monitoring_method
+    expected_context_constraints:
+      - "Requires verified interval semantics, interval level, and observed outcomes."
+    planned_adapter: prediction_interval_breach_adapter
+    notes:
+      - "A breach is a monitoring signal, not automatic proof of bad data or model failure."
+
+  - <<: *internal_anomaly_workflow
+    registry_id: cross_provider_discrepancy_detection
+    display_name: "Cross-Provider Discrepancy Detection"
+    component_type: data_quality_method
+    expected_context_constraints:
+      - "Requires time-aligned observations from separately identified providers."
+    planned_adapter: cross_provider_discrepancy_adapter
+    notes:
+      - "Provider differences are flagged for review; no provider value is silently substituted."
+
+  - <<: *internal_anomaly_workflow
+    registry_id: missing_and_duplicate_detection
+    display_name: "Missing and Duplicate Detection"
+    component_type: data_quality_method
+    expected_context_constraints:
+      - "Requires an expected calendar or frequency and unique id/timestamp validation."
+    planned_adapter: missing_duplicate_detection_adapter
+    notes:
+      - "Missing and duplicate observations remain traceable through flags and governed derived views."
+
+  - <<: *internal_anomaly_workflow
+    registry_id: corporate_action_adjustment_validation
+    display_name: "Corporate Action Adjustment Validation"
+    component_type: data_quality_method
+    expected_context_constraints:
+      - "Requires authoritative corporate-action provenance and explicit adjusted/unadjusted series identity."
+    planned_adapter: corporate_action_validation_adapter
+    notes:
+      - "Adjustment validation must not rewrite raw provider observations."
+
+  - <<: *internal_anomaly_workflow
+    registry_id: volatility_regime_anomaly_detection
+    display_name: "Volatility Regime Anomaly Detection"
+    component_type: risk_monitoring_method
+    expected_context_constraints:
+      - "Requires a versioned volatility-regime definition and sufficient history."
+    planned_adapter: volatility_regime_anomaly_adapter
+    notes:
+      - "A regime shift can be a valid market event and must not be treated as corrupt data by default."
+
+  - <<: *external_entry
+    lane: trained_neural_baselines
+    registry_id: nixtla_neuralforecast
+    display_name: "Nixtla NeuralForecast"
+    provider: Nixtla
+    category: trained_neural_baselines
+    component_type: training_library
+    package_or_repository: neuralforecast
+    official_source_urls: *neuralforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu_requires_benchmark
+      - local_gpu
+    training_required: true
+    zero_shot_supported: false
+    point_forecast_supported: true
+    probabilistic_output: true
+    native_quantile_support: requires_verification
+    multivariate_support: requires_verification
+    past_covariate_support: true
+    future_covariate_support: true
+    exogenous_variable_support: true
+    cpu_support: true
+    gpu_support: true
+    expected_context_constraints:
+      - "Model-specific window, loss, scaling, exogenous, and hardware requirements require an approved training design."
+    initial_forecast_horizon: "5_periods_after_training_authorization"
+    dependency_group: neuralforecast
+    planned_adapter: neuralforecast_adapter
+    implementation_priority: "P3"
+    registry_status: blocked_pending_authorization
+    known_constraints:
+      - "Requires fitting or training and is not part of the Chronos-2 inference smoke test."
+      - "Implementation is blocked while Training is OFF."
+    evaluation_requirements:
+      - "A separate approved training phase, leakage controls, deterministic fixtures, and walk-forward evaluation are required."
+    notes:
+      - "Library parent for the registered trained-neural candidates."
+
+  - <<: *neural_model_entry
+    lane: trained_neural_baselines
+    registry_id: neuralforecast_nhits
+    display_name: "NeuralForecast NHITS"
+    upstream_artifact_id: neuralforecast.models.NHITS
+    notes:
+      - "Initial trained-neural priority order: 1 of 5."
+
+  - <<: *neural_model_entry
+    lane: trained_neural_baselines
+    registry_id: neuralforecast_patchtst
+    display_name: "NeuralForecast PatchTST"
+    upstream_artifact_id: neuralforecast.models.PatchTST
+    notes:
+      - "Initial trained-neural priority order: 2 of 5."
+
+  - <<: *neural_model_entry
+    lane: trained_neural_baselines
+    registry_id: neuralforecast_nbeatsx
+    display_name: "NeuralForecast NBEATSx"
+    upstream_artifact_id: neuralforecast.models.NBEATSx
+    notes:
+      - "Initial trained-neural priority order: 3 of 5."
+
+  - <<: *neural_model_entry
+    lane: trained_neural_baselines
+    registry_id: neuralforecast_deepar
+    display_name: "NeuralForecast DeepAR"
+    upstream_artifact_id: neuralforecast.models.DeepAR
+    notes:
+      - "Initial trained-neural priority order: 4 of 5."
+
+  - <<: *neural_model_entry
+    lane: trained_neural_baselines
+    registry_id: neuralforecast_tft
+    display_name: "NeuralForecast TFT"
+    upstream_artifact_id: neuralforecast.models.TFT
+    notes:
+      - "Initial trained-neural priority order: 5 of 5."
+
+  - <<: *reconciliation_entry
+    lane: forecast_reconciliation
+    registry_id: nixtla_hierarchicalforecast
+    display_name: "Nixtla HierarchicalForecast"
+    category: forecast_reconciliation
+    component_type: reconciliation_library
+    package_or_repository: hierarchicalforecast
+    official_source_urls: *hierarchicalforecast_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    training_required: false
+    planned_adapter: hierarchical_forecast_reconciliation_adapter
+    known_constraints:
+      - "This library is not a base forecasting model; it consumes base forecasts."
+      - "It enforces cross-sectional or temporal coherence."
+      - "It must follow the normalized forecast-adapter layer and must not be implemented before base adapters exist."
+    evaluation_requirements:
+      - "Preserve base_forecast and reconciled_forecast."
+      - "Record reconciliation_method, hierarchy_version, coherence_error_before, and coherence_error_after."
+    notes:
+      - "Training is not required for basic reconciliation methods."
+
+  - &point_reconciliation_method
+    <<: *reconciliation_entry
+    lane: forecast_reconciliation
+    registry_id: hierarchicalforecast_bottom_up
+    display_name: "HierarchicalForecast BottomUp"
+    component_type: point_reconciliation_method
+    upstream_artifact_id: hierarchicalforecast.methods.BottomUp
+    point_forecast_supported: true
+    probabilistic_output: false
+    native_quantile_support: false
+    planned_adapter: hierarchical_point_reconciliation_adapter
+    notes:
+      - "Point-reconciliation method that aggregates lower-level base forecasts upward."
+
+  - <<: *point_reconciliation_method
+    registry_id: hierarchicalforecast_top_down
+    display_name: "HierarchicalForecast TopDown"
+    upstream_artifact_id: hierarchicalforecast.methods.TopDown
+    notes:
+      - "Point-reconciliation method that allocates top-level base forecasts downward."
+
+  - <<: *point_reconciliation_method
+    registry_id: hierarchicalforecast_middle_out
+    display_name: "HierarchicalForecast MiddleOut"
+    upstream_artifact_id: hierarchicalforecast.methods.MiddleOut
+    notes:
+      - "Point-reconciliation method anchored at a selected middle level."
+
+  - <<: *point_reconciliation_method
+    registry_id: hierarchicalforecast_min_trace
+    display_name: "HierarchicalForecast MinTrace"
+    upstream_artifact_id: hierarchicalforecast.methods.MinTrace
+    notes:
+      - "Point-reconciliation method using a minimum-trace objective."
+
+  - <<: *point_reconciliation_method
+    registry_id: hierarchicalforecast_erm
+    display_name: "HierarchicalForecast ERM"
+    upstream_artifact_id: hierarchicalforecast.methods.ERM
+    notes:
+      - "Point-reconciliation method using an empirical-risk-minimization reconciliation matrix."
+
+  - &probabilistic_reconciliation_method
+    <<: *reconciliation_entry
+    lane: forecast_reconciliation
+    registry_id: hierarchicalforecast_normality
+    display_name: "HierarchicalForecast Normality"
+    component_type: probabilistic_reconciliation_method
+    upstream_artifact_id: hierarchicalforecast.methods.Normality
+    point_forecast_supported: false
+    probabilistic_output: true
+    native_quantile_support: requires_verification
+    planned_adapter: hierarchical_probabilistic_reconciliation_adapter
+    known_constraints:
+      - "Consumes base probabilistic forecasts and depends on method assumptions."
+      - "Reconciled intervals or samples must not be mislabeled as native quantiles without verification."
+    evaluation_requirements:
+      - "Evaluate coherence, coverage, width, calibration, and quantile crossing where verified quantiles exist."
+    notes:
+      - "Normality-based probabilistic reconciliation."
+
+  - <<: *probabilistic_reconciliation_method
+    registry_id: hierarchicalforecast_bootstrap
+    display_name: "HierarchicalForecast Bootstrap"
+    upstream_artifact_id: hierarchicalforecast.methods.Bootstrap
+    notes:
+      - "Bootstrap probabilistic reconciliation."
+
+  - <<: *probabilistic_reconciliation_method
+    registry_id: hierarchicalforecast_permbu
+    display_name: "HierarchicalForecast PERMBU"
+    upstream_artifact_id: hierarchicalforecast.methods.PERMBU
+    notes:
+      - "Probabilistic reconciliation using rank-dependence reinjection and bottom-up aggregation."
+
+  - <<: *probabilistic_reconciliation_method
+    registry_id: hierarchicalforecast_conformal
+    display_name: "HierarchicalForecast Conformal"
+    upstream_artifact_id: hierarchicalforecast.methods.Conformal
+    native_quantile_support: false
+    known_constraints:
+      - "Register only where upstream support and exchangeability assumptions are verified."
+      - "Conformal prediction intervals must not be relabeled as native quantiles."
+    notes:
+      - "Conformal probabilistic reconciliation where supported and verified."
+
+  - &reconciliation_workflow
+    <<: *reconciliation_entry
+    lane: forecast_reconciliation
+    registry_id: hierarchicalforecast_temporal_reconciliation
+    display_name: "HierarchicalForecast Temporal Reconciliation"
+    component_type: reconciliation_workflow
+    point_forecast_supported: not_applicable
+    probabilistic_output: not_applicable
+    native_quantile_support: not_applicable
+    planned_adapter: hierarchical_temporal_reconciliation_adapter
+    expected_context_constraints:
+      - "Requires a versioned temporal hierarchy and aligned base forecasts across aggregation levels."
+    notes:
+      - "Conceptual temporal hierarchy: Monthly -> Weekly -> Daily -> Intraday."
+
+  - <<: *reconciliation_workflow
+    registry_id: hierarchicalforecast_exogenous_variable_reconciliation
+    display_name: "HierarchicalForecast Exogenous-Variable Reconciliation"
+    component_type: reconciliation_workflow
+    exogenous_variable_support: requires_verification
+    planned_adapter: hierarchical_exogenous_reconciliation_adapter
+    expected_context_constraints:
+      - "Requires verified exogenous-variable alignment and supported reconciliation behavior."
+    notes:
+      - "Supporting workflow only; base-forecast exogenous semantics remain authoritative."
+
+  - <<: *reconciliation_workflow
+    registry_id: hierarchicalforecast_reconciliation_diagnostics
+    display_name: "HierarchicalForecast Reconciliation Diagnostics"
+    component_type: diagnostics_workflow
+    planned_adapter: hierarchical_reconciliation_diagnostics_adapter
+    expected_context_constraints:
+      - "Requires base and reconciled forecasts, hierarchy version, and observed outcomes."
+    notes:
+      - "Tracks coherence error and forecast-quality changes before and after reconciliation."
+
+  - <<: *reconciliation_workflow
+    registry_id: hierarchicalforecast_forecasting_at_scale
+    display_name: "HierarchicalForecast Forecasting at Scale"
+    component_type: scale_workflow
+    planned_adapter: hierarchical_forecasting_scale_adapter
+    expected_context_constraints:
+      - "Requires stable base adapters, bounded parallelism, reproducibility controls, and operational benchmarks."
+    notes:
+      - "Scaling workflow is deferred until single-run reconciliation is correct and stable."
+
+  - <<: *reconciliation_workflow
+    registry_id: hierarchicalforecast_neural_mlforecast_integration
+    display_name: "HierarchicalForecast NeuralForecast and MLForecast Integration"
+    component_type: integration_workflow
+    training_required: requires_verification
+    planned_adapter: hierarchical_external_forecast_integration_adapter
+    expected_context_constraints:
+      - "Requires normalized base forecasts and separate authorization for any training dependency."
+    known_constraints:
+      - "Integration does not authorize NeuralForecast training or MLForecast implementation."
+      - "Stable base forecasts and adapters are prerequisites."
+    notes:
+      - "Supporting integration workflow; not a base model."
+
+  - <<: *deferred_specialist_entry
+    lane: deferred_specialists
+    registry_id: statsforecast_mstl
+    display_name: "StatsForecast MSTL"
+    component_type: multiple_seasonality_model
+    upstream_artifact_id: statsforecast.models.MSTL
+    notes:
+      - "Deferred specialist for multiple seasonalities such as intraday volume, liquidity, volatility, and session effects."
+
+  - <<: *deferred_specialist_entry
+    lane: deferred_specialists
+    registry_id: statsforecast_mfles
+    display_name: "StatsForecast MFLES"
+    component_type: multiple_seasonality_model
+    upstream_artifact_id: statsforecast.models.MFLES
+    notes:
+      - "Deferred specialist for multiple seasonalities such as intraday volume, liquidity, volatility, and session effects."
+
+  - <<: *deferred_specialist_entry
+    lane: deferred_specialists
+    registry_id: statsforecast_tbats
+    display_name: "StatsForecast TBATS"
+    component_type: multiple_seasonality_model
+    upstream_artifact_id: statsforecast.models.TBATS
+    notes:
+      - "Deferred specialist for complex seasonal structure and market-session effects."
+
+  - <<: *deferred_specialist_entry
+    lane: deferred_specialists
+    registry_id: multiple_seasonality_workflows
+    display_name: "Multiple-Seasonality Workflows"
+    component_type: research_workflow
+    notes:
+      - "May support intraday volume, liquidity, volatility, and market-session effects after base benchmarks are stable."
+
+  - <<: *deferred_specialist_entry
+    lane: deferred_specialists
+    registry_id: intermittent_sparse_data_forecasting
+    display_name: "Intermittent or Sparse-Data Forecasting"
+    component_type: specialist_forecasting_workflow
+    notes:
+      - "May support sparse instruments and series with few non-zero observations."
+
+  - <<: *deferred_specialist_entry
+    lane: deferred_specialists
+    registry_id: trajectory_simulation
+    display_name: "Trajectory Simulation"
+    component_type: simulation_workflow
+    point_forecast_supported: false
+    probabilistic_output: true
+    notes:
+      - "May support structured scenario simulation; simulations must remain labeled and separate from observed market data."
+
+  - <<: *deferred_specialist_entry
+    lane: deferred_specialists
+    registry_id: demand_peak_detection
+    display_name: "Demand-Peak Detection"
+    component_type: specialist_detection_workflow
+    point_forecast_supported: false
+    probabilistic_output: not_applicable
+    notes:
+      - "Reference workflow that may inform future liquidity or volume peak research; not an immediate market implementation target."
+
+  - <<: *deferred_specialist_entry
+    lane: deferred_specialists
+    registry_id: electricity_load_forecasting
+    display_name: "Electricity-Load Forecasting"
+    component_type: domain_reference_workflow
+    notes:
+      - "Reference workflow for seasonal and peak-demand patterns; market applicability requires a separate hypothesis and evidence."
+
+  - <<: *deferred_specialist_entry
+    lane: deferred_specialists
+    registry_id: mlflow_experiment_integration
+    display_name: "MLflow Experiment Integration"
+    component_type: experiment_tracking_integration
+    package_or_repository: requires_verification
+    license: requires_verification
+    commercial_eligibility: requires_verification
+    point_forecast_supported: not_applicable
+    probabilistic_output: not_applicable
+    cpu_support: not_applicable
+    notes:
+      - "Experiment-tracking integration only; package, license, hosting, data-governance, and authorization requirements must be separately verified."
+
+  - <<: *external_entry
+    lane: watchlist_and_exclusions
+    registry_id: salesforce_moirai_2_r_small
+    display_name: "Salesforce Moirai 2.0 R Small"
+    provider: "Salesforce AI Research"
+    category: foundation_forecaster_watchlist
+    component_type: pretrained_model
+    upstream_artifact_id: Salesforce/moirai-2.0-R-small
+    package_or_repository: uni2ts
+    official_source_urls: *moirai_sources
+    license: cc-by-nc-4.0
+    commercial_eligibility: blocked_noncommercial
+    execution_mode:
+      - research_only_requires_separate_approval
+    training_required: false
+    zero_shot_supported: true
+    point_forecast_supported: requires_verification
+    probabilistic_output: true
+    native_quantile_support: requires_verification
+    multivariate_support: requires_verification
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: requires_verification
+    cpu_support: requires_verification
+    gpu_support: requires_verification
+    expected_context_constraints:
+      - "Context, target dimension, dependency, and execution requirements must be reverified for the exact artifact."
+    initial_forecast_horizon: requires_verification
+    dependency_group: moirai_noncommercial_research_only
+    planned_adapter: none
+    implementation_priority: "none"
+    registry_status: excluded_noncommercial
+    known_constraints:
+      - "CC-BY-NC-4.0 blocks commercial Market AI use under the current disposition."
+      - "Must remain outside production-bound and commercial Market AI work."
+      - "Separate legal and licensing approval is required before any change in disposition."
+    evaluation_requirements:
+      - "No commercial or production-bound evaluation is authorized."
+    notes:
+      - "Research-only consideration."
+
+  - <<: *external_entry
+    lane: watchlist_and_exclusions
+    registry_id: lag_llama
+    display_name: "Lag-Llama"
+    provider: "Time Series Foundation Models"
+    category: foundation_forecaster_watchlist
+    component_type: pretrained_model
+    upstream_artifact_id: time-series-foundation-models/Lag-Llama
+    package_or_repository: lag-llama
+    official_source_urls: *lag_llama_sources
+    license: apache-2.0
+    commercial_eligibility: eligible_subject_to_reverification
+    execution_mode:
+      - local_cpu_requires_benchmark
+      - local_gpu_requires_verification
+    training_required: false
+    zero_shot_supported: true
+    point_forecast_supported: requires_verification
+    probabilistic_output: true
+    native_quantile_support: requires_verification
+    multivariate_support: requires_verification
+    past_covariate_support: requires_verification
+    future_covariate_support: requires_verification
+    exogenous_variable_support: requires_verification
+    cpu_support: requires_verification
+    gpu_support: requires_verification
+    expected_context_constraints:
+      - "Context length is a key tuning variable and must be reevaluated against the current integration stack."
+      - "Upstream recommendations begin from the training context and discuss longer-context scaling; exact use requires verification."
+    initial_forecast_horizon: requires_verification
+    dependency_group: lag_llama
+    planned_adapter: lag_llama_adapter
+    implementation_priority: "P4"
+    registry_status: watchlist
+    known_constraints:
+      - "Lower immediate priority than Chronos-2, TimesFM 2.5, and Granite TTM."
+      - "Context-length and integration requirements must be reevaluated before implementation."
+    evaluation_requirements:
+      - "Reverify probabilistic outputs, context behavior, current dependencies, CPU feasibility, and walk-forward integration before status change."
+    notes:
+      - "Probabilistic forecasting reference retained on the watchlist."

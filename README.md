@@ -1,5 +1,59 @@
 # Market-AI
 
+## Layer Zero — Constitutional Authority
+
+The CMI-Systems Constitutional Hierarchy is the first governing layer for this
+repository. Jesus Rebollar, Project Owner of CMI-Systems, LLC, retains final
+authority. Agents, models, plugins, services, migrations, deployments, and
+automations may not expand their own authority or bypass owner approval.
+
+This repository contains two logically separate jurisdictions:
+
+- **Market-AI:** provider integrations, market-data ingestion and normalization,
+  intelligence engines, signals, regimes, behavioral and tactical analysis,
+  risk and failsafe computation, backend APIs, diagnostics, and runtime
+  orchestration.
+- **AICC:** the active `FrontendReact` operator experience, dashboards, browser
+  state, charts, intelligence presentation, alerts, replay and journal
+  workflows, explanations and explainability, provenance display, and human
+  approval surfaces.
+
+`FrontendReact` is the active and canonical presentation layer. The original
+`Frontend` implementation is historical/reference material and must not be
+treated as the active UI or removed without separate authorization.
+
+AI-DATABASE owns canonical persistence, schemas, migrations, RLS, roles,
+grants, and database security. AI-DATASET owns deterministic dataset
+construction, quality, provenance, certification, registries, exports,
+leakage controls, and training-candidate preparation. Market-AI/AICC consumes
+those capabilities only through approved, versioned contracts.
+
+### Constitutional Safety State
+
+- Production: untouched unless explicitly authorized for a named operation.
+- Training: OFF.
+- Shadow Trainer: OFF.
+- Brain Learning: OFF.
+- Controlled Learning: OFF.
+- Autonomous Learning: OFF.
+- Autonomous trade execution: not authorized.
+- Uncertain authority: fail closed and escalate to the Project Owner.
+
+### Required Governance Reading
+
+Before changing this repository, read:
+
+1. `AGENTS.md`
+2. `docs/governance/CONSTITUTIONAL_HIERARCHY.md`
+3. `docs/governance/PROJECT_CHARTER.md`
+4. `docs/governance/OWNERSHIP_AND_JURISDICTION.md`
+5. `docs/governance/CROSS_PROJECT_CONTRACTS.md`
+6. `docs/governance/PROHIBITED_AUTHORITY.md`
+7. the existing `Chat-Codex/` baseline and architecture documents
+
+Use a reviewed non-default branch and draft pull request. Never silently merge,
+deploy, migrate, enable learning, or broaden constitutional authority.
+
 ## Advanced Intelligence Command Center (AICC)
 
 Market-AI is an advanced market intelligence ecosystem built around the Advanced Intelligence Command Center (AICC), designed to centralize market monitoring, signal generation, behavioral analysis, risk management, and decision-support intelligence into a unified operational dashboard.
@@ -112,12 +166,14 @@ Supported Timeframes:
 
 ## Technology Stack
 
-### Frontend
+### FrontendReact (Active)
 
 * React
 * Vite
 * JavaScript
 * CSS
+
+The original `Frontend` directory is historical/reference material only.
 
 ### Backend
 

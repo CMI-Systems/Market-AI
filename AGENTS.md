@@ -1,3 +1,83 @@
+<!-- CMI_CONSTITUTIONAL_LAYER_ZERO_START -->
+# Layer Zero — Market-AI / AICC Constitutional Agent Baseline
+
+## Mandatory First Action
+
+Read this file, the root `README.md`, all files under `docs/governance/`, and
+the existing `Chat-Codex/` baseline before editing. Repository documentation is
+persistent project memory and outranks assumptions from chat history.
+
+## Constitutional Authority
+
+The CMI-Systems Constitutional Hierarchy is the first governing layer. Jesus
+Rebollar, Project Owner of CMI-Systems, LLC, retains final authority. Agents,
+models, plugins, services, and automations have delegated implementation or
+audit authority only. Ambiguous authority fails closed and escalates to the
+Project Owner.
+
+## Repository Jurisdictions
+
+### Market-AI owns
+
+Provider adapters, market acquisition and normalization, signal and regime
+analysis, behavioral, tactical, risk, and failsafe computation, backend APIs,
+diagnostics, failover, and runtime application integration.
+
+### AICC owns
+
+The active `FrontendReact` presentation layer, browser state, charts, operator
+dashboards, intelligence presentation, replay and journal workflows, alerts,
+explanations, provenance display, and human approval surfaces. The original
+`Frontend` implementation is historical/reference material; do not treat it as
+the active presentation layer, migrate it, or remove it without explicit owner
+authorization.
+
+### External authorities
+
+AI-DATABASE owns canonical database infrastructure, schemas, migrations, RLS,
+grants, persistence, and recovery controls. AI-DATASET owns dataset builders,
+validation, provenance, certification, registries, exports, drift, leakage,
+corpus assembly, and eligibility evidence.
+
+## Allowed Agent Actions
+
+- Read, analyze, test, document, and propose scoped changes.
+- Create reviewed non-default branches and draft pull requests when authorized.
+- Improve Market-AI or AICC logic inside this repository's jurisdiction.
+- Consume only approved, versioned AI-DATABASE and AI-DATASET contracts.
+- Add fail-closed validation, telemetry redaction, provenance display, and
+  operator-review safeguards.
+
+## Prohibited Authority
+
+Do not:
+
+- write directly to protected or default branches;
+- merge, deploy, migrate, or change secrets without explicit approval;
+- add canonical database migrations or assume database ownership;
+- place privileged credentials in frontend code;
+- bypass governance, validation, source trust, freshness, or contract-version
+  checks;
+- enable Training, Shadow Trainer, Brain Learning, Controlled Learning, or
+  Autonomous Learning;
+- add autonomous trade execution or financial-advice claims;
+- broaden this repository's authority; or
+- amend constitutional rules through an ordinary commit.
+
+## Cross-Project Contract Minimums
+
+Require contract version, schema version, source identity, provenance,
+freshness, validation status, trust level, environment identity, correlation
+identifiers, and explicit rejection semantics. Missing or untrusted governance
+metadata must block consumption.
+
+## Branch and Review Policy
+
+Use a named non-default branch. Report files changed and checks run. Human
+approval is required for staging, commit, push, pull request, merge, deployment,
+migration, secrets, learning activation, or changes to constitutional authority.
+<!-- CMI_CONSTITUTIONAL_LAYER_ZERO_END -->
+
 <!-- CMI_SYSTEMS_HIERARCHY_START -->
 # CMI-Systems, LLC Agent Hierarchy
 
@@ -63,13 +143,13 @@ If any instruction in this root `AGENTS.md` conflicts with `Chat-Codex/AGENTS.md
 - Treat market outputs as decision support, not guarantees or financial advice.
 
 ## Architecture Rules
-- Preserve the current split: `Frontend/` owns presentation, browser state, chart rendering, and API consumption; `Backend/` owns provider access, secrets, normalization, and server routes.
+- Preserve the current split: `FrontendReact/` owns the active presentation, browser state, chart rendering, and API consumption; `Frontend/` is historical/reference material; `Backend/` owns provider access, secrets, normalization, and server routes.
 - Keep provider credentials and privileged market-data calls on the backend only.
 - Keep indicators, scoring, and summaries modular and testable; separate data retrieval from interpretation where practical.
 - Extend existing modules and route patterns before introducing new layers, frameworks, or shared abstractions.
 
 ## Coding Standards
-- Match the existing JavaScript style and module system in the touched area: browser ES modules in `Frontend/`, CommonJS in `Backend/`.
+- Match the existing JavaScript style and module system in the touched area: React/Vite conventions in active `FrontendReact/`, and CommonJS in `Backend/`. Do not treat historical `Frontend/` as the active implementation.
 - Favor small functions, explicit names, structured data, and graceful failure paths for provider and network errors.
 - Validate and normalize external data at boundaries before using it in charts, signals, summaries, or UI rendering.
 - Keep comments brief and useful; add focused verification for logic that changes signals, scoring, provider behavior, or route contracts.
